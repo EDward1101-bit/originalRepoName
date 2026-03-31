@@ -93,10 +93,25 @@ mypy .
 # Frontend
 cd frontend
 npm install
+npx prettier --write .
 npm run lint
 npm run typecheck
 npm run build
 ```
+
+## Before Pushing
+
+**Always run these commands before pushing to GitHub:**
+
+```bash
+# Frontend
+cd frontend
+npx prettier --write .
+npm run lint
+npm run typecheck
+```
+
+This ensures CI passes and prevents formatting-related failures.
 
 ## Database (Supabase)
 
