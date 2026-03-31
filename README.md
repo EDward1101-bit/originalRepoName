@@ -65,4 +65,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and [DOCKER.md
 |-------|------------|
 | Frontend | React 19, Vite, TypeScript, TailwindCSS |
 | Backend | Python 3.12, FastAPI, Slixmpp |
-| Database | Supabase (PostgreSQL) |
+| Database | Supabase |
