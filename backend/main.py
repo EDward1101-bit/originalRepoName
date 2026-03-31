@@ -2,10 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings
 
+from api import health_router, users_router
+
 
 class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_anon_key: str = ""
+    prosody_url: str = "http://prosody:5280"
     environment: str = "development"
 
     class Config:
@@ -29,12 +32,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/")
-async def root() -> dict[str, str]:
-    return {"message": "XMPP Chat API", "status": "running"}
-
-
-@app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "healthy"}
+app.include_router(health_router)
+app.include_router(users_router)

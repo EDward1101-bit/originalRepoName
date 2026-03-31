@@ -4,6 +4,25 @@
 # Works on Windows, Linux, and Mac
 
 services:
+  prosody:
+    build:
+      context: ./prosody
+      dockerfile: Dockerfile
+    container_name: xmpp-chat-prosody
+    ports:
+      - "5222:5222"
+      - "5269:5269"
+      - "5280:5280"
+    volumes:
+      - ./prosody/data:/var/lib/prosody
+      - ./prosody/prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro
+      - ./prosody/modules:/usr/lib/prosody/modules:ro
+    environment:
+      - PROSODY_HOST=localhost
+    restart: unless-stopped
+    networks:
+      - xmpp-network
+
   backend:
     build:
       context: ./backend
@@ -15,6 +34,8 @@ services:
       - ./backend/.env
     volumes:
       - ./backend:/app
+    depends_on:
+      - prosody
     restart: unless-stopped
     networks:
       - xmpp-network

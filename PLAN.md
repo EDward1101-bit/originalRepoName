@@ -35,10 +35,12 @@ Build a full-featured XMPP-based chat application with instant messaging, file t
 **Duration:** 2 weeks  
 **Description:**
 
-- Implement custom XMPP server using Python (slixmpp library)
-- Handle client connections and authentication
+- Set up Prosody XMPP server (existing solution)
+- Configure Prosody for localhost development
+- Implement user sync service (Supabase <-> Prosody)
+- Handle client connections and JWT authentication
 - Implement roster management and presence
-- Set up message routing between clients
+- Set up HTTP API for user management via mod_admin_net
 
 ### Task 1.3: Database Design & Implementation
 
@@ -46,7 +48,7 @@ Build a full-featured XMPP-based chat application with instant messaging, file t
 **Duration:** 2 weeks  
 **Description:**
 
-- Design database schema (PostgreSQL)
+- Design database schema (Supabase/PostgreSQL)
 - Implement user authentication tables
 - Create message storage and retrieval system
 - Implement group/muc (Multi-User Chat) storage
@@ -200,8 +202,9 @@ Build a full-featured XMPP-based chat application with instant messaging, file t
 
 | Layer      | Technology                     |
 | ---------- | ------------------------------ |
-| Backend    | Python, Slixmpp, FastAPI       |
-| Database   | PostgreSQL, Redis              |
+| Backend    | Python, FastAPI, Slixmpp       |
+| Database   | Supabase (PostgreSQL)          |
+| XMPP       | Prosody                        |
 | Frontend   | React, TypeScript, TailwindCSS |
 | Voice      | WebRTC, Jitsi (optional)       |
 | Encryption | OMEMO (libsignal fork)         |
@@ -247,7 +250,7 @@ Phase 4 (Polish)
 
 ## Risk Mitigation
 
-1. **XMPP Complexity** - Start with simple message passing before adding features
+1. **XMPP Complexity** - Use Prosody (established XMPP server) instead of building custom
 2. **WebRTC Difficulties** - Use existing libraries (simple-peer) for voice
 3. **E2E Encryption** - Use established OMEMO library, don't roll own crypto
 4. **Team Coordination** - Daily standups, weekly demos

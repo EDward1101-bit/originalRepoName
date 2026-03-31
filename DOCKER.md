@@ -59,6 +59,8 @@ docker-compose up --build -d
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:8000 |
 | API Docs | http://localhost:8000/docs |
+| Prosody XMPP | localhost:5222 |
+| Prosody HTTP API | http://localhost:5280 |
 
 ## Common Commands
 
@@ -81,6 +83,7 @@ docker-compose logs -f
 # View logs for specific service
 docker-compose logs -f backend
 docker-compose logs -f frontend
+docker-compose logs -f prosody
 
 # Stop and remove volumes (clean slate)
 docker-compose down -v
@@ -93,6 +96,11 @@ Code changes on your host machine will be reflected in the running containers (h
 ### Backend
 - Python files are mounted directly
 - Uvicorn auto-reloads on changes
+
+### Prosody (XMPP Server)
+- Configuration mounted from `prosody/prosody.cfg.lua`
+- Custom modules in `prosody/modules/`
+- HTTP API available at port 5280 for user management
 
 ### Frontend
 - Vite dev server with HMR enabled
@@ -139,11 +147,17 @@ docker-compose up --build
 ├── backend/
 │   ├── Dockerfile          # Backend container
 │   ├── main.py             # FastAPI entry point
+│   ├── services/           # Business logic
+│   ├── api/                # API routes
 │   └── .env.example        # Environment template
 ├── frontend/
 │   ├── Dockerfile          # Frontend container
 │   ├── nginx.conf          # Production nginx config
 │   └── .env.example        # Environment template
+├── prosody/
+│   ├── Dockerfile          # Prosody XMPP server
+│   ├── prosody.cfg.lua     # Prosody configuration
+│   └── modules/            # Custom Prosody modules
 └── docker-compose.yml      # Orchestration
 ```
 
