@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -17,17 +18,17 @@ class UserCreate(BaseModel):
 
 class UserSync:
     @staticmethod
-    async def create_user(user: UserCreate) -> dict:
+    async def create_user(user: UserCreate) -> dict[str, Any]:
         supabase = get_supabase_client()
 
         prosody_response = await prosody_client.create_user(user.username, user.password)
 
-        auth_data = {
+        auth_data: dict[str, str] = {
             "email": user.email or f"{user.username}@localhost",
             "password": user.password,
         }
 
-        auth_response = supabase.auth.admin.create_user(auth_data)
+        auth_response = supabase.auth.admin.create_user(auth_data)  # type: ignore[arg-type]
 
         if auth_response.user:
             user_data = {
@@ -68,11 +69,11 @@ class UserSync:
         return True
 
     @staticmethod
-    async def get_prosody_users() -> list[dict]:
+    async def get_prosody_users() -> list[dict[str, Any]]:
         return await prosody_client.get_users()
 
     @staticmethod
-    async def health_check() -> dict:
+    async def health_check() -> dict[str, Any]:
         prosody_healthy = await prosody_client.health_check()
         return {"prosody": prosody_healthy}
 

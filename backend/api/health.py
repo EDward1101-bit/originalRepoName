@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter
 
 from models.user import HealthResponse
@@ -7,7 +9,7 @@ router = APIRouter(tags=["health"])
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check():
+async def health_check() -> HealthResponse:
     status = await user_sync.health_check()
     return HealthResponse(
         status="healthy" if status["prosody"] else "degraded",
@@ -16,12 +18,12 @@ async def health_check():
 
 
 @router.get("/")
-async def root():
+async def root() -> dict[str, str]:
     return {"message": "XMPP Chat API", "status": "running"}
 
 
 @router.get("/health/prosody")
-async def prosody_health():
+async def prosody_health() -> dict[str, Any]:
     from services.prosody import prosody_client
 
     healthy = await prosody_client.health_check()

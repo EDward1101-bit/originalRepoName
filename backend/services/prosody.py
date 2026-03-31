@@ -1,3 +1,4 @@
+from typing import Any
 
 import httpx
 from pydantic_settings import BaseSettings
@@ -28,28 +29,28 @@ class ProsodyClient:
         except httpx.RequestError:
             return False
 
-    async def get_users(self) -> list[dict]:
+    async def get_users(self) -> list[dict[str, Any]]:
         response = await self.client.get(f"{self.base_url}/users")
         response.raise_for_status()
-        data = response.json()
-        return data.get("users", [])
+        data: list[dict[str, Any]] = response.json().get("users", [])
+        return data
 
-    async def get_user(self, username: str) -> dict | None:
+    async def get_user(self, username: str) -> dict[str, Any] | None:
         try:
             response = await self.client.get(f"{self.base_url}/users/{username}")
             if response.status_code == 200:
-                return response.json()
+                return dict(response.json())
             return None
         except httpx.HTTPError:
             return None
 
-    async def create_user(self, username: str, password: str) -> dict:
+    async def create_user(self, username: str, password: str) -> dict[str, Any]:
         response = await self.client.post(
             f"{self.base_url}/users/{username}",
             json={"password": password},
         )
         response.raise_for_status()
-        return response.json()
+        return dict(response.json())
 
     async def delete_user(self, username: str) -> bool:
         response = await self.client.delete(f"{self.base_url}/users/{username}")
@@ -62,12 +63,13 @@ class ProsodyClient:
                 json={"username": username, "host": "localhost"},
             )
             if response.status_code == 200:
-                return response.json().get("exists", False)
+                data: dict[str, Any] = response.json()
+                return bool(data.get("exists", False))
             return False
         except httpx.HTTPError:
             return False
 
-    async def close(self):
+    async def close(self) -> None:
         await self.client.aclose()
 
 
