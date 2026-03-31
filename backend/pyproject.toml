@@ -1,0 +1,18 @@
+[project]
+name = "xmpp-chat-backend"
+version = "0.1.0"
+description = "XMPP Chat Application Backend"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
