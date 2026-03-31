@@ -1,0 +1,16 @@
+# ============================================
+# Docker Compose Ignore
+# ============================================
+# Exclude from docker build context
+.git/
+.github/
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.local
+.env.*.local
+*.md
+LICENSE
+.DS_Store
+Thumbs.db

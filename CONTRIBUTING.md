@@ -81,11 +81,42 @@ feat: add user authentication endpoints
 fix: resolve message delivery timeout issue
 ```
 
+## Running with Docker (Recommended)
+
+Docker ensures everyone has the same environment. See [DOCKER.md](DOCKER.md) for full setup.
+
+```bash
+# Quick Start
+cp backend/.env.example backend/.env
+# Edit backend/.env with your Supabase credentials
+
+docker-compose up --build
+```
+
+Access:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
 ## Running Checks
+
+```bash
+# Backend (in Docker)
+docker-compose exec backend ruff check .
+docker-compose exec backend mypy .
+
+# Frontend (in Docker)
+docker-compose exec frontend npm run lint
+docker-compose exec frontend npm run typecheck
+```
+
+### Running Locally (Alternative to Docker)
 
 ```bash
 # Backend
 cd backend
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
 ruff check .
 mypy .
@@ -104,7 +135,12 @@ npm run build
 **Always run these commands before pushing to GitHub:**
 
 ```bash
-# Frontend
+# Frontend (with Docker)
+docker-compose exec frontend npx prettier --write .
+docker-compose exec frontend npm run lint
+docker-compose exec frontend npm run typecheck
+
+# Or locally (without Docker)
 cd frontend
 npx prettier --write .
 npm run lint
