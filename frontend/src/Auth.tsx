@@ -1,15 +1,29 @@
 import { useState } from "react";
-import { supabase } from "./supabase";
+import { useAuth } from "./AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function Auth() {
+  const { signIn, signUp, signOut, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [username, setUsername] = useState("");
+
+  const syncUserToProsody = async (email: string, password: string) => {
+    const username = email.split("@")[0];
+    try {
+      const response = await fetch(`${API_URL}/api/auth/sync-user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,44 +34,16 @@ export default function Auth() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email: userEmail,
-          password,
-        });
-
-        if (error) throw error;
-
-        const usernameFromEmail = email.split("@")[0];
-        setUsername(usernameFromEmail);
-
-        const syncResponse = await fetch(`${API_URL}/api/auth/sync-user`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: usernameFromEmail, password }),
-        });
-
-        if (syncResponse.ok) {
+        await signUp(userEmail, password);
+        setMessage("Account created! Check email to confirm, then login.");
+        const synced = await syncUserToProsody(userEmail, password);
+        if (synced) {
           setMessage("Account created and synced to Prosody!");
-        } else {
-          setMessage("Account created but sync failed. Please try logging in.");
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: userEmail,
-          password,
-        });
-
-        if (error) throw error;
-
-        const usernameFromEmail = email.split("@")[0];
-
-        const syncResponse = await fetch(`${API_URL}/api/auth/sync-user`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: usernameFromEmail, password }),
-        });
-
-        if (syncResponse.ok) {
+        await signIn(userEmail, password);
+        const synced = await syncUserToProsody(userEmail, password);
+        if (synced) {
           setMessage("Logged in and synced to Prosody!");
         } else {
           setMessage("Logged in but sync failed.");
@@ -70,6 +56,21 @@ export default function Auth() {
     }
   };
 
+  if (user) {
+    return (
+      <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-4">Logged in as {user.email}</h2>
+        <p className="text-gray-600 mb-4">You are authenticated with Supabase.</p>
+        <button
+          onClick={signOut}
+          className="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+        >
+          Log Out
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-6">
@@ -77,13 +78,13 @@ export default function Auth() {
       </h2>
       <form onSubmit={handleAuth} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Email / Username</label>
+          <label className="block text-sm font-medium mb-1">Email</label>
           <input
-            type="text"
+            type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full p-2 border rounded"
-            placeholder="alice or alice@localhost"
+            placeholder="alice@example.com"
             required
           />
         </div>
