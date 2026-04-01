@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings
 
 from api import health_router, users_router
+from api.auth import router as auth_router
 
 
 class Settings(BaseSettings):
@@ -34,3 +35,4 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(users_router)
+app.include_router(auth_router)
