@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm --prefix frontend run lint)",
+      "Bash(echo \"---LINT EXIT: $?\")",
+      "Bash(npm --prefix frontend run typecheck)",
+      "Bash(echo \"---TYPECHECK EXIT: $?\")",
+      "Bash(npx prettier:*)",
+      "Bash(echo \"---PRETTIER EXIT: $?\")",
+      "Bash(pip install:*)",
+      "Bash(ruff check:*)",
+      "Bash(echo \"---RUFF EXIT: $?\")"
+    ]
+  }
+}

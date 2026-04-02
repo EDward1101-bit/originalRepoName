@@ -1,4 +1,5 @@
 from typing import Any
+from typing import cast
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -23,7 +24,7 @@ class SyncUserRequest(BaseModel):
 
 
 @router.post("/verify", response_model=AuthVerifyResponse)
-async def verify_credentials(request: AuthVerifyRequest) -> AuthVerifyResponse:  # type: ignore[return]
+async def verify_credentials(request: AuthVerifyRequest) -> AuthVerifyResponse:
     from services.supabase import get_supabase_client
 
     supabase = get_supabase_client()
@@ -39,10 +40,14 @@ async def verify_credentials(request: AuthVerifyRequest) -> AuthVerifyResponse: 
         if not user_response.data or len(user_response.data) == 0:
             return AuthVerifyResponse(valid=False, user_id=None)
 
-        user = user_response.data[0]
-        user_id: str = str(user.get("id", ""))
+        user = user_response.data[0] if user_response.data else None
+        if not user:
+            return AuthVerifyResponse(valid=False, user_id=None)
 
-        auth_response = supabase.auth.sign_in_with_password(  # type: ignore[arg-type]
+        user_dict = cast(dict[str, Any], user)
+        user_id: str = str(user_dict.get("id", ""))
+
+        auth_response = supabase.auth.sign_in_with_password(
             {"email": f"{request.username}@{request.host}", "password": request.password}
         )
 
@@ -61,7 +66,7 @@ async def sync_user_to_prosody(request: SyncUserRequest) -> dict[str, Any]:
     from services.user_sync import user_sync
 
     try:
-        result = await user_sync.sync_user_to_prosody(request.username, request.password)
+        await user_sync.sync_user_to_prosody(request.username, request.password)
         return {"synced": True, "username": request.username}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e)) from None

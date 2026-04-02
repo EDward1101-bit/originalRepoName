@@ -1,6 +1,6 @@
-import Auth from "./Auth";
-import Chat from "./Chat";
-import { useAuth } from "./AuthContext";
+import Auth from './Auth';
+import Chat from './Chat';
+import { useAuth } from './AuthContext';
 
 function App() {
   const { user } = useAuth();
