@@ -4,9 +4,22 @@ modules_enabled = {
     "saslauth";
     "disco";
     "carbons";
+    "offline";
     "admin_net";
-    "http";        -- (required for admin_net to work over HTTP)
+    "http";
+    "bosh";
 }
+
+-- Enable debug logging for BOSH
+log_levels = {
+    ["mod_bosh"] = "debug";
+}
+
+-- CORS for BOSH
+cross_domain_bosh = true
+
+-- Reduce long-poll hold time so presence/messages aren't delayed 30 seconds
+bosh_max_wait = 5
 
 -- 2. HTTP Server Configuration
 https_ports = { }
