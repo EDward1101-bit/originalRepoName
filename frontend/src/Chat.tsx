@@ -10,12 +10,20 @@ interface ChatMessage {
   time: Date;
 }
 
+interface OnlineUser {
+  jid: string;
+  name: string;
+  status: string;
+  online: boolean;
+}
+
 export default function Chat() {
   const { user, password, signOut } = useAuth();
   const [status, setStatus] = useState<string>('Connecting...');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [recipient, setRecipient] = useState('');
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [jid, setJid] = useState(() => {
     const stored = sessionStorage.getItem('xmpp_jid');
     return stored || '';
@@ -80,6 +88,40 @@ export default function Chat() {
       setStatus('Error: ' + (err.message || 'Connection failed'));
     };
 
+    const handlePresence = (presence: any) => {
+      const fromFull = presence.from || '';
+      if (!fromFull) return;
+      
+      const bareJid = fromFull.split('/')[0];
+      const myBareJid = jidRef.current.split('/')[0];
+      
+      if (bareJid === myBareJid) return;
+      
+      const from = bareJid.split('@')[0];
+      const type = presence.type;
+      
+      setOnlineUsers(prev => {
+        const existing = prev.find(u => u.jid === from);
+        
+        if (type === 'unavailable' || type === 'unsubscribed') {
+          if (existing) {
+            return prev.map(u => u.jid === from ? { ...u, online: false } : u);
+          }
+          return prev;
+        }
+        
+        if (existing) {
+          return prev.map(u => u.jid === from ? { ...u, online: true } : u);
+        }
+        
+        return [...prev, { jid: from, name: from, status: 'Online', online: true }];
+      });
+    };
+
+    const handleRoster = (roster: any) => {
+      console.log('Roster received:', roster);
+    };
+
     // Primary path: stanza.js 'message' event
     const handleMessage = (msg: ReceivedMessage) => {
       if (msg.type !== 'chat') return;
@@ -96,12 +138,49 @@ export default function Chat() {
       const str = String(data);
       console.log('XMPP Incoming:', str);
 
-      // Send presence immediately when bind succeeds, before any long-polls start.
-      // Without this, presence is queued and sent only after the first 30-second poll
-      // returns — during which Prosody drops all incoming messages (no available resource).
       if (str.includes('urn:ietf:params:xml:ns:xmpp-bind') && str.includes("type='result'")) {
         console.log('Bind complete — sending presence immediately');
         client.sendPresence({});
+      }
+
+      const presenceRegex = /<presence[^>]*>/g;
+      let presenceMatch;
+      while ((presenceMatch = presenceRegex.exec(str)) !== null) {
+        const tagStart = presenceMatch.index;
+        const closeIdx = str.indexOf('</presence>', tagStart);
+        if (closeIdx === -1) continue;
+        
+        const presenceXml = str.slice(tagStart, closeIdx + '</presence>'.length);
+        const fromMatch = presenceXml.match(/\bfrom="([^"]+)"/);
+        const typeMatch = presenceXml.match(/\btype="([^"]+)"/);
+        
+        if (!fromMatch) continue;
+        
+        const fromFull = fromMatch[1];
+        const bareJid = fromFull.split('/')[0];
+        const myBareJid = jidRef.current.split('/')[0];
+        
+        if (bareJid === myBareJid) continue;
+        
+        const from = bareJid.split('@')[0];
+        const type = typeMatch?.[1];
+        
+        setOnlineUsers(prev => {
+          const existing = prev.find(u => u.jid === from);
+          
+          if (type === 'unavailable') {
+            if (existing) {
+              return prev.map(u => u.jid === from ? { ...u, online: false } : u);
+            }
+            return prev;
+          }
+          
+          if (existing) {
+            return prev.map(u => u.jid === from ? { ...u, online: true } : u);
+          }
+          
+          return [...prev, { jid: from, name: from, status: 'Online', online: true }];
+        });
       }
 
       const msgRegex = /<message\b[^>]*>/g;
@@ -140,6 +219,8 @@ export default function Chat() {
     client.on('disconnected', handleDisconnected);
     client.on('error', handleError);
     client.on('message', handleMessage);
+    client.on('presence', handlePresence);
+    client.on('roster:push', handleRoster);
     client.on('raw:incoming', handleRawIncoming);
     client.on('raw:outgoing', handleRawOutgoing);
 
@@ -154,6 +235,8 @@ export default function Chat() {
       client.off('disconnected', handleDisconnected);
       client.off('error', handleError);
       client.off('message', handleMessage);
+      client.off('presence', handlePresence);
+      client.off('roster:push', handleRoster);
       client.off('raw:incoming', handleRawIncoming);
       client.off('raw:outgoing', handleRawOutgoing);
       client.disconnect();
@@ -187,65 +270,235 @@ export default function Chat() {
   if (!user) return null;
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="bg-white rounded-lg shadow-md p-4 mb-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">XMPP Chat</h2>
-          <button onClick={signOut} className="text-sm text-red-500 hover:underline">
-            Log Out
+    <div className="h-screen w-full flex items-center justify-center p-6 relative bg-background text-on-surface overflow-hidden">
+      {/* Ambient Background Accents */}
+      <div className="ambient-secondary"></div>
+      <div className="ambient-primary"></div>
+
+      {/* SideNavBar */}
+      <nav className="fixed left-6 top-1/2 -translate-y-1/2 w-20 rounded-[3rem] h-auto py-8 bg-slate-900/40 backdrop-blur-3xl shadow-[0_0_40px_-10px_rgba(255,144,104,0.15)] flex flex-col items-center gap-8 z-50">
+        <div className="mb-4">
+          <div className="w-10 h-10 bg-gradient-to-tr from-primary to-secondary rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,144,104,0.3)]">
+            <span className="material-symbols-outlined text-black font-bold">bolt</span>
+          </div>
+        </div>
+        <button className="text-gray-500 p-4 hover:bg-slate-800/60 hover:text-orange-200 rounded-full transition-all scale-110 active:scale-90 duration-200 cursor-pointer">
+          <span className="material-symbols-outlined">home</span>
+        </button>
+        <button className="bg-orange-400 text-black rounded-full p-4 shadow-[0_0_20px_rgba(255,144,104,0.5)] scale-110 active:scale-90 duration-200 cursor-pointer">
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>group</span>
+        </button>
+        <button className="text-gray-500 p-4 hover:bg-slate-800/60 hover:text-orange-200 rounded-full transition-all scale-110 active:scale-90 duration-200 cursor-pointer">
+          <span className="material-symbols-outlined">person_pin</span>
+        </button>
+        <div className="mt-auto">
+          <button className="text-primary-dim p-4 hover:bg-primary/10 rounded-full transition-all cursor-pointer">
+            <span className="material-symbols-outlined">add</span>
           </button>
         </div>
-        <div className="flex justify-between items-center">
-          <span
-            className={`px-3 py-1 rounded text-sm ${status === 'Connected' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
-          >
+      </nav>
+
+      {/* TopNavBar */}
+      <header className="fixed top-0 left-0 w-full z-40 bg-transparent backdrop-blur-xl flex justify-between items-center px-8 py-6">
+        <div className="flex items-center gap-4 pl-24">
+          <h1 className="text-2xl font-bold text-orange-400 drop-shadow-[0_0_10px_rgba(255,144,104,0.3)] font-['Plus_Jakarta_SANS'] tracking-tight">The Electric Hearth</h1>
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ml-4 ${status === 'Connected' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
             {status}
           </span>
-          <div className="text-sm text-gray-600">Logged in as: {jid}</div>
         </div>
-      </div>
+        <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center bg-surface-container-low/60 rounded-full px-4 py-2 border border-outline-variant/10 focus-within:border-primary/40 transition-all">
+            <span className="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+            <input className="bg-transparent border-none outline-none text-sm focus:ring-0 text-on-surface placeholder:text-outline-variant w-48" placeholder="Search the sanctuary..." type="text" />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium text-outline-variant hidden sm:block">{jid}</div>
+            <button onClick={signOut} title="Log Out" className="text-orange-400 hover:text-orange-300 transition-all duration-300 scale-105 active:scale-95 cursor-pointer">
+              <span className="material-symbols-outlined">logout</span>
+            </button>
+          </div>
+        </div>
+      </header>
 
-      <div className="bg-white rounded-lg shadow-md h-96 flex flex-col">
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {messages.length === 0 ? (
-            <p className="text-gray-400 text-center">No messages yet. Start a conversation!</p>
-          ) : (
-            messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`p-2 rounded ${msg.type === 'sent' ? 'bg-blue-100 ml-auto' : 'bg-gray-100'}`}
-              >
-                <div className="font-medium text-sm">{msg.from}</div>
-                <div>{msg.body}</div>
+      {/* Main Workspace */}
+      <main className="ml-24 mt-20 w-full h-[calc(100vh-120px)] flex gap-6 px-4 max-w-[1600px] z-10">
+        
+        {/* Communities Module (Floating Island) */}
+        <aside className="hidden lg:flex flex-col w-72 h-full gap-4">
+          <div className="glass-panel p-6 rounded-xl flex flex-col gap-6 flex-1 shadow-xl">
+            <h3 className="text-on-surface-variant text-xs font-bold uppercase tracking-widest">Active Channels</h3>
+            <div className="flex flex-col gap-2">
+              <button className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 text-primary transition-all group cursor-pointer border-none outline-none text-left">
+                <span className="material-symbols-outlined text-lg">tag</span>
+                <span className="font-semibold">the-forge</span>
+                <div className="ml-auto w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_#ff9068]"></div>
+              </button>
+              <button className="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all cursor-pointer border-none outline-none text-left">
+                <span className="material-symbols-outlined text-lg">tag</span>
+                <span className="font-semibold text-sm">general-assembly</span>
+              </button>
+              <button className="flex items-center gap-3 p-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-all cursor-pointer border-none outline-none text-left">
+                <span className="material-symbols-outlined text-lg">tag</span>
+                <span className="font-semibold text-sm">neon-garden</span>
+              </button>
+            </div>
+            <div className="mt-auto p-4 bg-surface-container-lowest rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary shrink-0">
+                  {user.email?.[0].toUpperCase()}
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-sm font-bold truncate">{user.email?.split('@')[0]}</p>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-tertiary"></div>
+                    <p className="text-[10px] text-tertiary">In the Zone</p>
+                  </div>
+                </div>
               </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-        <div className="border-t p-4 flex gap-2">
-          <input
-            type="text"
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            placeholder="Recipient username"
-            className="w-1/3 p-2 border rounded"
-          />
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder="Type a message..."
-            className="flex-1 p-2 border rounded"
-          />
-          <button
-            onClick={sendMessage}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Send
-          </button>
-        </div>
-      </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Chat Container */}
+        <section className="flex-1 flex flex-col h-full glass-panel rounded-xl relative overflow-hidden shadow-2xl">
+          {/* Chat Header */}
+          <header className="p-6 flex items-center justify-between border-b border-outline-variant/5">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="p-2 bg-primary/20 rounded-lg shrink-0">
+                <span className="material-symbols-outlined text-primary">forum</span>
+              </div>
+              <div className="flex flex-col gap-1 flex-1">
+                <input
+                  type="text"
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  placeholder="Recipient username (e.g. user2)"
+                  className="bg-transparent border-none outline-none focus:ring-0 text-xl font-bold leading-tight text-on-surface placeholder:text-outline-variant/50 p-0 m-0 w-full max-w-sm"
+                />
+                <p className="text-xs text-on-surface-variant">Send a direct message</p>
+              </div>
+            </div>
+            
+            {/* Member HUD Widget */}
+            <div className="group relative">
+              <div className="flex -space-x-3 hover:-space-x-1 transition-all duration-300 cursor-pointer p-2 rounded-full bg-surface-container-highest/40">
+                <div className="w-8 h-8 rounded-full border-2 border-surface-container-low bg-secondary/20 flex items-center justify-center text-xs font-bold text-secondary">A</div>
+                <div className="w-8 h-8 rounded-full border-2 border-surface-container-low bg-tertiary/20 flex items-center justify-center text-xs font-bold text-tertiary">B</div>
+                <div className="w-8 h-8 rounded-full border-2 border-surface-container-low bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">C</div>
+                <div className="w-8 h-8 rounded-full bg-surface-container-high border-2 border-surface-container-low flex items-center justify-center text-[10px] font-bold">+12</div>
+              </div>
+            </div>
+          </header>
+
+          {/* Message Feed */}
+          <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-10">
+            {messages.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-outline-variant opacity-60">
+                <span className="material-symbols-outlined text-4xl mb-2">speaker_notes_off</span>
+                <p>No messages yet. Start a conversation!</p>
+              </div>
+            ) : (
+              <>
+                <div className="relative flex justify-center mt-4">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-outline-variant/10"></div></div>
+                  <span className="relative px-4 bg-[#131319] text-[10px] uppercase tracking-widest text-outline-variant font-bold">Today</span>
+                </div>
+                
+                {messages.map((msg, idx) => {
+                  const isSent = msg.type === 'sent';
+                  return (
+                    <div key={idx} className={`flex gap-6 group ${isSent ? 'flex-row-reverse' : ''}`}>
+                      <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center shadow-lg font-bold text-lg ${isSent ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-secondary'}`}>
+                        {isSent ? 'Me' : msg.from[0].toUpperCase()}
+                      </div>
+                      <div className={`flex flex-col gap-1 max-w-2xl ${isSent ? 'items-end' : ''}`}>
+                        <div className={`flex items-center gap-3 ${isSent ? 'flex-row-reverse' : ''}`}>
+                          <span className={`font-bold ${isSent ? 'text-primary' : 'text-secondary'}`}>{isSent ? 'You' : msg.from}</span>
+                          <span className="text-[10px] text-outline-variant">{msg.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <div className={`p-5 text-on-surface leading-relaxed shadow-sm ${
+                          isSent
+                            ? 'bg-primary/20 rounded-l-xl rounded-br-xl border-r-2 border-primary'
+                            : 'bg-surface-variant/40 rounded-r-xl rounded-bl-xl border-l-2 border-primary/20'
+                        }`}>
+                          {msg.body}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Composition Area */}
+          <footer className="p-6">
+            <div className="glass-panel rounded-full p-2 flex items-center gap-3 border border-outline-variant/10 shadow-2xl">
+              <button className="w-10 h-10 flex items-center justify-center rounded-full text-outline-variant hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border-none outline-none">
+                <span className="material-symbols-outlined">add_circle</span>
+              </button>
+              <input 
+                className="flex-1 bg-transparent border-none outline-none focus:ring-0 text-on-surface placeholder:text-outline-variant/60 font-medium" 
+                placeholder={recipient ? `Message ${recipient}...` : "Choose a recipient above to type a message..."}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                disabled={!recipient}
+              />
+              <div className="flex items-center gap-2 pr-2">
+                <button className="w-10 h-10 flex items-center justify-center rounded-full text-outline-variant hover:text-tertiary transition-all cursor-pointer border-none outline-none">
+                  <span className="material-symbols-outlined">mood</span>
+                </button>
+                <button 
+                  onClick={sendMessage}
+                  disabled={!recipient || !input.trim()}
+                  className="w-10 h-10 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,144,104,0.4)] hover:scale-105 active:scale-95 transition-all cursor-pointer border-none outline-none disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                >
+                  <span className="material-symbols-outlined">send</span>
+                </button>
+              </div>
+            </div>
+          </footer>
+        </section>
+
+        {/* Dynamic Context Island (Right) - Online Users */}
+        <aside className="hidden lg:flex flex-col w-80 h-full gap-4">
+          <div className="glass-panel p-6 rounded-xl flex-1 flex flex-col shadow-xl border border-outline-variant/5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-outline-variant">Online Users</h3>
+              <span className="text-[10px] text-tertiary px-2 py-1 bg-tertiary/10 rounded-full">{onlineUsers.filter(u => u.online).length} Online</span>
+            </div>
+            <div className="flex flex-col gap-2 overflow-y-auto">
+              {onlineUsers.length === 0 ? (
+                <p className="text-sm text-outline-variant opacity-60">No users online yet</p>
+              ) : (
+                onlineUsers.map((u) => (
+                  <button
+                    key={u.jid}
+                    onClick={() => setRecipient(u.jid)}
+                    className={`flex items-center gap-3 group cursor-pointer p-2 rounded-lg transition-all border-none outline-none text-left w-full ${recipient === u.jid ? 'bg-primary/10' : 'hover:bg-surface-container-highest'}`}
+                  >
+                    <div className="relative">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${u.online ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-outline-variant'}`}>
+                        {u.name[0].toUpperCase()}
+                      </div>
+                      {u.online && (
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary rounded-full border-2 border-surface shadow-[0_0_8px_#ffd16f]"></div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-sm font-bold transition-colors ${recipient === u.jid ? 'text-primary' : 'group-hover:text-primary'}`}>{u.name}</p>
+                      <p className="text-[10px] text-outline-variant truncate">{u.status}</p>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </aside>
+      </main>
     </div>
   );
 }
