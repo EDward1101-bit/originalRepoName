@@ -17,6 +17,11 @@ interface OnlineUser {
   online: boolean;
 }
 
+interface RegisteredUser {
+  username: string;
+  online: boolean;
+}
+
 export default function Chat() {
   const { user, password, signOut } = useAuth();
   const [status, setStatus] = useState<string>('Connecting...');
@@ -24,6 +29,7 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const [recipient, setRecipient] = useState('');
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [allUsers, setAllUsers] = useState<RegisteredUser[]>([]);
   const [jid, setJid] = useState(() => {
     const stored = sessionStorage.getItem('xmpp_jid');
     return stored || '';
@@ -99,11 +105,12 @@ export default function Chat() {
 
       const from = bareJid.split('@')[0];
       const type = presence.type;
+      const isOnline = !(type === 'unavailable' || type === 'unsubscribed');
 
       setOnlineUsers((prev) => {
         const existing = prev.find((u) => u.jid === from);
 
-        if (type === 'unavailable' || type === 'unsubscribed') {
+        if (!isOnline) {
           if (existing) {
             return prev.map((u) => (u.jid === from ? { ...u, online: false } : u));
           }
@@ -116,6 +123,10 @@ export default function Chat() {
 
         return [...prev, { jid: from, name: from, status: 'Online', online: true }];
       });
+
+      setAllUsers((prev) =>
+        prev.map((u) => (u.username === from ? { ...u, online: isOnline } : u))
+      );
     };
 
     const handleRoster = (roster: any) => {
@@ -164,11 +175,12 @@ export default function Chat() {
 
         const from = bareJid.split('@')[0];
         const type = typeMatch?.[1];
+        const isOnline = !(type === 'unavailable');
 
         setOnlineUsers((prev) => {
           const existing = prev.find((u) => u.jid === from);
 
-          if (type === 'unavailable') {
+          if (!isOnline) {
             if (existing) {
               return prev.map((u) => (u.jid === from ? { ...u, online: false } : u));
             }
@@ -181,6 +193,10 @@ export default function Chat() {
 
           return [...prev, { jid: from, name: from, status: 'Online', online: true }];
         });
+
+        setAllUsers((prev) =>
+          prev.map((u) => (u.username === from ? { ...u, online: isOnline } : u))
+        );
       }
 
       const msgRegex = /<message\b[^>]*>/g;
@@ -242,6 +258,19 @@ export default function Chat() {
       client.disconnect();
     };
   }, [user, password]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/users');
+        const data = await res.json();
+        setAllUsers(data.map((u: any) => ({ username: u.username, online: false })));
+      } catch (err) {
+        console.error('Failed to fetch users:', err);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -385,13 +414,9 @@ export default function Chat() {
                 <span className="material-symbols-outlined text-primary">forum</span>
               </div>
               <div className="flex flex-col gap-1 flex-1">
-                <input
-                  type="text"
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
-                  placeholder="Recipient username (e.g. user2)"
-                  className="bg-transparent border-none outline-none focus:ring-0 text-xl font-bold leading-tight text-on-surface placeholder:text-outline-variant/50 p-0 m-0 w-full max-w-sm"
-                />
+                <p className="text-xl font-bold leading-tight text-on-surface">
+                  {recipient ? recipient : 'Select a user to message'}
+                </p>
                 <p className="text-xs text-on-surface-variant">Send a direct message</p>
               </div>
             </div>
@@ -514,47 +539,51 @@ export default function Chat() {
           </footer>
         </section>
 
-        {/* Dynamic Context Island (Right) - Online Users */}
+        {/* Dynamic Context Island (Right) - All Users */}
         <aside className="hidden lg:flex flex-col w-80 h-full gap-4">
           <div className="glass-panel p-6 rounded-xl flex-1 flex flex-col shadow-xl border border-outline-variant/5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-outline-variant">
-                Online Users
+                Users
               </h3>
               <span className="text-[10px] text-tertiary px-2 py-1 bg-tertiary/10 rounded-full">
-                {onlineUsers.filter((u) => u.online).length} Online
+                {allUsers.filter((u) => u.online).length} Online
               </span>
             </div>
             <div className="flex flex-col gap-2 overflow-y-auto">
-              {onlineUsers.length === 0 ? (
-                <p className="text-sm text-outline-variant opacity-60">No users online yet</p>
+              {allUsers.length === 0 ? (
+                <p className="text-sm text-outline-variant opacity-60">No users found</p>
               ) : (
-                onlineUsers.map((u) => (
-                  <button
-                    key={u.jid}
-                    onClick={() => setRecipient(u.jid)}
-                    className={`flex items-center gap-3 group cursor-pointer p-2 rounded-lg transition-all border-none outline-none text-left w-full ${recipient === u.jid ? 'bg-primary/10' : 'hover:bg-surface-container-highest'}`}
-                  >
-                    <div className="relative">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${u.online ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-outline-variant'}`}
-                      >
-                        {u.name[0].toUpperCase()}
+                allUsers
+                  .filter((u) => u.username !== user?.email?.split('@')[0])
+                  .map((u) => (
+                    <button
+                      key={u.username}
+                      onClick={() => setRecipient(u.username)}
+                      className={`flex items-center gap-3 group cursor-pointer p-2 rounded-lg transition-all border-none outline-none text-left w-full ${recipient === u.username ? 'bg-primary/10' : 'hover:bg-surface-container-highest'}`}
+                    >
+                      <div className="relative">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${u.online ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-outline-variant'}`}
+                        >
+                          {u.username[0].toUpperCase()}
+                        </div>
+                        {u.online && (
+                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary rounded-full border-2 border-surface shadow-[0_0_8px_#ffd16f]"></div>
+                        )}
                       </div>
-                      {u.online && (
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary rounded-full border-2 border-surface shadow-[0_0_8px_#ffd16f]"></div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p
-                        className={`text-sm font-bold transition-colors ${recipient === u.jid ? 'text-primary' : 'group-hover:text-primary'}`}
-                      >
-                        {u.name}
-                      </p>
-                      <p className="text-[10px] text-outline-variant truncate">{u.status}</p>
-                    </div>
-                  </button>
-                ))
+                      <div className="flex-1">
+                        <p
+                          className={`text-sm font-bold transition-colors ${recipient === u.username ? 'text-primary' : 'group-hover:text-primary'}`}
+                        >
+                          {u.username}
+                        </p>
+                        <p className="text-[10px] text-outline-variant truncate">
+                          {u.online ? 'Online' : 'Offline'}
+                        </p>
+                      </div>
+                    </button>
+                  ))
               )}
             </div>
           </div>
