@@ -6,7 +6,7 @@ function App() {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 text-black">
       <h1 className="text-2xl font-bold text-center p-8">XMPP Chat</h1>
       {user ? <Chat /> : <Auth />}
     </div>
