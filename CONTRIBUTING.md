@@ -7,7 +7,7 @@ We use **GitHub Flow**:
 1. Create a feature branch from `main`
 2. Make changes and commit
 3. Open a Pull Request
-4. After review, **squash and merge** to `main`
+4. After review, **merge** to `main`
 
 ### Feature Branches
 
@@ -30,15 +30,6 @@ feature/xmpp-server-setup
 bugfix/message-delivery
 hotfix/security-patch
 ```
-
-### Squash Merging
-
-When merging PRs, use **squash merge** to:
-- Keep `main` history clean
-- Combine multiple commits into one meaningful commit
-- Write a good PR title that becomes the commit message
-
-GitHub PR merge button → "Squash and merge"
 
 ### PR Title Format
 
