@@ -246,7 +246,8 @@ export default function Chat() {
     fetchUsers();
     fetchFriendships();
 
-    const channel = supabase.channel('friendships_changes')
+    const channel = supabase
+      .channel('friendships_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => {
         fetchFriendships();
       })
@@ -270,7 +271,7 @@ export default function Chat() {
     if (error) {
       console.error('Failed to send friend request:', error);
     } else if (data) {
-      setFriendships(prev => [...prev, data]);
+      setFriendships((prev) => [...prev, data]);
     }
   };
 
@@ -283,20 +284,19 @@ export default function Chat() {
     if (error) {
       console.error('Failed to accept friend request:', error);
     } else {
-      setFriendships(prev => prev.map(f => f.id === friendshipId ? { ...f, status: 'accepted' } : f));
+      setFriendships((prev) =>
+        prev.map((f) => (f.id === friendshipId ? { ...f, status: 'accepted' } : f))
+      );
     }
   };
 
   const removeFriendship = async (friendshipId: string) => {
-    const { error } = await supabase
-      .from('friendships')
-      .delete()
-      .eq('id', friendshipId);
+    const { error } = await supabase.from('friendships').delete().eq('id', friendshipId);
 
     if (error) {
       console.error('Failed to remove friend:', error);
     } else {
-      setFriendships(prev => prev.filter(f => f.id !== friendshipId));
+      setFriendships((prev) => prev.filter((f) => f.id !== friendshipId));
       if (contextMenu && recipient === contextMenu.username) {
         setRecipient('');
       }
@@ -581,7 +581,7 @@ export default function Chat() {
                 {allUsers.filter((u) => u.online).length} Online
               </span>
             </div>
-            
+
             <div className="relative mb-4">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-outline-variant">
                 search
@@ -601,17 +601,26 @@ export default function Chat() {
 
                 const usersWithRel = allUsers
                   .filter((u) => u.username !== myUsername)
-                  .map(u => {
-                    const relationship = friendships.find(f => 
-                      (f.requester === myUsername && f.receiver === u.username) || 
-                      (f.receiver === myUsername && f.requester === u.username)
+                  .map((u) => {
+                    const relationship = friendships.find(
+                      (f) =>
+                        (f.requester === myUsername && f.receiver === u.username) ||
+                        (f.receiver === myUsername && f.requester === u.username)
                     );
                     return { ...u, relationship };
                   });
 
-                const displayedUsers = searchQuery.trim() !== ''
-                  ? usersWithRel.filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase()))
-                  : usersWithRel.filter(u => u.relationship?.status === 'accepted' || (u.relationship?.status === 'pending' && u.relationship.receiver === myUsername));
+                const displayedUsers =
+                  searchQuery.trim() !== ''
+                    ? usersWithRel.filter((u) =>
+                        u.username.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                    : usersWithRel.filter(
+                        (u) =>
+                          u.relationship?.status === 'accepted' ||
+                          (u.relationship?.status === 'pending' &&
+                            u.relationship.receiver === myUsername)
+                      );
 
                 if (displayedUsers.length === 0) {
                   return <p className="text-sm text-outline-variant opacity-60">No users found</p>;
@@ -633,7 +642,7 @@ export default function Chat() {
                           x: e.clientX,
                           y: e.clientY,
                           username: u.username,
-                          friendshipId: u.relationship.id
+                          friendshipId: u.relationship.id,
                         });
                       }
                     }}
@@ -661,7 +670,7 @@ export default function Chat() {
                         {u.online ? 'Online' : 'Offline'}
                       </p>
                     </div>
-                    
+
                     {/* Relationship Actions */}
                     <div className="shrink-0 flex items-center">
                       {!u.relationship ? (

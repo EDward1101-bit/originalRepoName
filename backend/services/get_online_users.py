@@ -1,6 +1,5 @@
-import asyncio
 from slixmpp import ClientXMPP
-from slixmpp.features.xep_0030 import service_discovery
+
 
 class OnlineUserClient(ClientXMPP):
     def __init__(self, jid, password, server):
@@ -8,12 +7,12 @@ class OnlineUserClient(ClientXMPP):
         self.online_users = []
         self.server = server
         self.add_event_handler("session_start", self.session_start)
-        
+
     async def session_start(self, event):
         # Query the server for online users
         # This uses service discovery to find users
         self.disconnect()
-        
+
     def handle_presence(self, presence):
         # This would need to be implemented to track presences
         pass
