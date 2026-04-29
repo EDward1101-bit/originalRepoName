@@ -1,6 +1,7 @@
 import Auth from './Auth';
 import Chat from './Chat';
 import { useAuth } from './AuthContext';
+import FileUpload from './components/FileUpload';
 
 function App() {
   const { user } = useAuth();
