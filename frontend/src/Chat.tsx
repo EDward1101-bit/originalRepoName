@@ -5,10 +5,12 @@ import type { ReceivedMessage } from 'stanza/protocol';
 import { supabase } from './supabase';
 
 interface ChatMessage {
+  id: string;
   from: string;
   body: string;
   type: 'sent' | 'received';
   time: Date;
+  otherParty: string;
 }
 
 interface RegisteredUser {
@@ -97,7 +99,10 @@ export default function Chat() {
       if (from === myUsername) return;
       if (seenIds.current.has(msgId)) return;
       seenIds.current.add(msgId);
-      setMessages((prev) => [...prev, { from, body, type: 'received', time: new Date() }]);
+      setMessages((prev) => [
+        ...prev,
+        { id: msgId, from, body, type: 'received', time: new Date(), otherParty: from },
+      ]);
     };
 
     const handleConnected = () => {
@@ -258,6 +263,36 @@ export default function Chat() {
     };
   }, [user]);
 
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const myUsername = user?.email?.split('@')[0];
+      if (!myUsername) return;
+
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`sender.eq.${myUsername},receiver.eq.${myUsername}`)
+        .order('created_at', { ascending: true });
+
+      if (!error && data) {
+        const loaded: ChatMessage[] = data.map((m: any) => {
+          const isSent = m.sender === myUsername;
+          return {
+            id: m.id,
+            from: isSent ? 'You' : m.sender,
+            body: m.body,
+            type: isSent ? 'sent' : 'received',
+            time: new Date(m.created_at),
+            otherParty: isSent ? m.receiver : m.sender,
+          } as ChatMessage;
+        });
+        loaded.forEach((m) => seenIds.current.add(m.id));
+        setMessages(loaded);
+      }
+    };
+    fetchMessages();
+  }, [user]);
+
   const sendFriendRequest = async (targetUsername: string) => {
     const myUsername = user?.email?.split('@')[0];
     if (!myUsername) return;
@@ -307,10 +342,13 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim() || !clientRef.current || !recipient) return;
 
-    let finalRecipient = recipient.trim();
+    const myUsername = user?.email?.split('@')[0] || '';
+    const recipientUsername = recipient.trim();
+
+    let finalRecipient = recipientUsername;
     if (!finalRecipient.includes('@')) {
       finalRecipient = `${finalRecipient}@localhost`;
     }
@@ -323,8 +361,27 @@ export default function Chat() {
 
     console.log('Sending to:', finalRecipient);
     clientRef.current.sendMessage(msg);
-    setMessages((prev) => [...prev, { from: 'You', body: input, type: 'sent', time: new Date() }]);
+
+    const msgId = crypto.randomUUID();
+    const now = new Date();
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: msgId,
+        from: 'You',
+        body: input,
+        type: 'sent',
+        time: now,
+        otherParty: recipientUsername,
+      },
+    ]);
     setInput('');
+
+    const { error } = await supabase
+      .from('messages')
+      .insert({ sender: myUsername, receiver: recipientUsername, body: input });
+
+    if (error) console.error('Failed to persist message:', error);
   };
 
   if (!user) return null;
@@ -473,65 +530,76 @@ export default function Chat() {
 
           {/* Message Feed */}
           <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-10">
-            {messages.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-outline-variant opacity-60">
-                <span className="material-symbols-outlined text-4xl mb-2">speaker_notes_off</span>
-                <p>No messages yet. Start a conversation!</p>
-              </div>
-            ) : (
-              <>
-                <div className="relative flex justify-center mt-4">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-outline-variant/10"></div>
-                  </div>
-                  <span className="relative px-4 bg-[#131319] text-[10px] uppercase tracking-widest text-outline-variant font-bold">
-                    Today
-                  </span>
+            {(() => {
+              const filteredMessages = recipient
+                ? messages.filter((m) => m.otherParty === recipient)
+                : [];
+              return filteredMessages.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-outline-variant opacity-60">
+                  <span className="material-symbols-outlined text-4xl mb-2">speaker_notes_off</span>
+                  <p>
+                    {recipient
+                      ? 'No messages yet. Start a conversation!'
+                      : 'Select a user to message'}
+                  </p>
                 </div>
-
-                {messages.map((msg, idx) => {
-                  const isSent = msg.type === 'sent';
-                  return (
-                    <div
-                      key={idx}
-                      className={`flex gap-6 group ${isSent ? 'flex-row-reverse' : ''}`}
-                    >
-                      <div
-                        className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center shadow-lg font-bold text-lg ${isSent ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-secondary'}`}
-                      >
-                        {isSent ? 'Me' : msg.from[0].toUpperCase()}
-                      </div>
-                      <div className={`flex flex-col gap-1 max-w-2xl ${isSent ? 'items-end' : ''}`}>
-                        <div
-                          className={`flex items-center gap-3 ${isSent ? 'flex-row-reverse' : ''}`}
-                        >
-                          <span
-                            className={`font-bold ${isSent ? 'text-primary' : 'text-secondary'}`}
-                          >
-                            {isSent ? 'You' : msg.from}
-                          </span>
-                          <span className="text-[10px] text-outline-variant">
-                            {msg.time.toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </span>
-                        </div>
-                        <div
-                          className={`p-5 text-on-surface leading-relaxed shadow-sm ${
-                            isSent
-                              ? 'bg-primary/20 rounded-l-xl rounded-br-xl border-r-2 border-primary'
-                              : 'bg-surface-variant/40 rounded-r-xl rounded-bl-xl border-l-2 border-primary/20'
-                          }`}
-                        >
-                          {msg.body}
-                        </div>
-                      </div>
+              ) : (
+                <>
+                  <div className="relative flex justify-center mt-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-outline-variant/10"></div>
                     </div>
-                  );
-                })}
-              </>
-            )}
+                    <span className="relative px-4 bg-[#131319] text-[10px] uppercase tracking-widest text-outline-variant font-bold">
+                      Today
+                    </span>
+                  </div>
+
+                  {filteredMessages.map((msg, idx) => {
+                    const isSent = msg.type === 'sent';
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex gap-6 group ${isSent ? 'flex-row-reverse' : ''}`}
+                      >
+                        <div
+                          className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center shadow-lg font-bold text-lg ${isSent ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-secondary'}`}
+                        >
+                          {isSent ? 'Me' : msg.from[0].toUpperCase()}
+                        </div>
+                        <div
+                          className={`flex flex-col gap-1 max-w-2xl ${isSent ? 'items-end' : ''}`}
+                        >
+                          <div
+                            className={`flex items-center gap-3 ${isSent ? 'flex-row-reverse' : ''}`}
+                          >
+                            <span
+                              className={`font-bold ${isSent ? 'text-primary' : 'text-secondary'}`}
+                            >
+                              {isSent ? 'You' : msg.from}
+                            </span>
+                            <span className="text-[10px] text-outline-variant">
+                              {msg.time.toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                          <div
+                            className={`p-5 text-on-surface leading-relaxed shadow-sm ${
+                              isSent
+                                ? 'bg-primary/20 rounded-l-xl rounded-br-xl border-r-2 border-primary'
+                                : 'bg-surface-variant/40 rounded-r-xl rounded-bl-xl border-l-2 border-primary/20'
+                            }`}
+                          >
+                            {msg.body}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              );
+            })()}
             <div ref={messagesEndRef} />
           </div>
 
