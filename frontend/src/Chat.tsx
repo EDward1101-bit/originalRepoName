@@ -32,6 +32,13 @@ export default function Chat() {
   const [allUsers, setAllUsers] = useState<RegisteredUser[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [friendships, setFriendships] = useState<Friendship[]>([]);
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    username: string;
+    friendshipId: string;
+  } | null>(null);
   const [jid, setJid] = useState(() => {
     const stored = sessionStorage.getItem('xmpp_jid');
     return stored || '';
@@ -45,6 +52,14 @@ export default function Chat() {
     sessionStorage.setItem('xmpp_jid', jid);
     jidRef.current = jid;
   }, [jid]);
+
+  useEffect(() => {
+    const handleClick = () => {
+      if (contextMenu) setContextMenu(null);
+    };
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, [contextMenu]);
 
   useEffect(() => {
     if (!user || !password) return;
@@ -246,11 +261,17 @@ export default function Chat() {
     const myUsername = user?.email?.split('@')[0];
     if (!myUsername) return;
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('friendships')
-      .insert({ requester: myUsername, receiver: targetUsername, status: 'pending' });
+      .insert({ requester: myUsername, receiver: targetUsername, status: 'pending' })
+      .select()
+      .single();
 
-    if (error) console.error('Failed to send friend request:', error);
+    if (error) {
+      console.error('Failed to send friend request:', error);
+    } else if (data) {
+      setFriendships(prev => [...prev, data]);
+    }
   };
 
   const acceptFriendRequest = async (friendshipId: string) => {
@@ -259,7 +280,27 @@ export default function Chat() {
       .update({ status: 'accepted' })
       .eq('id', friendshipId);
 
-    if (error) console.error('Failed to accept friend request:', error);
+    if (error) {
+      console.error('Failed to accept friend request:', error);
+    } else {
+      setFriendships(prev => prev.map(f => f.id === friendshipId ? { ...f, status: 'accepted' } : f));
+    }
+  };
+
+  const removeFriendship = async (friendshipId: string) => {
+    const { error } = await supabase
+      .from('friendships')
+      .delete()
+      .eq('id', friendshipId);
+
+    if (error) {
+      console.error('Failed to remove friend:', error);
+    } else {
+      setFriendships(prev => prev.filter(f => f.id !== friendshipId));
+      if (contextMenu && recipient === contextMenu.username) {
+        setRecipient('');
+      }
+    }
   };
 
   useEffect(() => {
@@ -584,6 +625,18 @@ export default function Chat() {
                         setRecipient(u.username);
                       }
                     }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      if (u.relationship && u.relationship.status === 'accepted') {
+                        setContextMenu({
+                          visible: true,
+                          x: e.clientX,
+                          y: e.clientY,
+                          username: u.username,
+                          friendshipId: u.relationship.id
+                        });
+                      }
+                    }}
                     role="button"
                     tabIndex={0}
                     className={`flex items-center gap-3 group cursor-pointer p-2 rounded-lg transition-all border-none outline-none text-left w-full ${recipient === u.username ? 'bg-primary/10' : 'hover:bg-surface-container-highest'} ${u.relationship?.status !== 'accepted' ? 'opacity-80' : ''}`}
@@ -644,6 +697,25 @@ export default function Chat() {
           </div>
         </aside>
       </main>
+
+      {/* Context Menu */}
+      {contextMenu && contextMenu.visible && (
+        <div
+          className="fixed z-50 bg-surface-container-high border border-outline-variant/20 shadow-2xl rounded-lg py-1 min-w-[150px] overflow-hidden"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => {
+              removeFriendship(contextMenu.friendshipId);
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors cursor-pointer border-none outline-none"
+          >
+            Remove Friend
+          </button>
+        </div>
+      )}
     </div>
   );
 }
