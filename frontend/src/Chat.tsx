@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { Client } from 'stanza';
 import type { ReceivedMessage } from 'stanza/protocol';
+import { supabase } from './supabase';
 
 interface ChatMessage {
   from: string;
@@ -15,6 +16,13 @@ interface RegisteredUser {
   online: boolean;
 }
 
+interface Friendship {
+  id: string;
+  requester: string;
+  receiver: string;
+  status: 'pending' | 'accepted';
+}
+
 export default function Chat() {
   const { user, password, signOut } = useAuth();
   const [status, setStatus] = useState<string>('Connecting...');
@@ -22,6 +30,8 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const [recipient, setRecipient] = useState('');
   const [allUsers, setAllUsers] = useState<RegisteredUser[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [friendships, setFriendships] = useState<Friendship[]>([]);
   const [jid, setJid] = useState(() => {
     const stored = sessionStorage.getItem('xmpp_jid');
     return stored || '';
@@ -62,7 +72,6 @@ export default function Chat() {
 
     const handleBeforeUnload = () => {
       if (clientRef.current) {
-        clientRef.current.sendPresence({ type: 'unavailable' });
         clientRef.current.disconnect();
       }
     };
@@ -190,7 +199,6 @@ export default function Chat() {
       client.off('presence', handlePresence);
       client.off('raw:incoming', handleRawIncoming);
       client.off('raw:outgoing', handleRawOutgoing);
-      client.sendPresence({ type: 'unavailable' });
       client.disconnect();
     };
   }, [user, password]);
@@ -205,8 +213,54 @@ export default function Chat() {
         console.error('Failed to fetch users:', err);
       }
     };
+
+    const fetchFriendships = async () => {
+      const myUsername = user?.email?.split('@')[0];
+      if (!myUsername) return;
+
+      const { data, error } = await supabase
+        .from('friendships')
+        .select('*')
+        .or(`requester.eq.${myUsername},receiver.eq.${myUsername}`);
+
+      if (!error && data) {
+        setFriendships(data);
+      }
+    };
+
     fetchUsers();
-  }, []);
+    fetchFriendships();
+
+    const channel = supabase.channel('friendships_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => {
+        fetchFriendships();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const sendFriendRequest = async (targetUsername: string) => {
+    const myUsername = user?.email?.split('@')[0];
+    if (!myUsername) return;
+
+    const { error } = await supabase
+      .from('friendships')
+      .insert({ requester: myUsername, receiver: targetUsername, status: 'pending' });
+
+    if (error) console.error('Failed to send friend request:', error);
+  };
+
+  const acceptFriendRequest = async (friendshipId: string) => {
+    const { error } = await supabase
+      .from('friendships')
+      .update({ status: 'accepted' })
+      .eq('id', friendshipId);
+
+    if (error) console.error('Failed to accept friend request:', error);
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -486,41 +540,106 @@ export default function Chat() {
                 {allUsers.filter((u) => u.online).length} Online
               </span>
             </div>
+            
+            <div className="relative mb-4">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-sm text-outline-variant">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Find users..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-surface-container-high border-none outline-none text-on-surface placeholder:text-outline-variant text-sm py-2 pl-9 pr-4 rounded-full"
+              />
+            </div>
+
             <div className="flex flex-col gap-2 overflow-y-auto">
-              {allUsers.length === 0 ? (
-                <p className="text-sm text-outline-variant opacity-60">No users found</p>
-              ) : (
-                allUsers
-                  .filter((u) => u.username !== user?.email?.split('@')[0])
-                  .map((u) => (
-                    <button
-                      key={u.username}
-                      onClick={() => setRecipient(u.username)}
-                      className={`flex items-center gap-3 group cursor-pointer p-2 rounded-lg transition-all border-none outline-none text-left w-full ${recipient === u.username ? 'bg-primary/10' : 'hover:bg-surface-container-highest'}`}
-                    >
-                      <div className="relative">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${u.online ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-outline-variant'}`}
-                        >
-                          {u.username[0].toUpperCase()}
-                        </div>
-                        {u.online && (
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary rounded-full border-2 border-surface shadow-[0_0_8px_#ffd16f]"></div>
-                        )}
+              {(() => {
+                const myUsername = user?.email?.split('@')[0] || '';
+
+                const usersWithRel = allUsers
+                  .filter((u) => u.username !== myUsername)
+                  .map(u => {
+                    const relationship = friendships.find(f => 
+                      (f.requester === myUsername && f.receiver === u.username) || 
+                      (f.receiver === myUsername && f.requester === u.username)
+                    );
+                    return { ...u, relationship };
+                  });
+
+                const displayedUsers = searchQuery.trim() !== ''
+                  ? usersWithRel.filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase()))
+                  : usersWithRel.filter(u => u.relationship?.status === 'accepted' || (u.relationship?.status === 'pending' && u.relationship.receiver === myUsername));
+
+                if (displayedUsers.length === 0) {
+                  return <p className="text-sm text-outline-variant opacity-60">No users found</p>;
+                }
+
+                return displayedUsers.map((u) => (
+                  <div
+                    key={u.username}
+                    onClick={() => {
+                      if (u.relationship?.status === 'accepted') {
+                        setRecipient(u.username);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    className={`flex items-center gap-3 group cursor-pointer p-2 rounded-lg transition-all border-none outline-none text-left w-full ${recipient === u.username ? 'bg-primary/10' : 'hover:bg-surface-container-highest'} ${u.relationship?.status !== 'accepted' ? 'opacity-80' : ''}`}
+                  >
+                    <div className="relative">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${u.online ? 'bg-primary/20 text-primary' : 'bg-surface-container-high text-outline-variant'}`}
+                      >
+                        {u.username[0].toUpperCase()}
                       </div>
-                      <div className="flex-1">
-                        <p
-                          className={`text-sm font-bold transition-colors ${recipient === u.username ? 'text-primary' : 'group-hover:text-primary'}`}
+                      {u.online && (
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-tertiary rounded-full border-2 border-surface shadow-[0_0_8px_#ffd16f]"></div>
+                      )}
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <p
+                        className={`text-sm font-bold transition-colors truncate ${recipient === u.username ? 'text-primary' : 'group-hover:text-primary'}`}
+                      >
+                        {u.username}
+                      </p>
+                      <p className="text-[10px] text-outline-variant truncate">
+                        {u.online ? 'Online' : 'Offline'}
+                      </p>
+                    </div>
+                    
+                    {/* Relationship Actions */}
+                    <div className="shrink-0 flex items-center">
+                      {!u.relationship ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            sendFriendRequest(u.username);
+                          }}
+                          className="px-3 py-1 bg-primary/20 text-primary text-[10px] font-bold rounded-full hover:bg-primary hover:text-on-primary transition-colors cursor-pointer"
                         >
-                          {u.username}
-                        </p>
-                        <p className="text-[10px] text-outline-variant truncate">
-                          {u.online ? 'Online' : 'Offline'}
-                        </p>
-                      </div>
-                    </button>
-                  ))
-              )}
+                          Add
+                        </button>
+                      ) : u.relationship.status === 'pending' ? (
+                        u.relationship.receiver === myUsername ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              acceptFriendRequest(u.relationship!.id);
+                            }}
+                            className="px-3 py-1 bg-tertiary/20 text-tertiary text-[10px] font-bold rounded-full hover:bg-tertiary hover:text-on-tertiary transition-colors cursor-pointer"
+                          >
+                            Accept
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-outline-variant px-2">Pending</span>
+                        )
+                      ) : null}
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </aside>
