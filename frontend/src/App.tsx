@@ -1,16 +1,33 @@
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Auth from './Auth';
 import Chat from './Chat';
+import DMsPage from './DMsPage';
+import Layout from './Layout';
 import { useAuth } from './AuthContext';
+import { ChatProvider } from './ChatContext';
+
+function AuthenticatedRoutes() {
+  return (
+    <ChatProvider>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/dms" element={<DMsPage />} />
+          <Route path="/dms/:username" element={<Chat />} />
+          <Route path="*" element={<Navigate to="/dms" replace />} />
+        </Route>
+      </Routes>
+    </ChatProvider>
+  );
+}
 
 function App() {
   const { user } = useAuth();
 
-  return (
-    <div className="min-h-screen bg-gray-100 text-black">
-      <h1 className="text-2xl font-bold text-center p-8">XMPP Chat</h1>
-      {user ? <Chat /> : <Auth />}
-    </div>
-  );
+  if (!user) {
+    return <Auth />;
+  }
+
+  return <AuthenticatedRoutes />;
 }
 
 export default App;
