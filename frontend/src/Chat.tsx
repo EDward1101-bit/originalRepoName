@@ -10,13 +10,6 @@ interface ChatMessage {
   time: Date;
 }
 
-interface OnlineUser {
-  jid: string;
-  name: string;
-  status: string;
-  online: boolean;
-}
-
 interface RegisteredUser {
   username: string;
   online: boolean;
@@ -28,7 +21,6 @@ export default function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [recipient, setRecipient] = useState('');
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [allUsers, setAllUsers] = useState<RegisteredUser[]>([]);
   const [jid, setJid] = useState(() => {
     const stored = sessionStorage.getItem('xmpp_jid');
@@ -68,6 +60,14 @@ export default function Chat() {
 
     clientRef.current = client;
 
+    const handleBeforeUnload = () => {
+      if (clientRef.current) {
+        clientRef.current.sendPresence({ type: 'unavailable' });
+        clientRef.current.disconnect();
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     const addMessage = (from: string, body: string, msgId: string) => {
       const myUsername = jidRef.current.split('@')[0];
       if (from === myUsername) return;
@@ -105,32 +105,13 @@ export default function Chat() {
 
       const from = bareJid.split('@')[0];
       const type = presence.type;
-      const isOnline = !(type === 'unavailable' || type === 'unsubscribed');
 
-      setOnlineUsers((prev) => {
-        const existing = prev.find((u) => u.jid === from);
-
-        if (!isOnline) {
-          if (existing) {
-            return prev.map((u) => (u.jid === from ? { ...u, online: false } : u));
-          }
-          return prev;
-        }
-
-        if (existing) {
-          return prev.map((u) => (u.jid === from ? { ...u, online: true } : u));
-        }
-
-        return [...prev, { jid: from, name: from, status: 'Online', online: true }];
-      });
+      // Update allUsers (displayed in UI) based on presence
+      const isOnline = !type || ['available', 'chat', 'dnd', 'away', 'xa'].includes(type);
 
       setAllUsers((prev) =>
         prev.map((u) => (u.username === from ? { ...u, online: isOnline } : u))
       );
-    };
-
-    const handleRoster = (roster: any) => {
-      console.log('Roster received:', roster);
     };
 
     // Primary path: stanza.js 'message' event
@@ -152,51 +133,6 @@ export default function Chat() {
       if (str.includes('urn:ietf:params:xml:ns:xmpp-bind') && str.includes("type='result'")) {
         console.log('Bind complete — sending presence immediately');
         client.sendPresence({});
-      }
-
-      const presenceRegex = /<presence[^>]*>/g;
-      let presenceMatch;
-      while ((presenceMatch = presenceRegex.exec(str)) !== null) {
-        const tagStart = presenceMatch.index;
-        const closeIdx = str.indexOf('</presence>', tagStart);
-        if (closeIdx === -1) continue;
-
-        const presenceXml = str.slice(tagStart, closeIdx + '</presence>'.length);
-        const fromMatch = presenceXml.match(/\bfrom="([^"]+)"/);
-        const typeMatch = presenceXml.match(/\btype="([^"]+)"/);
-
-        if (!fromMatch) continue;
-
-        const fromFull = fromMatch[1];
-        const bareJid = fromFull.split('/')[0];
-        const myBareJid = jidRef.current.split('/')[0];
-
-        if (bareJid === myBareJid) continue;
-
-        const from = bareJid.split('@')[0];
-        const type = typeMatch?.[1];
-        const isOnline = !(type === 'unavailable');
-
-        setOnlineUsers((prev) => {
-          const existing = prev.find((u) => u.jid === from);
-
-          if (!isOnline) {
-            if (existing) {
-              return prev.map((u) => (u.jid === from ? { ...u, online: false } : u));
-            }
-            return prev;
-          }
-
-          if (existing) {
-            return prev.map((u) => (u.jid === from ? { ...u, online: true } : u));
-          }
-
-          return [...prev, { jid: from, name: from, status: 'Online', online: true }];
-        });
-
-        setAllUsers((prev) =>
-          prev.map((u) => (u.username === from ? { ...u, online: isOnline } : u))
-        );
       }
 
       const msgRegex = /<message\b[^>]*>/g;
@@ -236,7 +172,6 @@ export default function Chat() {
     client.on('error', handleError);
     client.on('message', handleMessage);
     client.on('presence', handlePresence);
-    client.on('roster:push', handleRoster);
     client.on('raw:incoming', handleRawIncoming);
     client.on('raw:outgoing', handleRawOutgoing);
 
@@ -246,15 +181,16 @@ export default function Chat() {
     });
 
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       client.off('connected', handleConnected);
       client.off('session:started', handleSessionStarted);
       client.off('disconnected', handleDisconnected);
       client.off('error', handleError);
       client.off('message', handleMessage);
       client.off('presence', handlePresence);
-      client.off('roster:push', handleRoster);
       client.off('raw:incoming', handleRawIncoming);
       client.off('raw:outgoing', handleRawOutgoing);
+      client.sendPresence({ type: 'unavailable' });
       client.disconnect();
     };
   }, [user, password]);
