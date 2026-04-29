@@ -65,9 +65,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || !password) return;
 
-    const storedJid = sessionStorage.getItem('xmpp_jid');
     const username = user.email?.split('@')[0] || '';
-    const fullJid = storedJid || `${username}@localhost`;
+    const fullJid = `${username}@localhost`;
     jidRef.current = fullJid;
     setJid(fullJid);
     setStatus('Connecting...');
@@ -140,6 +139,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       const from = bareJid.split('@')[0];
       const type = presence.type;
+
+      if (type === 'subscribe') {
+        client.sendPresence({ type: 'subscribed', to: fromFull });
+        client.sendPresence({ type: 'subscribe', to: fromFull });
+        return;
+      }
+
+      if (
+        type === 'subscribed' ||
+        type === 'unsubscribed' ||
+        type === 'unsubscribe' ||
+        type === 'error' ||
+        type === 'probe'
+      ) {
+        return;
+      }
 
       const isOnline = !type || ['available', 'chat', 'dnd', 'away', 'xa'].includes(type);
 
@@ -285,6 +300,27 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
     fetchMessages();
   }, [user, myUsername]);
+
+  // ── Auto-subscribe and send directed presence to friends ──
+  useEffect(() => {
+    if (status === 'Connected' && clientRef.current && myUsername) {
+      friendships.forEach((f) => {
+        if (f.status === 'accepted') {
+          const friendUsername = f.requester === myUsername ? f.receiver : f.requester;
+          const friendJid = `${friendUsername}@localhost`;
+
+          // Subscribe to their presence in XMPP roster
+          clientRef.current?.sendPresence({ type: 'subscribe', to: friendJid });
+          // Auto-accept their subscription just in case
+          clientRef.current?.sendPresence({ type: 'subscribed', to: friendJid });
+
+          // Force a directed presence update to them immediately 
+          // so they know we're online even before the roster syncs
+          clientRef.current?.sendPresence({ to: friendJid });
+        }
+      });
+    }
+  }, [friendships, status, myUsername]);
 
   // ── Actions ──
   const sendMessage = async (recipient: string, body: string) => {

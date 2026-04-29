@@ -62,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
     setPassword(null);
     sessionStorage.removeItem('xmpp_password');
+    sessionStorage.removeItem('xmpp_jid');
   };
 
   return (
