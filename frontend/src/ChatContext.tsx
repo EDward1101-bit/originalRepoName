@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import * as stanza from 'stanza';
 import { Client } from 'stanza';
 import type { ReceivedMessage } from 'stanza/protocol';
 import { supabase } from './supabase';
@@ -75,7 +76,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const boshUrl = `${window.location.origin}/http-bind`;
 
-    const client = new Client({
+    const client = stanza.createClient({
       jid: fullJid,
       password: password,
       server: 'localhost',
@@ -83,7 +84,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         bosh: boshUrl,
       },
       useStreamManagement: false,
-    });
+    }) as unknown as Client;
 
     clientRef.current = client;
     setClientInstance(client);
