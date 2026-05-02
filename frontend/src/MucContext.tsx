@@ -248,31 +248,55 @@ export function MucProvider({ children }: { children: ReactNode }) {
   };
 
   const joinRoom = async (roomName: string) => {
-    if (!client || !myUsername) return;
+    console.log(`[MUC] Attempting to join room: ${roomName}, XMPP status: ${status}`);
+    if (!client) {
+      console.error('[MUC] Cannot join: client is null');
+      return;
+    }
+    if (!myUsername) {
+      console.error('[MUC] Cannot join: myUsername is empty');
+      return;
+    }
+    if (status !== 'Connected') {
+      console.error(`[MUC] Cannot join: XMPP not connected (status: ${status})`);
+      return;
+    }
     
     const roomJid = `${roomName}@conference.localhost`;
+    const fullJid = `${roomJid}/${myUsername}`;
     
-    // Join the MUC via XMPP (send presence)
-    (client as any).joinRoom(roomJid, myUsername);
-    
-    joinedRoomsRef.current.add(roomName);
-    setJoinedRooms(Array.from(joinedRoomsRef.current));
-    
-    await loadRoomHistory(roomName);
+    try {
+      // Join the MUC via XMPP (send presence)
+      client.sendPresence({ to: fullJid });
+      
+      console.log(`[MUC] Presence sent. Updating local state.`);
+      joinedRoomsRef.current.add(roomName);
+      setJoinedRooms(Array.from(joinedRoomsRef.current));
+      
+      console.log(`[MUC] Loading room history from Supabase...`);
+      await loadRoomHistory(roomName);
+      console.log(`[MUC] Join process complete for ${roomName}`);
+    } catch (err) {
+      console.error('[MUC] Error during joinRoom:', err);
+    }
   };
 
   const leaveRoom = (roomName: string) => {
+    console.log(`[MUC] Attempting to leave room: ${roomName}`);
     if (!client || !myUsername) return;
     
     const roomJid = `${roomName}@conference.localhost`;
-    (client as any).leaveRoom(roomJid, myUsername);
+    const fullJid = `${roomJid}/${myUsername}`;
+    
+    // Leave the MUC via XMPP
+    client.sendPresence({ to: fullJid, type: 'unavailable' });
     
     joinedRoomsRef.current.delete(roomName);
     setJoinedRooms(Array.from(joinedRoomsRef.current));
   };
 
   const sendRoomMessage = async (roomName: string, body: string) => {
-    if (!client || !myUsername || !body.trim()) return;
+    if (!client || !myUsername || !body.trim() || status !== 'Connected') return;
 
     const roomJid = `${roomName}@conference.localhost`;
     const room = availableRooms.find(r => r.name === roomName);

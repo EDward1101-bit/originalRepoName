@@ -7,7 +7,8 @@ export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
   const navigate = useNavigate();
   const { availableRooms, joinedRooms, joinRoom, leaveRoom, roomMessages, sendRoomMessage } = useMucContext();
-  const { myUsername } = useChatContext();
+  const { myUsername, status } = useChatContext();
+  const isConnected = status === 'Connected';
   
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -22,6 +23,7 @@ export default function RoomChat() {
   }, [messages]);
 
   const handleJoin = async () => {
+    console.log('[RoomChat] handleJoin clicked for roomName:', roomName);
     if (roomName) {
       await joinRoom(roomName);
     }
@@ -96,9 +98,11 @@ export default function RoomChat() {
           ) : (
             <button 
               onClick={handleJoin}
-              className="px-6 py-2 text-sm font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-xl transition-colors shadow-sm"
+              disabled={!isConnected}
+              title={!isConnected ? `XMPP ${status}` : 'Join this room'}
+              className="px-6 py-2 text-sm font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Join Room
+              {isConnected ? 'Join Room' : status}
             </button>
           )}
         </div>
@@ -190,9 +194,11 @@ export default function RoomChat() {
           </p>
           <button 
             onClick={handleJoin}
-            className="px-8 py-3 font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-xl transition-all shadow-md hover:shadow-lg"
+            disabled={!isConnected}
+            title={!isConnected ? `XMPP ${status}` : 'Join this room'}
+            className="px-8 py-3 font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Join #{room.name}
+            {isConnected ? `Join #${room.name}` : status}
           </button>
         </div>
       )}
