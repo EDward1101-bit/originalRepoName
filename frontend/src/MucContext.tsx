@@ -25,6 +25,7 @@ interface MucContextType {
   joinedRooms: string[]; // room names
   roomMessages: Record<string, RoomMessage[]>; // room name -> messages
   createRoom: (name: string, description?: string) => Promise<void>;
+  deleteRoom: (roomId: string, roomName: string) => Promise<void>;
   joinRoom: (roomName: string) => Promise<void>;
   leaveRoom: (roomName: string) => void;
   sendRoomMessage: (roomName: string, body: string) => Promise<void>;
@@ -182,24 +183,30 @@ export function MucProvider({ children }: { children: ReactNode }) {
 
     const handleMucPresence = (presence: any) => {
         const fromFull = presence.from || '';
-        const [roomJid, nickname] = fromFull.split('/');
-        
-        if (!roomJid.includes('@conference.localhost')) return;
+        const parts = fromFull.split('/');
+        const roomJid = parts[0];
+        const nickname = parts[1];
+
+        if (!roomJid || !roomJid.includes('@conference.localhost')) return;
+        if (!nickname) return; // ignore bare JID presences (e.g. error stanzas)
         
         const roomName = roomJid.split('@')[0];
+
+        // Only show system messages for rooms we are currently in
+        if (!joinedRoomsRef.current.has(roomName)) return;
         
-        // System message for joins/leaves
         const type = presence.type;
         let sysMsgBody = '';
         
         if (!type || type === 'available') {
-            // Joined
-            // Ignore our own initial join
-            if (nickname !== myUsername) {
-                sysMsgBody = `${nickname} has entered the room.`;
-            }
+            // Show join message for everyone, including ourselves
+            sysMsgBody = nickname === myUsername
+                ? `You joined #${roomName}.`
+                : `${nickname} has entered the room.`;
         } else if (type === 'unavailable') {
-            sysMsgBody = `${nickname} has left the room.`;
+            sysMsgBody = nickname === myUsername
+                ? `You left #${roomName}.`
+                : `${nickname} has left the room.`;
         }
 
         if (sysMsgBody) {
@@ -243,6 +250,31 @@ export function MucProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       console.error('Failed to create room in Supabase:', error);
+      throw error;
+    }
+  };
+
+  const deleteRoom = async (roomId: string, roomName: string) => {
+    if (!myUsername) return;
+
+    // Leave the XMPP room first if we are currently in it
+    if (joinedRoomsRef.current.has(roomName) && client && status === 'Connected') {
+      const roomJid = `${roomName}@conference.localhost`;
+      const fullJid = `${roomJid}/${myUsername}`;
+      client.sendPresence({ to: fullJid, type: 'unavailable' });
+      joinedRoomsRef.current.delete(roomName);
+      setJoinedRooms(Array.from(joinedRoomsRef.current));
+    }
+
+    // Delete from Supabase (cascades to room_messages)
+    const { error } = await supabase
+      .from('rooms')
+      .delete()
+      .eq('id', roomId)
+      .eq('created_by', myUsername); // extra safety: only own rooms
+
+    if (error) {
+      console.error('Failed to delete room:', error);
       throw error;
     }
   };
@@ -347,6 +379,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
         joinedRooms,
         roomMessages,
         createRoom,
+        deleteRoom,
         joinRoom,
         leaveRoom,
         sendRoomMessage

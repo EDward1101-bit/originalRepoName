@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import { useMucContext } from './MucContext';
+import { useChatContext } from './ChatContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function RoomsPage() {
-  const { availableRooms, createRoom } = useMucContext();
+  const { availableRooms, createRoom, deleteRoom } = useMucContext();
+  const { myUsername } = useChatContext();
   const navigate = useNavigate();
 
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDesc, setNewRoomDesc] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleCreateRoom = async (e: React.FormEvent) => {
@@ -28,6 +31,21 @@ export default function RoomsPage() {
     }
   };
 
+  const handleDeleteRoom = async (e: React.MouseEvent, roomId: string, roomName: string) => {
+    e.stopPropagation(); // don't navigate into the room
+    if (!confirm(`Delete room "#${roomName}"? This cannot be undone.`)) return;
+
+    setDeletingId(roomId);
+    setError(null);
+    try {
+      await deleteRoom(roomId, roomName);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete room.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-surface">
       {/* Header */}
@@ -42,6 +60,11 @@ export default function RoomsPage() {
         {/* Room List */}
         <div className="flex-1 overflow-y-auto p-6">
           <h2 className="text-lg font-semibold text-on-surface mb-4">Available Rooms</h2>
+          {error && (
+            <div className="mb-4 p-3 bg-error/10 text-error rounded-xl text-sm border border-error/20">
+              {error}
+            </div>
+          )}
           {availableRooms.length === 0 ? (
             <p className="text-on-surface-variant text-sm italic">
               No rooms available. Create one to get started!
@@ -54,19 +77,37 @@ export default function RoomsPage() {
                   className="bg-surface-container p-5 rounded-2xl border border-surface-variant hover:border-primary transition-colors cursor-pointer group flex flex-col"
                   onClick={() => navigate(`/rooms/${room.name}`)}
                 >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-                      #
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-shrink-0">
+                        #
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-on-surface group-hover:text-primary transition-colors">
+                          {room.name}
+                        </h3>
+                        <p className="text-xs text-on-surface-variant">
+                          Created by {room.created_by}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-on-surface group-hover:text-primary transition-colors">
-                        {room.name}
-                      </h3>
-                      <p className="text-xs text-on-surface-variant">
-                        Created by {room.created_by}
-                      </p>
-                    </div>
+
+                    {/* Delete button — only visible to the creator */}
+                    {room.created_by === myUsername && (
+                      <button
+                        onClick={(e) => handleDeleteRoom(e, room.id, room.name)}
+                        disabled={deletingId === room.id}
+                        title="Delete room"
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-error/10 hover:text-error transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                      >
+                        {deletingId === room.id
+                          ? <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                          : <span className="material-symbols-outlined text-[18px]">delete</span>
+                        }
+                      </button>
+                    )}
                   </div>
+
                   <p className="text-sm text-on-surface-variant flex-1 mb-4 mt-2">
                     {room.description || 'No description provided.'}
                   </p>
@@ -107,12 +148,6 @@ export default function RoomsPage() {
                 className="w-full bg-surface border border-outline rounded-xl px-4 py-2 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none h-24"
               />
             </div>
-
-            {error && (
-              <div className="p-3 bg-error/10 text-error rounded-xl text-sm border border-error/20">
-                {error}
-              </div>
-            )}
 
             <button
               type="submit"
