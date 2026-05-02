@@ -148,7 +148,7 @@ export default function RoomChat() {
                         isSentByMe 
                           ? 'bg-primary text-on-primary rounded-br-sm' 
                           : 'bg-surface-container-high text-on-surface rounded-bl-sm border border-surface-variant'
-                      } break-words whitespace-pre-wrap leading-relaxed`}>
+                      } wrap-break-word whitespace-pre-wrap leading-relaxed`}>
                         {msg.body}
                       </div>
                     </div>

@@ -54,10 +54,36 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   });
   const jidRef = useRef(jid);
   const seenIds = useRef(new Set<string>());
+  const seenMessageKeys = useRef(new Set<string>());
   const [clientInstance, setClientInstance] = useState<Client | null>(null);
   const clientRef = useRef<Client | null>(null);
 
   const myUsername = user?.email?.split('@')[0] || '';
+
+  const makeMessageKey = (sender: string, receiver: string, body: string) =>
+    `${sender}::${receiver}::${body}`;
+
+  const upsertMessageFromDb = (row: any) => {
+    if (!row) return;
+    if (!row.id || seenIds.current.has(row.id)) return;
+
+    const msgKey = makeMessageKey(row.sender, row.receiver, row.body);
+    if (seenMessageKeys.current.has(msgKey)) return;
+
+    const isSent = row.sender === myUsername;
+    const mapped: ChatMessage = {
+      id: row.id,
+      from: isSent ? 'You' : row.sender,
+      body: row.body,
+      type: isSent ? 'sent' : 'received',
+      time: new Date(row.created_at),
+      otherParty: isSent ? row.receiver : row.sender,
+    };
+
+    seenIds.current.add(mapped.id);
+    seenMessageKeys.current.add(msgKey);
+    setMessages((prev) => [...prev, mapped]);
+  };
 
   useEffect(() => {
     sessionStorage.setItem('xmpp_jid', jid);
@@ -100,7 +126,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const myUser = jidRef.current.split('@')[0];
       if (from === myUser) return;
       if (seenIds.current.has(msgId)) return;
+      const msgKey = makeMessageKey(from, myUser, body);
+      if (seenMessageKeys.current.has(msgKey)) return;
       seenIds.current.add(msgId);
+      seenMessageKeys.current.add(msgKey);
       setMessages((prev) => [
         ...prev,
         {
@@ -305,6 +334,33 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     fetchMessages();
   }, [user, myUsername]);
 
+  // ── Realtime updates for direct messages ──
+  useEffect(() => {
+    if (!myUsername) return;
+
+    const channel = supabase
+      .channel(`messages_realtime:${myUsername}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver=eq.${myUsername}` },
+        (payload) => {
+          upsertMessageFromDb(payload.new);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender=eq.${myUsername}` },
+        (payload) => {
+          upsertMessageFromDb(payload.new);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [myUsername]);
+
   // ── Auto-subscribe and send directed presence to friends ──
   useEffect(() => {
     if (status === 'Connected' && clientRef.current && myUsername) {
@@ -343,6 +399,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
 
     const msgId = crypto.randomUUID();
+    const msgKey = makeMessageKey(myUsername, recipientUsername, body);
     setMessages((prev) => [
       ...prev,
       {
@@ -354,6 +411,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         otherParty: recipientUsername,
       },
     ]);
+    seenIds.current.add(msgId);
+    seenMessageKeys.current.add(msgKey);
 
     const { error } = await supabase
       .from('messages')

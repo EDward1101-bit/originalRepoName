@@ -395,7 +395,7 @@ export default function Chat() {
       {/* SideNavBar */}
       <nav className="fixed left-6 top-1/2 -translate-y-1/2 w-20 rounded-[3rem] h-auto py-8 bg-slate-900/40 backdrop-blur-3xl shadow-[0_0_40px_-10px_rgba(255,144,104,0.15)] flex flex-col items-center gap-8 z-50">
         <div className="mb-4">
-          <div className="w-10 h-10 bg-gradient-to-tr from-primary to-secondary rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,144,104,0.3)]">
+          <div className="w-10 h-10 bg-linear-to-tr from-primary to-secondary rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,144,104,0.3)]">
             <span className="material-symbols-outlined text-black font-bold">bolt</span>
           </div>
         </div>
@@ -454,7 +454,7 @@ export default function Chat() {
       </header>
 
       {/* Main Workspace */}
-      <main className="ml-24 mt-20 w-full h-[calc(100vh-120px)] flex gap-6 px-4 max-w-[1600px] z-10">
+      <main className="ml-24 mt-20 w-full h-[calc(100vh-120px)] flex gap-6 px-4 max-w-400 z-10">
         {/* Communities Module (Floating Island) */}
         <aside className="hidden lg:flex flex-col w-72 h-full gap-4">
           <div className="glass-panel p-6 rounded-xl flex flex-col gap-6 flex-1 shadow-xl">
@@ -778,7 +778,7 @@ export default function Chat() {
       {/* Context Menu */}
       {contextMenu && contextMenu.visible && (
         <div
-          className="fixed z-50 bg-surface-container-high border border-outline-variant/20 shadow-2xl rounded-lg py-1 min-w-[150px] overflow-hidden"
+          className="fixed z-50 bg-surface-container-high border border-outline-variant/20 shadow-2xl rounded-lg py-1 min-w-37.5 overflow-hidden"
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(e) => e.stopPropagation()}
         >

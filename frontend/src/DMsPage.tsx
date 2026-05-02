@@ -66,7 +66,7 @@ export default function DMsPage() {
   return (
     <div className="flex flex-col h-full" onClick={handlePageClick}>
       {/* Canvas Header */}
-      <header className="h-16 flex items-center px-8 border-b border-surface-variant flex-shrink-0 bg-surface/80 backdrop-blur-sm shadow-sm z-10">
+      <header className="h-16 flex items-center px-8 border-b border-surface-variant shrink-0 bg-surface/80 backdrop-blur-sm shadow-sm z-10">
         <div className="flex items-center gap-4 text-on-background">
           <span className="material-symbols-outlined text-outline">group</span>
           <h1 className="text-xl font-bold tracking-tight">Friends</h1>
@@ -259,7 +259,7 @@ export default function DMsPage() {
                         >
                           {u.username}
                         </h3>
-                        <p className="text-xs text-outline mt-0.5 max-w-[180px] truncate">
+                        <p className="text-xs text-outline mt-0.5 max-w-45 truncate">
                           {lastMsg
                             ? `${lastMsg.type === 'sent' ? 'You: ' : ''}${lastMsg.body}`
                             : u.online
@@ -290,7 +290,7 @@ export default function DMsPage() {
       {/* Context Menu */}
       {contextMenu && (
         <div
-          className="fixed z-50 bg-surface-container-high border border-outline-variant shadow-2xl rounded-xl py-1 min-w-[160px] overflow-hidden"
+          className="fixed z-50 bg-surface-container-high border border-outline-variant shadow-2xl rounded-xl py-1 min-w-40 overflow-hidden"
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(e) => e.stopPropagation()}
         >
