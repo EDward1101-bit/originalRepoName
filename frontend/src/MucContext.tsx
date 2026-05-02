@@ -57,18 +57,14 @@ export function MucProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!myUsername) return;
-    
+
     fetchRooms();
 
-    const roomsChannel = supabase
-      .channel('rooms_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms' }, () => {
-        fetchRooms();
-      })
-      .subscribe();
+    // Poll for room list changes every 30s (free alternative to Supabase Realtime)
+    const pollInterval = setInterval(fetchRooms, 30_000);
 
     return () => {
-      supabase.removeChannel(roomsChannel);
+      clearInterval(pollInterval);
     };
   }, [myUsername]);
 
@@ -102,41 +98,9 @@ export function MucProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Realtime subscription for room_messages
-  useEffect(() => {
-    if (!myUsername) return;
-
-    const messagesChannel = supabase
-      .channel('room_messages_changes')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'room_messages' }, (payload) => {
-        const newMsg = payload.new;
-        const room = availableRooms.find(r => r.id === newMsg.room_id);
-        
-        if (room && joinedRoomsRef.current.has(room.name)) {
-           // If we haven't seen it (sent by us vs others)
-           if (!seenRoomMessageIds.current.has(newMsg.id)) {
-              seenRoomMessageIds.current.add(newMsg.id);
-              const formattedMsg: RoomMessage = {
-                 id: newMsg.id,
-                 room_id: newMsg.room_id,
-                 sender: newMsg.sender,
-                 body: newMsg.body,
-                 created_at: new Date(newMsg.created_at),
-                 type: 'chat'
-              };
-              setRoomMessages(prev => ({
-                 ...prev,
-                 [room.name]: [...(prev[room.name] || []), formattedMsg]
-              }));
-           }
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(messagesChannel);
-    };
-  }, [myUsername, availableRooms]);
+  // Note: XMPP handles real-time message delivery for MUC (via BOSH/long-polling).
+  // Supabase is only used for message history (loadRoomHistory) and persistence.
+  // No Supabase Realtime subscription needed here.
 
   // Listen to XMPP events for MUC
   useEffect(() => {
