@@ -28,9 +28,9 @@ function AuthenticatedRoutes() {
 }
 
 function App() {
-  const { user } = useAuth();
+  const { user, password } = useAuth();
 
-  if (!user) {
+  if (!user || !password) {
     return <Auth />;
   }
 

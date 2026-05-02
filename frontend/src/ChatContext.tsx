@@ -49,7 +49,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [allUsers, setAllUsers] = useState<RegisteredUser[]>([]);
   const [friendships, setFriendships] = useState<Friendship[]>([]);
   const [jid, setJid] = useState(() => {
-    const stored = sessionStorage.getItem('xmpp_jid');
+    const stored = localStorage.getItem('xmpp_jid');
     return stored || '';
   });
   const jidRef = useRef(jid);
@@ -86,7 +86,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    sessionStorage.setItem('xmpp_jid', jid);
+    localStorage.setItem('xmpp_jid', jid);
     jidRef.current = jid;
   }, [jid]);
 
