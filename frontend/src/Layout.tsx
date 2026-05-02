@@ -46,10 +46,10 @@ export default function Layout() {
               <span className="material-symbols-outlined">chat_bubble</span>
               <span className="text-[15px] font-medium">Direct Messages</span>
             </NavLink>
-            <a className="text-on-surface-variant hover:text-primary hover:bg-surface-variant transition-all duration-200 ease-in-out flex items-center gap-4 px-4 py-2 rounded-xl cursor-pointer">
+            <NavLink to="/rooms" className={navLinkClass}>
               <span className="material-symbols-outlined">grid_view</span>
               <span className="text-[15px] font-medium">Servers</span>
-            </a>
+            </NavLink>
             <a className="text-on-surface-variant hover:text-primary hover:bg-surface-variant transition-all duration-200 ease-in-out flex items-center gap-4 px-4 py-2 rounded-xl cursor-pointer">
               <span className="material-symbols-outlined">pulse_alert</span>
               <span className="text-[15px] font-medium">Activity</span>

@@ -35,3 +35,8 @@ VirtualHost "localhost"
     authentication = "internal_plain"
     c2s_require_encryption = false
     allow_unencrypted_plain_auth = true
+
+-- 3. MUC Component
+Component "conference.localhost" "muc"
+    name = "Localhost Chatrooms"
+    restrict_room_creation = false

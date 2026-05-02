@@ -26,6 +26,7 @@ export interface Friendship {
 }
 
 interface ChatContextType {
+  client: Client | null;
   status: string;
   jid: string;
   messages: ChatMessage[];
@@ -406,6 +407,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   return (
     <ChatContext.Provider
       value={{
+        client: clientRef.current,
         status,
         jid,
         messages,
