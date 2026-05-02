@@ -53,6 +53,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   });
   const jidRef = useRef(jid);
   const seenIds = useRef(new Set<string>());
+  const [clientInstance, setClientInstance] = useState<Client | null>(null);
   const clientRef = useRef<Client | null>(null);
 
   const myUsername = user?.email?.split('@')[0] || '';
@@ -85,6 +86,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
 
     clientRef.current = client;
+    setClientInstance(client);
 
     const handleBeforeUnload = () => {
       if (clientRef.current) {
@@ -407,7 +409,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   return (
     <ChatContext.Provider
       value={{
-        client: clientRef.current,
+        client: clientInstance,
         status,
         jid,
         messages,
