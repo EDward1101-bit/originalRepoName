@@ -33,7 +33,7 @@ export default function Chat() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isTyping, setIsTyping] = useState(false);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -71,6 +71,7 @@ export default function Chat() {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredMessages.length]);
 
   const handleSend = async () => {
