@@ -667,7 +667,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteRoomMessageForEveryone = async (
-    roomId: string,
+    _roomId: string,
     roomName: string,
     messageId: string
   ) => {
@@ -722,7 +722,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const deleteRoomMessageForMe = (roomName: string, messageId: string) => {
+  const deleteRoomMessageForMe = (_roomName: string, messageId: string) => {
     setHiddenRoomMessageIds((prev) => {
       const next = new Set(prev);
       next.add(messageId);

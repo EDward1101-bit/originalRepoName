@@ -299,7 +299,7 @@ export default function RoomChat() {
                     </div>
 
                     {/* Message Actions Button */}
-                    {!isDeleted && msg.type !== 'system' && (
+                    {!isDeleted && (
                       <div className="absolute right-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => {
