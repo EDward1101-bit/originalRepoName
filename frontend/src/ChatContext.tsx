@@ -57,6 +57,8 @@ interface ChatContextType {
   editMessage: (messageId: string, newBody: string) => Promise<void>;
   typingUsers: Record<string, number>;
   sendTypingIndicator: (recipient: string, isTyping: boolean) => void;
+  unreadCounts: Record<string, number>;
+  clearUnread: (chatId: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -93,6 +95,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [clientInstance, setClientInstance] = useState<Agent | null>(null);
   const clientRef = useRef<Agent | null>(null);
   const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   const myUsername = user?.email?.split('@')[0] || '';
 
@@ -264,7 +267,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      if (msg.type !== 'chat') return;
+      if (msg.type !== 'chat' && msg.type !== 'groupchat') return;
       if (!msg.body) return;
 
       // Clear typing indicator when a message is actually received
@@ -276,7 +279,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
       }
       const msgId = (msg as any).id || `${from}:${msg.body}`;
-      addMessage(from, msg.body as string, msgId);
+      
+      // Increment unread count for the sender or room
+      if (from !== myUser) {
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [from]: (prev[from] || 0) + 1,
+        }));
+      }
+
+      if (msg.type === 'chat') {
+        addMessage(from, msg.body as string, msgId);
+      }
     };
 
     const handleRawIncoming = (data: unknown) => {
@@ -295,7 +309,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
         const msgXml = str.slice(tagStart, closeIdx + '</message>'.length);
         if (msgXml.includes('type="error"')) continue;
-        if (!msgXml.includes('type="chat"')) continue;
+        if (!msgXml.includes('type="chat"') && !msgXml.includes('type="groupchat"')) continue;
 
         const bodyMatch = msgXml.match(/<body[^>]*>([^<]*)<\/body>/);
         const fromMatch = msgXml.match(/\bfrom="([^"]+)"/);
@@ -308,7 +322,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const body = bodyMatch[1];
         const msgId = (idMatch?.[1] ?? idFallback?.[1]) || `${from}:${body}`;
 
-        addMessage(from, body, msgId);
+        // Wait, since handleRawIncoming duplicates handleMessage for some BOSH reasons,
+        // we might increment unread twice. It's safer to only do it for type="chat" here if we don't have MucContext doing it,
+        // but let's increment unread if from != myUser
+        const myUser = jidRef.current.split('@')[0];
+        if (from !== myUser) {
+          setUnreadCounts((prev) => ({
+            ...prev,
+            [from]: (prev[from] || 0) + 1,
+          }));
+        }
+
+        if (msgXml.includes('type="chat"')) {
+          addMessage(from, body, msgId);
+        }
       }
     };
 
@@ -649,6 +676,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [clientInstance]
   );
 
+  const clearUnread = useCallback((chatId: string) => {
+    setUnreadCounts((prev) => {
+      if (!prev[chatId]) return prev;
+      const next = { ...prev };
+      delete next[chatId];
+      return next;
+    });
+  }, []);
+
   return (
     <ChatContext.Provider
       value={{
@@ -669,6 +705,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         editMessage,
         typingUsers,
         sendTypingIndicator,
+        unreadCounts,
+        clearUnread,
       }}
     >
       {children}

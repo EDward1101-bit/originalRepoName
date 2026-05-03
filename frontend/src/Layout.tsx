@@ -1,18 +1,48 @@
 import { useState, useEffect } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useChatContext } from './ChatContext';
+import { useMucContext } from './MucContext';
 import { useTranslation } from './LanguageContext';
 import SettingsModal from './components/SettingsModal';
 
 export default function Layout() {
   const { user } = useAuth();
-  const { status, myUsername } = useChatContext();
+  const { status, myUsername, unreadCounts, clearUnread } = useChatContext();
+  const { joinedRooms } = useMucContext();
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const location = useLocation();
 
   const isConnected = status === 'Connected';
+
+  const roomUnread = Object.keys(unreadCounts).reduce((acc, key) => {
+    if (joinedRooms.includes(key)) {
+      return acc + unreadCounts[key];
+    }
+    return acc;
+  }, 0);
+
+  const dmUnread = Object.keys(unreadCounts).reduce((acc, key) => {
+    if (!joinedRooms.includes(key)) {
+      return acc + unreadCounts[key];
+    }
+    return acc;
+  }, 0);
+
+  // Automatically clear unread if we navigate to a specific room or DM
+  useEffect(() => {
+    // E.g., location.pathname is "/dms/username" or "/rooms/roomname"
+    const parts = location.pathname.split('/').filter(Boolean);
+    if (parts.length >= 2) {
+      const chatId = parts[1]; // The 'username' or 'roomname'
+      if (unreadCounts[chatId] > 0) {
+        clearUnread(chatId);
+      }
+    }
+  }, [location.pathname, unreadCounts, clearUnread]);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -25,34 +55,48 @@ export default function Layout() {
   }, [settingsOpen]);
 
   const ServersColumn = () => (
-    <div className="w-[72px] bg-[var(--bg-tertiary)]/80 backdrop-blur-md h-[calc(100vh-32px)] my-4 ml-4 rounded-[24px] flex flex-col items-center py-4 gap-3 flex-shrink-0 z-50 border border-[var(--border)] shadow-xl">
-      <NavLink
-        to="/dms"
-        className={({ isActive }) =>
-          `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm ${
-            isActive
-              ? '!rounded-[14px] bg-[var(--brand)] text-white'
-              : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
-          }`
-        }
-      >
-        <span className="material-symbols-outlined text-[24px]">chat_bubble</span>
-      </NavLink>
+    <div className="w-[72px] bg-[var(--bg-tertiary)]/80 backdrop-blur-md h-[calc(100vh-32px)] my-4 ml-4 rounded-[24px] flex flex-col items-center py-4 gap-3 flex-shrink-0 z-50 border border-[var(--border)] shadow-xl relative">
+      <div className="relative group">
+        <NavLink
+          to="/dms"
+          className={({ isActive }) =>
+            `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm ${
+              isActive
+                ? '!rounded-[14px] bg-[var(--brand)] text-white'
+                : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
+            }`
+          }
+        >
+          <span className="material-symbols-outlined text-[24px]">chat_bubble</span>
+        </NavLink>
+        {dmUnread > 0 && (
+          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[var(--bg-tertiary)]">
+            {dmUnread > 99 ? '99+' : dmUnread}
+          </div>
+        )}
+      </div>
 
       <div className="w-6 h-[2px] bg-[var(--bg-modifier-active)] rounded-full my-1 opacity-50" />
 
-      <NavLink
-        to="/rooms"
-        className={({ isActive }) =>
-          `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm ${
-            isActive
-              ? '!rounded-[14px] bg-[var(--brand)] text-white'
-              : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
-          }`
-        }
-      >
-        <span className="material-symbols-outlined text-[24px]">dns</span>
-      </NavLink>
+      <div className="relative group">
+        <NavLink
+          to="/rooms"
+          className={({ isActive }) =>
+            `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm ${
+              isActive
+                ? '!rounded-[14px] bg-[var(--brand)] text-white'
+                : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
+            }`
+          }
+        >
+          <span className="material-symbols-outlined text-[24px]">dns</span>
+        </NavLink>
+        {roomUnread > 0 && (
+          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[var(--bg-tertiary)]">
+            {roomUnread > 99 ? '99+' : roomUnread}
+          </div>
+        )}
+      </div>
 
       {/* Add new server button */}
       <button className="w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[#14b8a6] hover:text-white mt-auto mb-2 border border-dashed border-[#14b8a6]/50 hover:bg-[#14b8a6] hover:border-transparent">
