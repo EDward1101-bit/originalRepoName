@@ -10,7 +10,7 @@ import {
 import { useAuth } from './AuthContext';
 import { createClient, type Client } from 'stanza';
 import type { ReceivedMessage } from 'stanza/protocol';
-import { XMPP_DOMAIN, buildApiUrl, buildBareJid } from './config';
+import { XMPP_DOMAIN, buildBareJid } from './config';
 import { supabase } from './supabase';
 
 const makeMessageKey = (sender: string, receiver: string, body: string) =>
