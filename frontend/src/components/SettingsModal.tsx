@@ -107,7 +107,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             <p className="text-[var(--text-muted)] text-sm mb-4">Connect your favorite apps.</p>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-[var(--bg-tertiary)] p-4 rounded-xl flex items-center justify-between">
-                <span className="font-bold">Discord Placeholder</span>
+                <span className="font-bold">Third-party Service Placeholder</span>
                 <button className="text-[var(--brand)] text-sm font-semibold">Connect</button>
               </div>
             </div>

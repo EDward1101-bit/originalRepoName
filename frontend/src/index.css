@@ -30,42 +30,42 @@
 
 :root {
   /* Light Theme */
-  --brand: #5865f2;
-  --brand-hover: #4752c4;
+  --brand: #2563eb;
+  --brand-hover: #1d4ed8;
 
   --bg-primary: #ffffff;
-  --bg-secondary: #f2f3f5;
-  --bg-tertiary: #e3e5e8;
-  --bg-modifier-hover: rgba(6, 6, 7, 0.08);
-  --bg-modifier-active: rgba(6, 6, 7, 0.12);
-  --bg-modifier-selected: rgba(6, 6, 7, 0.16);
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-modifier-hover: rgba(15, 23, 42, 0.05);
+  --bg-modifier-active: rgba(15, 23, 42, 0.1);
+  --bg-modifier-selected: rgba(15, 23, 42, 0.15);
 
-  --text-normal: #313338;
-  --text-muted: #5c5e66;
-  --text-link: #006ce7;
+  --text-normal: #0f172a;
+  --text-muted: #64748b;
+  --text-link: #3b82f6;
 
-  --border: #e3e5e8;
-  --input-bg: #e3e5e8;
+  --border: #e2e8f0;
+  --input-bg: #e2e8f0;
 }
 
 .dark {
   /* Dark Theme */
-  --brand: #5865f2;
-  --brand-hover: #4752c4;
+  --brand: #3b82f6;
+  --brand-hover: #2563eb;
 
-  --bg-primary: #313338;
-  --bg-secondary: #2b2d31;
-  --bg-tertiary: #1e1f22;
-  --bg-modifier-hover: rgba(78, 80, 88, 0.3);
-  --bg-modifier-active: rgba(78, 80, 88, 0.48);
-  --bg-modifier-selected: rgba(78, 80, 88, 0.6);
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #020617;
+  --bg-modifier-hover: rgba(248, 250, 252, 0.05);
+  --bg-modifier-active: rgba(248, 250, 252, 0.1);
+  --bg-modifier-selected: rgba(248, 250, 252, 0.15);
 
-  --text-normal: #dbdee1;
-  --text-muted: #949ba4;
-  --text-link: #00a8fc;
+  --text-normal: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-link: #60a5fa;
 
-  --border: #1e1f22;
-  --input-bg: #1e1f22;
+  --border: #334155;
+  --input-bg: #1e293b;
 }
 
 * {

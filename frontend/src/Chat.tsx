@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChatContext } from './ChatContext';
 import { formatMessageTimestamp } from './utils/time';
+import MediaViewer from './components/MediaViewer';
+import { supabase } from './supabase';
 
 export default function Chat() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { messages, allUsers, sendMessage, myUsername } = useChatContext();
   const [input, setInput] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const recipient = username || '';
 
@@ -28,6 +32,34 @@ export default function Chat() {
     if (!input.trim() || !recipient) return;
     sendMessage(recipient, input);
     setInput('');
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !recipient) return;
+
+    setIsUploading(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+
+    const { error } = await supabase.storage.from('chat-media').upload(fileName, file);
+    setIsUploading(false);
+
+    if (error) {
+      console.error('Error uploading file:', error);
+      alert('Failed to upload file. Make sure the chat-media bucket exists and is public.');
+      return;
+    }
+
+    const { data } = supabase.storage.from('chat-media').getPublicUrl(fileName);
+
+    if (data?.publicUrl) {
+      sendMessage(recipient, data.publicUrl);
+    }
+  };
+
+  const isMediaUrl = (text: string) => {
+    return text.startsWith('http') && text.includes('supabase') && text.includes('chat-media');
   };
 
   return (
@@ -99,12 +131,10 @@ export default function Chat() {
                     {senderName?.[0]?.toUpperCase()}
                   </div>
                 ) : (
-                  <div className="w-10 shrink-0 flex items-center justify-center">
-                    {/* Time hover could go here */}
-                  </div>
+                  <div className="w-10 shrink-0 flex items-center justify-center"></div>
                 )}
 
-                <div className="flex flex-col min-w-0">
+                <div className="flex flex-col min-w-0 w-full">
                   {showHeader && (
                     <div className="flex items-baseline gap-2 mb-0.5">
                       <span className="font-medium text-[15px] text-[var(--text-normal)] hover:underline cursor-pointer">
@@ -115,9 +145,13 @@ export default function Chat() {
                       </span>
                     </div>
                   )}
-                  <div className="text-[15px] text-[var(--text-normal)] whitespace-pre-wrap break-words leading-[1.375rem]">
-                    {msg.body}
-                  </div>
+                  {isMediaUrl(msg.body) ? (
+                    <MediaViewer url={msg.body} />
+                  ) : (
+                    <div className="text-[15px] text-[var(--text-normal)] whitespace-pre-wrap break-words leading-[1.375rem]">
+                      {msg.body}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -129,8 +163,21 @@ export default function Chat() {
       {/* Composition Area */}
       <footer className="px-4 pb-6 pt-2">
         <div className="flex items-center gap-3 bg-[var(--input-bg)] rounded-lg p-2.5">
-          <button className="w-6 h-6 rounded-full bg-[var(--text-muted)] text-[var(--input-bg)] flex items-center justify-center hover:bg-[var(--text-normal)] transition-colors">
-            <span className="material-symbols-outlined text-[16px]">add</span>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            className="hidden"
+            accept="image/*,video/*,image/gif"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className={`w-6 h-6 rounded-full bg-[var(--text-muted)] text-[var(--input-bg)] flex items-center justify-center hover:bg-[var(--text-normal)] transition-colors ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <span className="material-symbols-outlined text-[16px]">
+              {isUploading ? 'hourglass_empty' : 'add'}
+            </span>
           </button>
 
           <input
@@ -140,6 +187,7 @@ export default function Chat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            disabled={isUploading}
           />
 
           <div className="flex items-center gap-3">

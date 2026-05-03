@@ -75,7 +75,7 @@ export default function Layout() {
           }
         >
           <span className="material-symbols-outlined text-[20px]">person</span>
-          <span className="font-medium text-[15px]">Friends</span>
+          <span className="font-medium text-[15px]">Direct Messages</span>
         </NavLink>
         <NavLink
           to="/rooms"
