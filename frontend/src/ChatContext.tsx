@@ -1,9 +1,21 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useAuth } from './AuthContext';
 import * as stanza from 'stanza';
 import { Client } from 'stanza';
 import type { ReceivedMessage } from 'stanza/protocol';
+import { XMPP_DOMAIN, buildApiUrl, buildBareJid } from './config';
 import { supabase } from './supabase';
+
+const makeMessageKey = (sender: string, receiver: string, body: string) =>
+  `${sender}::${receiver}::${body}`;
 
 export interface ChatMessage {
   id: string;
@@ -60,30 +72,30 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const myUsername = user?.email?.split('@')[0] || '';
 
-  const makeMessageKey = (sender: string, receiver: string, body: string) =>
-    `${sender}::${receiver}::${body}`;
+  const upsertMessageFromDb = useCallback(
+    (row: any) => {
+      if (!row) return;
+      if (!row.id || seenIds.current.has(row.id)) return;
 
-  const upsertMessageFromDb = (row: any) => {
-    if (!row) return;
-    if (!row.id || seenIds.current.has(row.id)) return;
+      const msgKey = makeMessageKey(row.sender, row.receiver, row.body);
+      if (seenMessageKeys.current.has(msgKey)) return;
 
-    const msgKey = makeMessageKey(row.sender, row.receiver, row.body);
-    if (seenMessageKeys.current.has(msgKey)) return;
+      const isSent = row.sender === myUsername;
+      const mapped: ChatMessage = {
+        id: row.id,
+        from: isSent ? 'You' : row.sender,
+        body: row.body,
+        type: isSent ? 'sent' : 'received',
+        time: new Date(row.created_at),
+        otherParty: isSent ? row.receiver : row.sender,
+      };
 
-    const isSent = row.sender === myUsername;
-    const mapped: ChatMessage = {
-      id: row.id,
-      from: isSent ? 'You' : row.sender,
-      body: row.body,
-      type: isSent ? 'sent' : 'received',
-      time: new Date(row.created_at),
-      otherParty: isSent ? row.receiver : row.sender,
-    };
-
-    seenIds.current.add(mapped.id);
-    seenMessageKeys.current.add(msgKey);
-    setMessages((prev) => [...prev, mapped]);
-  };
+      seenIds.current.add(mapped.id);
+      seenMessageKeys.current.add(msgKey);
+      setMessages((prev) => [...prev, mapped]);
+    },
+    [myUsername]
+  );
 
   useEffect(() => {
     localStorage.setItem('xmpp_jid', jid);
@@ -95,7 +107,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!user || !password) return;
 
     const username = user.email?.split('@')[0] || '';
-    const fullJid = `${username}@localhost`;
+    const fullJid = buildBareJid(username);
     jidRef.current = fullJid;
     setJid(fullJid);
     setStatus('Connecting...');
@@ -105,7 +117,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const client = stanza.createClient({
       jid: fullJid,
       password: password,
-      server: 'localhost',
+      server: XMPP_DOMAIN,
       transports: {
         bosh: boshUrl,
       },
@@ -268,7 +280,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/users');
+        const res = await fetch(buildApiUrl('/api/users'));
         const data = await res.json();
         setAllUsers(data.map((u: any) => ({ username: u.username, online: false })));
       } catch (err) {
@@ -342,7 +354,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       .channel(`messages_realtime:${myUsername}`)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver=eq.${myUsername}` },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver=eq.${myUsername}`,
+        },
         (payload) => {
           upsertMessageFromDb(payload.new);
         }
@@ -359,7 +376,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [myUsername]);
+  }, [myUsername, upsertMessageFromDb]);
 
   // ── Auto-subscribe and send directed presence to friends ──
   useEffect(() => {
@@ -367,14 +384,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       friendships.forEach((f) => {
         if (f.status === 'accepted') {
           const friendUsername = f.requester === myUsername ? f.receiver : f.requester;
-          const friendJid = `${friendUsername}@localhost`;
+          const friendJid = buildBareJid(friendUsername);
 
           // Subscribe to their presence in XMPP roster
           clientRef.current?.sendPresence({ type: 'subscribe', to: friendJid });
           // Auto-accept their subscription just in case
           clientRef.current?.sendPresence({ type: 'subscribed', to: friendJid });
 
-          // Force a directed presence update to them immediately 
+          // Force a directed presence update to them immediately
           // so they know we're online even before the roster syncs
           clientRef.current?.sendPresence({ to: friendJid });
         }
@@ -389,7 +406,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const recipientUsername = recipient.trim();
     let finalRecipient = recipientUsername;
     if (!finalRecipient.includes('@')) {
-      finalRecipient = `${finalRecipient}@localhost`;
+      finalRecipient = buildBareJid(finalRecipient);
     }
 
     clientRef.current.sendMessage({

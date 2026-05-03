@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useChatContext } from './ChatContext';
+import { useChatContext, type Friendship } from './ChatContext';
 
 export default function DMsPage() {
   const {
@@ -23,45 +23,63 @@ export default function DMsPage() {
     friendshipId: string;
   } | null>(null);
 
+  const relationshipsByUsername = useMemo(() => {
+    const map = new Map<string, Friendship>();
+
+    friendships.forEach((friendship) => {
+      if (friendship.requester === myUsername) {
+        map.set(friendship.receiver, friendship);
+      } else if (friendship.receiver === myUsername) {
+        map.set(friendship.requester, friendship);
+      }
+    });
+
+    return map;
+  }, [friendships, myUsername]);
+
+  const lastMessageByUser = useMemo(() => {
+    const map = new Map<string, (typeof messages)[number]>();
+
+    messages.forEach((message) => {
+      map.set(message.otherParty, message);
+    });
+
+    return map;
+  }, [messages]);
+
   // Close context menu on click anywhere
   const handlePageClick = () => {
     if (contextMenu) setContextMenu(null);
   };
 
   // ── Derive friend lists ──
-  const acceptedFriends = allUsers.filter((u) => {
-    if (u.username === myUsername) return false;
-    const rel = friendships.find(
-      (f) =>
-        (f.requester === myUsername && f.receiver === u.username) ||
-        (f.receiver === myUsername && f.requester === u.username)
-    );
-    return rel?.status === 'accepted';
-  });
+  const acceptedFriends = useMemo(
+    () =>
+      allUsers.filter((u) => {
+        if (u.username === myUsername) return false;
+        return relationshipsByUsername.get(u.username)?.status === 'accepted';
+      }),
+    [allUsers, myUsername, relationshipsByUsername]
+  );
 
-  const pendingReceived = friendships.filter(
-    (f) => f.status === 'pending' && f.receiver === myUsername
+  const pendingReceived = useMemo(
+    () => friendships.filter((f) => f.status === 'pending' && f.receiver === myUsername),
+    [friendships, myUsername]
   );
 
   // ── Search results ──
-  const searchResults = allUsers
-    .filter((u) => u.username !== myUsername)
-    .filter((u) => u.username.toLowerCase().includes(searchQuery.toLowerCase()))
-    .map((u) => {
-      const rel = friendships.find(
-        (f) =>
-          (f.requester === myUsername && f.receiver === u.username) ||
-          (f.receiver === myUsername && f.requester === u.username)
-      );
-      return { ...u, relationship: rel };
-    });
+  const searchResults = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) return [];
 
-  // Get last message preview for a friend
-  const getLastMessage = (username: string) => {
-    const conversation = messages.filter((m) => m.otherParty === username);
-    if (conversation.length === 0) return null;
-    return conversation[conversation.length - 1];
-  };
+    return allUsers
+      .filter((u) => u.username !== myUsername)
+      .filter((u) => u.username.toLowerCase().includes(normalizedQuery))
+      .map((u) => {
+        const relationship = relationshipsByUsername.get(u.username) ?? null;
+        return { ...u, relationship };
+      });
+  }, [allUsers, myUsername, relationshipsByUsername, searchQuery]);
 
   return (
     <div className="flex flex-col h-full" onClick={handlePageClick}>
@@ -218,12 +236,8 @@ export default function DMsPage() {
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4 max-w-7xl mx-auto">
               {acceptedFriends.map((u) => {
-                const lastMsg = getLastMessage(u.username);
-                const rel = friendships.find(
-                  (f) =>
-                    (f.requester === myUsername && f.receiver === u.username) ||
-                    (f.receiver === myUsername && f.requester === u.username)
-                );
+                const lastMsg = lastMessageByUser.get(u.username) ?? null;
+                const rel = relationshipsByUsername.get(u.username) ?? null;
 
                 return (
                   <div

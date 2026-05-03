@@ -2,20 +2,25 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMucContext } from './MucContext';
 import { useChatContext } from './ChatContext';
+import { formatMessageTimestamp } from './utils/time';
 
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
   const navigate = useNavigate();
-  const { availableRooms, joinedRooms, joinRoom, leaveRoom, roomMessages, sendRoomMessage } = useMucContext();
+  const { availableRooms, joinedRooms, joinRoom, leaveRoom, roomMessages, sendRoomMessage } =
+    useMucContext();
   const { myUsername, status } = useChatContext();
   const isConnected = status === 'Connected';
-  
+
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const room = availableRooms.find(r => r.name === roomName);
+  const room = availableRooms.find((r) => r.name === roomName);
   const isJoined = roomName ? joinedRooms.includes(roomName) : false;
-  const messages = useMemo(() => roomName ? (roomMessages[roomName] || []) : [], [roomName, roomMessages]);
+  const messages = useMemo(
+    () => (roomName ? roomMessages[roomName] || [] : []),
+    [roomName, roomMessages]
+  );
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -39,7 +44,7 @@ export default function RoomChat() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || !roomName) return;
-    
+
     await sendRoomMessage(roomName, input);
     setInput('');
   };
@@ -71,7 +76,7 @@ export default function RoomChat() {
       {/* Header */}
       <div className="h-16 flex-none border-b border-surface-variant bg-surface-container-low flex items-center justify-between px-6">
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => navigate('/rooms')}
             className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-variant transition-colors text-on-surface-variant"
           >
@@ -82,21 +87,23 @@ export default function RoomChat() {
               <span className="text-primary">#</span> {room.name}
             </h2>
             {room.description && (
-              <p className="text-xs text-on-surface-variant truncate max-w-md">{room.description}</p>
+              <p className="text-xs text-on-surface-variant truncate max-w-md">
+                {room.description}
+              </p>
             )}
           </div>
         </div>
-        
+
         <div>
           {isJoined ? (
-            <button 
+            <button
               onClick={handleLeave}
               className="px-4 py-2 text-sm font-medium text-error hover:bg-error/10 rounded-xl transition-colors border border-error/20"
             >
               Leave Room
             </button>
           ) : (
-            <button 
+            <button
               onClick={handleJoin}
               disabled={!isConnected}
               title={!isConnected ? `XMPP ${status}` : 'Join this room'}
@@ -124,7 +131,7 @@ export default function RoomChat() {
             ) : (
               messages.map((msg, idx) => {
                 const isSentByMe = msg.sender === myUsername;
-                
+
                 if (msg.type === 'system') {
                   return (
                     <div key={msg.id || idx} className="flex justify-center my-2">
@@ -137,23 +144,28 @@ export default function RoomChat() {
                 }
 
                 return (
-                  <div key={msg.id} className={`flex flex-col ${isSentByMe ? 'items-end' : 'items-start'} group max-w-full`}>
+                  <div
+                    key={msg.id}
+                    className={`flex flex-col ${isSentByMe ? 'items-end' : 'items-start'} group max-w-full`}
+                  >
                     {!isSentByMe && (
                       <span className="text-xs text-on-surface-variant mb-1 ml-1 font-medium">
                         {msg.sender}
                       </span>
                     )}
                     <div className="flex items-end gap-2 max-w-[85%]">
-                      <div className={`px-5 py-3 rounded-2xl shadow-sm text-[15px] ${
-                        isSentByMe 
-                          ? 'bg-primary text-on-primary rounded-br-sm' 
-                          : 'bg-surface-container-high text-on-surface rounded-bl-sm border border-surface-variant'
-                      } wrap-break-word whitespace-pre-wrap leading-relaxed`}>
+                      <div
+                        className={`px-5 py-3 rounded-2xl shadow-sm text-[15px] ${
+                          isSentByMe
+                            ? 'bg-primary text-on-primary rounded-br-sm'
+                            : 'bg-surface-container-high text-on-surface rounded-bl-sm border border-surface-variant'
+                        } wrap-break-word whitespace-pre-wrap leading-relaxed`}
+                      >
                         {msg.body}
                       </div>
                     </div>
                     <span className="text-[10px] text-on-surface-variant mt-1 opacity-0 group-hover:opacity-100 transition-opacity mx-1">
-                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatMessageTimestamp(msg.created_at)}
                     </span>
                   </div>
                 );
@@ -164,7 +176,10 @@ export default function RoomChat() {
 
           {/* Input Area */}
           <div className="p-4 bg-surface-container-lowest border-t border-surface-variant">
-            <form onSubmit={handleSend} className="flex gap-3 bg-surface-container-low p-2 rounded-3xl border border-surface-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+            <form
+              onSubmit={handleSend}
+              className="flex gap-3 bg-surface-container-low p-2 rounded-3xl border border-surface-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all"
+            >
               <input
                 type="text"
                 value={input}
@@ -188,11 +203,13 @@ export default function RoomChat() {
           <div className="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mb-6 text-primary shadow-sm border border-surface-variant">
             <span className="material-symbols-outlined text-4xl">lock</span>
           </div>
-          <h3 className="text-xl font-bold text-on-surface mb-2">You haven&apos;t joined this room</h3>
+          <h3 className="text-xl font-bold text-on-surface mb-2">
+            You haven&apos;t joined this room
+          </h3>
           <p className="mb-6 text-center max-w-sm">
             Join #{room.name} to see the message history and participate in the conversation.
           </p>
-          <button 
+          <button
             onClick={handleJoin}
             disabled={!isConnected}
             title={!isConnected ? `XMPP ${status}` : 'Join this room'}

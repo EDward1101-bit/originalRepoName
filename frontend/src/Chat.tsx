@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChatContext } from './ChatContext';
+import { formatMessageTimestamp } from './utils/time';
 
 export default function Chat() {
   const { username } = useParams<{ username: string }>();
@@ -14,7 +15,10 @@ export default function Chat() {
   const recipientUser = allUsers.find((u) => u.username === recipient);
   const isOnline = recipientUser?.online ?? false;
 
-  const filteredMessages = recipient ? messages.filter((m) => m.otherParty === recipient) : [];
+  const filteredMessages = useMemo(
+    () => (recipient ? messages.filter((m) => m.otherParty === recipient) : []),
+    [messages, recipient]
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,10 +83,7 @@ export default function Chat() {
                       {isSent ? 'You' : msg.from}
                     </span>
                     <span className="text-[10px] text-outline">
-                      {msg.time.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatMessageTimestamp(msg.time)}
                     </span>
                   </div>
                   <div
