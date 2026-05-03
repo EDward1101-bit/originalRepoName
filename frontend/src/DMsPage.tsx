@@ -1,6 +1,11 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useChatContext, type Friendship } from './ChatContext';
+import {
+  useChatContext,
+  type Friendship,
+  type RegisteredUser,
+  type ChatMessage,
+} from './ChatContext';
 import { formatMessageTimestamp } from './utils/time';
 import { supabase } from './supabase';
 import { useTranslation } from './LanguageContext';
@@ -25,7 +30,7 @@ export default function DMsPage() {
 
   const relationshipsByUsername = useMemo(() => {
     const map = new Map<string, Friendship>();
-    friendships.forEach((friendship) => {
+    friendships.forEach((friendship: Friendship) => {
       if (friendship.requester === myUsername) {
         map.set(friendship.receiver, friendship);
       } else if (friendship.receiver === myUsername) {
@@ -37,7 +42,7 @@ export default function DMsPage() {
 
   const acceptedFriends = useMemo(
     () =>
-      allUsers.filter((u) => {
+      allUsers.filter((u: RegisteredUser) => {
         if (u.username === myUsername) return false;
         return relationshipsByUsername.get(u.username)?.status === 'accepted';
       }),
@@ -45,7 +50,8 @@ export default function DMsPage() {
   );
 
   const pendingReceived = useMemo(
-    () => friendships.filter((f) => f.status === 'pending' && f.receiver === myUsername),
+    () =>
+      friendships.filter((f: Friendship) => f.status === 'pending' && f.receiver === myUsername),
     [friendships, myUsername]
   );
 
@@ -93,7 +99,7 @@ export default function DMsPage() {
 
   // Get last message for each friend (for conversation list preview)
   const getLastMessage = (username: string) => {
-    const userMessages = messages.filter((m) => m.otherParty === username);
+    const userMessages = messages.filter((m: ChatMessage) => m.otherParty === username);
     if (userMessages.length === 0) return null;
     return userMessages[userMessages.length - 1];
   };
@@ -166,7 +172,7 @@ export default function DMsPage() {
                         <p className="text-sm font-medium">No pending requests</p>
                       </div>
                     ) : (
-                      pendingReceived.map((f) => (
+                      pendingReceived.map((f: Friendship) => (
                         <div
                           key={f.id}
                           className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]/50 hover:bg-[var(--bg-modifier-hover)] transition-colors last:border-0"
@@ -247,7 +253,7 @@ export default function DMsPage() {
           </div>
         ) : (
           <div className="flex flex-col">
-            {sortedFriends.map((u) => {
+            {sortedFriends.map((u: RegisteredUser) => {
               const lastMsg = getLastMessage(u.username);
               const rel = relationshipsByUsername.get(u.username) ?? null;
 
@@ -399,7 +405,7 @@ export default function DMsPage() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  {searchResults.map((u) => (
+                  {searchResults.map((u: any) => (
                     <div
                       key={u.username}
                       className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg-tertiary)]/50 border border-[var(--border)]/50 hover:bg-[var(--bg-modifier-hover)] transition-colors"

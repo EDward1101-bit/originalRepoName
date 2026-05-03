@@ -56,7 +56,7 @@ const generateId = () => {
 };
 
 export function MucProvider({ children }: { children: ReactNode }) {
-  const { client, myUsername, status } = useChatContext();
+  const { client, myUsername, status, allUsers } = useChatContext();
 
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
   const [joinedRooms, setJoinedRooms] = useState<string[]>(() => {
@@ -137,11 +137,14 @@ export function MucProvider({ children }: { children: ReactNode }) {
       if (!joinedRoomsRef.current.has(roomName)) return;
       if (nickname === myUsername) return; // Prevent self-echo on refresh; our own joins are handled explicitly
 
+      const userProfile = allUsers.find((u) => u.username === nickname);
+      const displayName = userProfile?.displayName || nickname;
+
       let sysMsgBody = '';
       if (!presenceType || presenceType === 'available') {
-        sysMsgBody = `${nickname} has entered the room.`;
+        sysMsgBody = `${displayName} has entered the room.`;
       } else if (presenceType === 'unavailable') {
-        sysMsgBody = `${nickname} has left the room.`;
+        sysMsgBody = `${displayName} has left the room.`;
       }
 
       if (!sysMsgBody) return;
@@ -169,7 +172,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
         [roomName]: [...(prev[roomName] || []), sysMsg],
       }));
     },
-    [availableRooms, myUsername]
+    [availableRooms, myUsername, allUsers]
   );
 
   const persistJoinedRooms = (rooms: Set<string>) => {
@@ -377,6 +380,31 @@ export function MucProvider({ children }: { children: ReactNode }) {
 
       if (nickname === myUsername) return;
 
+      // XEP-0308 Replace
+      const replaceId = (msg as any).replace?.id || (msg as any).replace;
+      if (replaceId) {
+        setRoomMessages((prev) => {
+          const msgs = prev[roomName] || [];
+          return {
+            ...prev,
+            [roomName]: msgs.map((m) =>
+              m.id === replaceId ? { ...m, body: msg.body as string } : m
+            ),
+          };
+        });
+        const room = availableRooms.find((r) => r.name === roomName);
+        if (room) {
+          supabase
+            .from('room_messages')
+            .update({ body: msg.body as string })
+            .eq('id', replaceId)
+            .then(({ error }) => {
+              if (error) console.error('Failed to sync replaced db message:', error);
+            });
+        }
+        return;
+      }
+
       // Add to local state if not added by Supabase realtime
       // Actually, since we use Supabase for history, we can rely on Supabase for chat messages
       // but XMPP is faster. Let's just use XMPP for real-time delivery to be safe,
@@ -458,12 +486,39 @@ export function MucProvider({ children }: { children: ReactNode }) {
       addSystemMessage(roomName, nickname, 'unavailable');
     };
 
+    const handleRawIncoming = (xml: any) => {
+      if (xml?.is?.('message') && xml.attrs?.type === 'groupchat') {
+        const retract = xml
+          .getChild('apply-to', 'urn:xmpp:fasten:0')
+          ?.getChild('retract', 'urn:xmpp:message-retract:0');
+        if (retract) {
+          const fromFull = xml.attrs.from || '';
+          const [roomJid, nickname] = fromFull.split('/');
+          const roomName = roomJid.split('@')[0];
+          const targetId = xml.getChild('apply-to', 'urn:xmpp:fasten:0')?.attrs?.id;
+          if (targetId && roomName && nickname && nickname !== myUsername) {
+            setRoomMessages((prev) => {
+              const msgs = prev[roomName] || [];
+              return {
+                ...prev,
+                [roomName]: msgs.map((m) =>
+                  m.id === targetId ? { ...m, body: '\u{1F6AB} This message was deleted' } : m
+                ),
+              };
+            });
+            // Optional: DB sync, tho sender probably did it
+          }
+        }
+      }
+    };
+
     client.on('message', handleMucMessage);
     client.on('presence', handleMucPresence);
     client.on('muc:join', handleMucJoin);
     client.on('muc:leave', handleMucLeave);
     client.on('muc:available', handleMucAvailable);
     client.on('muc:unavailable', handleMucUnavailable);
+    client.on('raw:incoming', handleRawIncoming);
 
     return () => {
       client.off('message', handleMucMessage);
@@ -472,6 +527,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
       client.off('muc:leave', handleMucLeave);
       client.off('muc:available', handleMucAvailable);
       client.off('muc:unavailable', handleMucUnavailable);
+      client.off('raw:incoming', handleRawIncoming);
     };
   }, [client, status, myUsername, availableRooms, addSystemMessage]);
 
@@ -635,6 +691,24 @@ export function MucProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.error('Failed to delete room message:', error);
       return;
+    }
+
+    if (client && status === 'Connected') {
+      const roomJid = buildRoomJid(roomName);
+
+      // XEP-0308 Replace (LMC)
+      client.sendMessage({
+        to: roomJid,
+        body: '\u{1F6AB} This message was deleted',
+        type: 'groupchat',
+        replace: { id: messageId },
+      } as any);
+
+      // XEP-0424 Retraction
+      const retractXml = `<message to="${roomJid}" type="groupchat"><apply-to xmlns="urn:xmpp:fasten:0" id="${messageId}"><retract xmlns="urn:xmpp:message-retract:0"/></apply-to></message>`;
+      if ((client as any).send) {
+        (client as any).send(retractXml);
+      }
     }
 
     setRoomMessages((prev) => {

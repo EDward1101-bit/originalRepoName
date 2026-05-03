@@ -40,3 +40,6 @@ VirtualHost "localhost"
 Component "conference.localhost" "muc"
     name = "Localhost Chatrooms"
     restrict_room_creation = false
+    modules_enabled = {
+        "muc_mam",
+    }

@@ -253,6 +253,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const fromFull = msg.from || '';
       const from = fromFull.split('@')[0] || 'Unknown';
       const myUser = jidRef.current.split('@')[0];
+      const nickname = fromFull.includes('/') ? fromFull.split('/')[1] : '';
+      const isGroupchat = msg.type === 'groupchat';
+      const isMyOwnGroupchat = isGroupchat && nickname === myUser;
 
       // Handle typing indicators (XEP-0085)
       if ((msg as any).chatState && from !== myUser) {
@@ -280,8 +283,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
       const msgId = (msg as any).id || `${from}:${msg.body}`;
 
-      // Increment unread count for the sender or room
-      if (from !== myUser) {
+      // Increment unread count for the sender or room if it's not from us
+      if (from !== myUser && !isMyOwnGroupchat && !seenIds.current.has(msgId)) {
         setUnreadCounts((prev) => ({
           ...prev,
           [from]: (prev[from] || 0) + 1,
@@ -318,15 +321,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
         if (!bodyMatch || !fromMatch) continue;
 
-        const from = fromMatch[1].split('@')[0];
+        const fromFull = fromMatch[1];
+        const from = fromFull.split('@')[0];
+        const nickname = fromFull.includes('/') ? fromFull.split('/')[1] : '';
         const body = bodyMatch[1];
         const msgId = (idMatch?.[1] ?? idFallback?.[1]) || `${from}:${body}`;
 
-        // Wait, since handleRawIncoming duplicates handleMessage for some BOSH reasons,
-        // we might increment unread twice. It's safer to only do it for type="chat" here if we don't have MucContext doing it,
-        // but let's increment unread if from != myUser
         const myUser = jidRef.current.split('@')[0];
-        if (from !== myUser) {
+        const isGroupchat = msgXml.includes('type="groupchat"');
+        const isMyOwnGroupchat = isGroupchat && nickname === myUser;
+
+        // Note: we don't want to duplicate unread count increments with handleMessage.
+        if (from !== myUser && !isMyOwnGroupchat && !seenIds.current.has(msgId)) {
           setUnreadCounts((prev) => ({
             ...prev,
             [from]: (prev[from] || 0) + 1,
@@ -465,17 +471,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `receiver=eq.${myUsername}`,
         },
         (payload) => {
-          upsertMessageFromDb(payload.new);
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender=eq.${myUsername}` },
-        (payload) => {
-          upsertMessageFromDb(payload.new);
+          const row = payload.new;
+          if (row.sender === myUsername || row.receiver === myUsername) {
+            upsertMessageFromDb(row);
+          }
         }
       )
       .subscribe();
