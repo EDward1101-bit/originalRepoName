@@ -20,7 +20,10 @@ settings = ProsodySettings()
 class ProsodyClient:
     def __init__(self, base_url: str = settings.prosody_url):
         self.base_url = base_url
-        self.client = httpx.AsyncClient(timeout=30.0)
+        self.client = httpx.AsyncClient(
+            timeout=httpx.Timeout(5.0, connect=2.0),
+            limits=httpx.Limits(max_keepalive_connections=20, max_connections=100),
+        )
 
     async def health_check(self) -> bool:
         try:
