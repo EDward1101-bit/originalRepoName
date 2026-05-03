@@ -123,7 +123,7 @@ export default function Layout() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[14px] font-bold text-[var(--text-normal)] truncate leading-tight">
-              {myUsername}
+              {user?.user_metadata?.display_name || myUsername}
             </p>
             <p className="text-[12px] text-[var(--text-muted)] truncate leading-tight font-medium">
               {status === 'Connected' ? t('online') : status}
