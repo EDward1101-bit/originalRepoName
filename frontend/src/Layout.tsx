@@ -27,7 +27,9 @@ export default function Layout() {
       <div className="px-4 pb-4 border-b border-surface-variant">
         <span className="text-lg font-bold text-primary tracking-tight">Aether Chat</span>
         <div className="mt-2 flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isConnected ? 'bg-tertiary' : 'bg-error'}`} />
+          <div
+            className={`w-2 h-2 rounded-full flex-shrink-0 ${isConnected ? 'bg-tertiary' : 'bg-error'}`}
+          />
           <span className={`text-xs font-medium ${isConnected ? 'text-tertiary' : 'text-error'}`}>
             {status}
           </span>
@@ -81,7 +83,6 @@ export default function Layout() {
 
   return (
     <div className="bg-background text-on-background font-body h-screen flex overflow-hidden antialiased">
-
       {/* ── Mobile overlay ── */}
       {sidebarOpen && (
         <div
@@ -115,7 +116,6 @@ export default function Layout() {
 
       {/* ── Main area ── */}
       <div className="flex-1 flex flex-col min-w-0 h-full">
-
         {/* Top bar — mobile only */}
         <div className="lg:hidden flex-none h-14 bg-surface-container-low border-b border-surface-variant flex items-center px-4 gap-3 z-30">
           <button

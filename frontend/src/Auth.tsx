@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from './AuthContext';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { API_URL, XMPP_DOMAIN } from './config';
 
 export default function Auth() {
   const { signIn, signUp, signOut, user } = useAuth();
@@ -30,7 +29,7 @@ export default function Auth() {
     setLoading(true);
     setMessage('');
 
-    const userEmail = email.includes('@') ? email : `${email}@localhost`;
+    const userEmail = email.includes('@') ? email : `${email}@${XMPP_DOMAIN}`;
 
     try {
       if (isSignUp) {

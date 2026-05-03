@@ -100,10 +100,13 @@ export default function RoomsPage() {
                         title="Delete room"
                         className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-error/10 hover:text-error transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100 disabled:opacity-50"
                       >
-                        {deletingId === room.id
-                          ? <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-                          : <span className="material-symbols-outlined text-[18px]">delete</span>
-                        }
+                        {deletingId === room.id ? (
+                          <span className="material-symbols-outlined text-[18px] animate-spin">
+                            progress_activity
+                          </span>
+                        ) : (
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        )}
                       </button>
                     )}
                   </div>
