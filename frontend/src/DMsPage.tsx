@@ -19,6 +19,7 @@ export default function DMsPage() {
   const navigate = useNavigate();
 
   const [showAddFriend, setShowAddFriend] = useState(false);
+  const [showRequests, setShowRequests] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [requestSent, setRequestSent] = useState<string | null>(null);
 
@@ -126,35 +127,92 @@ export default function DMsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {pendingReceived.length > 0 && (
-            <div className="flex items-center gap-2 mr-2">
-              {pendingReceived.map((f) => (
-                <div
-                  key={f.id}
-                  className="flex items-center gap-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl px-3 py-2 shadow-sm"
-                >
-                  <div className="w-8 h-8 rounded-full bg-[#8b5cf6] text-white flex items-center justify-center font-bold text-sm">
-                    {f.requester[0].toUpperCase()}
+          {/* Friend Requests Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowRequests(!showRequests)}
+              className={`relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors ${
+                showRequests || pendingReceived.length > 0
+                  ? 'text-[var(--brand)] bg-[var(--brand)]/10 hover:bg-[var(--brand)]/20'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)]'
+              }`}
+              title="Friend Requests"
+            >
+              <span className="material-symbols-outlined text-[24px]">inbox</span>
+              {pendingReceived.length > 0 && (
+                <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--bg-secondary)]" />
+              )}
+            </button>
+
+            {showRequests && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowRequests(false)} />
+                <div className="absolute right-0 top-14 w-80 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden">
+                  <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-tertiary)] flex justify-between items-center">
+                    <h3 className="font-bold text-[15px] text-[var(--text-normal)]">
+                      Friend Requests
+                    </h3>
+                    <span className="bg-[var(--brand)] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {pendingReceived.length}
+                    </span>
                   </div>
-                  <span className="text-[13px] font-medium text-[var(--text-normal)]">
-                    {f.requester}
-                  </span>
-                  <button
-                    onClick={() => acceptFriendRequest(f.id)}
-                    className="w-7 h-7 rounded-lg bg-[#10b981] text-white flex items-center justify-center hover:bg-[#059669] transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">check</span>
-                  </button>
-                  <button
-                    onClick={() => removeFriendship(f.id)}
-                    className="w-7 h-7 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[#ef4444] hover:text-white transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">close</span>
-                  </button>
+
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {pendingReceived.length === 0 ? (
+                      <div className="p-6 flex flex-col items-center justify-center text-[var(--text-muted)] text-center">
+                        <span className="material-symbols-outlined text-4xl mb-2 opacity-50 text-[var(--brand)]">
+                          inbox
+                        </span>
+                        <p className="text-sm font-medium">No pending requests</p>
+                      </div>
+                    ) : (
+                      pendingReceived.map((f) => (
+                        <div
+                          key={f.id}
+                          className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]/50 hover:bg-[var(--bg-modifier-hover)] transition-colors last:border-0"
+                        >
+                          <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-[15px] shadow-sm">
+                            {f.requester[0].toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[14px] font-bold text-[var(--text-normal)] truncate block">
+                              {f.requester}
+                            </span>
+                            <span className="text-[12px] text-[var(--text-muted)]">
+                              Wants to be friends
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() => {
+                                acceptFriendRequest(f.id);
+                                if (pendingReceived.length === 1) setShowRequests(false);
+                              }}
+                              className="w-8 h-8 rounded-lg bg-[#10b981] text-white flex items-center justify-center hover:bg-[#059669] transition-colors shadow-sm"
+                              title="Accept"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">check</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                removeFriendship(f.id);
+                                if (pendingReceived.length === 1) setShowRequests(false);
+                              }}
+                              className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[#ef4444] hover:text-white transition-colors border border-[var(--border)]"
+                              title="Decline"
+                            >
+                              <span className="material-symbols-outlined text-[16px]">close</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </>
+            )}
+          </div>
+
           <button
             onClick={() => setShowAddFriend(true)}
             className="flex items-center gap-2 bg-[var(--brand)] text-white px-4 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
@@ -200,9 +258,17 @@ export default function DMsPage() {
                   className="flex items-center gap-4 px-6 py-4 hover:bg-[var(--bg-modifier-hover)] cursor-pointer transition-colors border-b border-[var(--border)]/30"
                 >
                   <div className="relative flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-                      {u.username[0].toUpperCase()}
-                    </div>
+                    {u.avatarUrl ? (
+                      <img
+                        src={u.avatarUrl}
+                        alt={`${u.username}'s avatar`}
+                        className="w-12 h-12 rounded-full object-cover shadow-sm bg-[var(--bg-tertiary)]"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                        {u.username[0].toUpperCase()}
+                      </div>
+                    )}
                     <div
                       className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[2.5px] border-[var(--bg-primary)] ${u.online ? 'bg-[#10b981]' : 'bg-[#64748b]'}`}
                     />
@@ -340,9 +406,17 @@ export default function DMsPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="relative">
-                          <div className="w-12 h-12 rounded-full bg-[var(--brand)] flex items-center justify-center font-bold text-white text-lg shadow-sm">
-                            {u.username[0].toUpperCase()}
-                          </div>
+                          {u.avatarUrl ? (
+                            <img
+                              src={u.avatarUrl}
+                              alt={`${u.username}'s avatar`}
+                              className="w-12 h-12 rounded-full object-cover shadow-sm bg-[var(--bg-tertiary)]"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-[var(--brand)] flex items-center justify-center font-bold text-white text-lg shadow-sm">
+                              {u.username[0].toUpperCase()}
+                            </div>
+                          )}
                           <div
                             className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-tertiary)] ${u.online ? 'bg-[#10b981]' : 'bg-[#64748b]'}`}
                           />
