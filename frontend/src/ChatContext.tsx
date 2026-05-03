@@ -55,6 +55,8 @@ interface ChatContextType {
   deleteMessageForEveryone: (messageId: string) => Promise<void>;
   deleteMessageForMe: (messageId: string) => void;
   editMessage: (messageId: string, newBody: string) => Promise<void>;
+  typingUsers: Record<string, number>;
+  sendTypingIndicator: (recipient: string, isTyping: boolean) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -90,6 +92,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const seenMessageKeys = useRef(new Set<string>());
   const [clientInstance, setClientInstance] = useState<Client | null>(null);
   const clientRef = useRef<Client | null>(null);
+  const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
 
   const myUsername = user?.email?.split('@')[0] || '';
 
@@ -244,10 +247,34 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
 
     const handleMessage = (msg: ReceivedMessage) => {
-      if (msg.type !== 'chat') return;
-      if (!msg.body) return;
       const fromFull = msg.from || '';
       const from = fromFull.split('@')[0] || 'Unknown';
+      const myUser = jidRef.current.split('@')[0];
+
+      // Handle typing indicators (XEP-0085)
+      if (msg.chatstate && from !== myUser) {
+        if (msg.chatstate === 'composing') {
+          setTypingUsers(prev => ({ ...prev, [from]: Date.now() }));
+        } else {
+          setTypingUsers(prev => {
+            const next = { ...prev };
+            delete next[from];
+            return next;
+          });
+        }
+      }
+
+      if (msg.type !== 'chat') return;
+      if (!msg.body) return;
+      
+      // Clear typing indicator when a message is actually received
+      if (from !== myUser) {
+        setTypingUsers(prev => {
+          const next = { ...prev };
+          delete next[from];
+          return next;
+        });
+      }
       const msgId = (msg as any).id || `${from}:${msg.body}`;
       addMessage(from, msg.body as string, msgId);
     };
@@ -607,6 +634,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [allUsers]
   );
 
+  const sendTypingIndicator = useCallback(
+    (recipient: string, isTyping: boolean) => {
+      if (!clientInstance) return;
+      clientInstance.sendMessage({
+        to: buildBareJid(recipient),
+        type: 'chat',
+        chatstate: isTyping ? 'composing' : 'active',
+      } as any);
+    },
+    [clientInstance]
+  );
+
   return (
     <ChatContext.Provider
       value={{
@@ -625,6 +664,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         deleteMessageForEveryone,
         deleteMessageForMe,
         editMessage,
+        typingUsers,
+        sendTypingIndicator,
       }}
     >
       {children}

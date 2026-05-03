@@ -59,7 +59,7 @@ export default function Auth() {
         if (!username) {
           throw new Error('Username is required for sign up.');
         }
-        await signUp(email, password);
+        await signUp(email, password, username);
         setMessage('Account created! Check email to confirm, then login.');
         const synced = await syncUserToProsody(username, password);
         if (synced) {

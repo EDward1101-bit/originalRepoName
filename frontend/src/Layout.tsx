@@ -76,7 +76,7 @@ export default function Layout() {
           }
         >
           <span className="material-symbols-outlined text-[22px]">person</span>
-          <span className="font-medium text-[15px]">Direct Messages</span>
+          <span className="font-medium text-[15px]">{t('direct_messages') || 'Direct Messages'}</span>
         </NavLink>
         <NavLink
           to="/rooms"
@@ -87,7 +87,7 @@ export default function Layout() {
           }
         >
           <span className="material-symbols-outlined text-[22px]">explore</span>
-          <span className="font-medium text-[15px]">Explore Servers</span>
+          <span className="font-medium text-[15px]">{t('explore_servers') || 'Explore Servers'}</span>
         </NavLink>
       </div>
 

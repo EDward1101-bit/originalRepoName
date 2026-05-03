@@ -19,6 +19,8 @@ export default function Chat() {
     deleteMessageForEveryone,
     deleteMessageForMe,
     editMessage,
+    typingUsers,
+    sendTypingIndicator,
   } = useChatContext();
   const [input, setInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -29,6 +31,27 @@ export default function Chat() {
   const [editText, setEditText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+    
+    if (!isTyping) {
+      setIsTyping(true);
+      sendTypingIndicator(recipient, true);
+    }
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      sendTypingIndicator(recipient, false);
+    }, 3000);
+  };
 
   const recipient = username || '';
   const recipientProfile = getUserProfile(recipient);
@@ -42,7 +65,12 @@ export default function Chat() {
   );
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      if (isTyping) {
+        setIsTyping(false);
+        sendTypingIndicator(recipient, false);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      }
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [filteredMessages.length]);
 
   const handleSend = async () => {
@@ -334,6 +362,17 @@ export default function Chat() {
             );
           })
         )}
+        
+        {typingUsers[recipient] && (
+          <div className="flex items-center gap-3 px-2 py-1">
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+              <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+              <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+            </div>
+            <span className="text-[12px] text-[var(--text-muted)] font-medium">{displayName} is typing...</span>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -410,7 +449,7 @@ export default function Chat() {
             placeholder={`Message @${recipient}`}
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             disabled={isUploading}
           />

@@ -140,7 +140,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
         .update({ full_name: newUsername.trim() })
         .eq('id', user?.id);
         
-      setUsernameMsg('Profile updated instantly!');
+      setUsernameMsg(t('profile_updated') || 'Your display name has been successfully updated.');
       setNewUsername('');
     } catch (error: any) {
       setUsernameMsg(`Error: ${error.message}`);
@@ -204,13 +204,22 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   </button>
                   {avatarUrl && (
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         setAvatarUrl(null);
                         localStorage.removeItem('aether_avatar');
+                        try {
+                          await updateProfile({ avatar_url: '' });
+                          await supabase
+                            .from('users')
+                            .update({ avatar_url: null } as any)
+                            .eq('id', user?.id);
+                        } catch (err) {
+                          console.error('Failed to sync avatar removal to DB:', err);
+                        }
                       }}
                       className="ml-3 text-[14px] text-[var(--text-muted)] hover:text-[#ef4444] transition-colors font-medium"
                     >
-                      Remove
+                      {t('remove') || 'Remove'}
                     </button>
                   )}
                 </div>
@@ -242,10 +251,10 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             {/* Display Name Change */}
             <div className="mb-8">
               <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
-                Display Name
+                {t('display_name') || 'Display Name'}
               </h3>
               <p className="text-[14px] text-[var(--text-muted)] mb-3">
-                Current: <span className="font-bold text-[var(--text-normal)]">{myUsername}</span>
+                Current: <span className="font-bold text-[var(--text-normal)]">{user?.user_metadata?.display_name || myUsername}</span>
               </p>
               <div className="flex gap-3">
                 <input

@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useChatContext, type Friendship } from './ChatContext';
 import { formatMessageTimestamp } from './utils/time';
+import { supabase } from './supabase';
+import { useTranslation } from './LanguageContext';
 
 export default function DMsPage() {
+  const { t } = useTranslation();
   const {
     allUsers,
     friendships,
@@ -45,18 +48,47 @@ export default function DMsPage() {
     [friendships, myUsername]
   );
 
-  const searchResults = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-    if (!normalizedQuery) return [];
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-    return allUsers
-      .filter((u) => u.username !== myUsername)
-      .filter((u) => u.username.toLowerCase().includes(normalizedQuery))
-      .map((u) => {
-        const relationship = relationshipsByUsername.get(u.username) ?? null;
-        return { ...u, relationship };
-      });
-  }, [allUsers, myUsername, relationshipsByUsername, searchQuery]);
+  // Debounced Optimized Supabase Search
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const debounceId = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('username, full_name, avatar_url')
+        .ilike('username', `%${q}%`)
+        .limit(10);
+
+      if (!error && data) {
+        // Remove duplicates by username in case the DB has any redundant records
+        const uniqueUsers = Array.from(new Map(data.map((u: any) => [u.username, u])).values());
+        
+        setSearchResults(
+          uniqueUsers
+            .filter((u: any) => u.username !== myUsername)
+            .map((u: any) => ({
+              username: u.username,
+              displayName: u.full_name || u.username,
+              avatarUrl: u.avatar_url,
+              online: false,
+              relationship: relationshipsByUsername.get(u.username) ?? null,
+            }))
+        );
+      }
+      setIsSearching(false);
+    }, 300);
+
+    return () => clearTimeout(debounceId);
+  }, [searchQuery, myUsername, relationshipsByUsername]);
 
   // Get last message for each friend (for conversation list preview)
   const getLastMessage = (username: string) => {
@@ -90,7 +122,7 @@ export default function DMsPage() {
       <header className="h-16 flex items-center px-6 border-b border-[var(--border)] shrink-0 z-10 shadow-sm bg-[var(--bg-secondary)]/50 backdrop-blur-sm">
         <div className="flex items-center gap-4 flex-1">
           <span className="material-symbols-outlined text-[var(--brand)] text-[28px]">chat</span>
-          <h1 className="text-[18px] font-bold tracking-tight">Messages</h1>
+          <h1 className="text-[18px] font-bold tracking-tight">{t('messages') || 'Messages'}</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -128,7 +160,7 @@ export default function DMsPage() {
             className="flex items-center gap-2 bg-[var(--brand)] text-white px-4 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
           >
             <span className="material-symbols-outlined text-[20px]">person_add</span>
-            Add Friend
+            {t('add_friend') || 'Add Friend'}
           </button>
         </div>
       </header>
@@ -143,14 +175,14 @@ export default function DMsPage() {
               </span>
             </div>
             <h2 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
-              No conversations yet
+              {t('no_conversations') || 'No conversations yet'}
             </h2>
-            <p className="text-[15px] mb-6">Add a friend to start chatting!</p>
+            <p className="text-[15px] mb-6">{t('add_friend_to_chat') || 'Add a friend to start chatting!'}</p>
             <button
               onClick={() => setShowAddFriend(true)}
               className="bg-[var(--brand)] text-white px-6 py-3 rounded-xl font-bold hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
             >
-              Add Your First Friend
+              {t('add_first_friend') || 'Add Your First Friend'}
             </button>
           </div>
         ) : (
@@ -239,7 +271,7 @@ export default function DMsPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-[var(--border)]">
               <div>
-                <h2 className="text-[20px] font-bold tracking-tight">Add Friend</h2>
+                <h2 className="text-[20px] font-bold tracking-tight">{t('add_friend') || 'Add Friend'}</h2>
                 <p className="text-[14px] text-[var(--text-muted)] mt-1">
                   Search for users by their Aether username.
                 </p>
@@ -263,7 +295,7 @@ export default function DMsPage() {
                 </span>
                 <input
                   type="text"
-                  placeholder="Type a username..."
+                  placeholder={t('search_users') || 'Search users by name...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
@@ -280,6 +312,13 @@ export default function DMsPage() {
                     person_search
                   </span>
                   <p className="text-[15px]">Start typing to search for users</p>
+                </div>
+              ) : isSearching ? (
+                <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)]">
+                  <span className="material-symbols-outlined text-6xl mb-4 opacity-30 animate-spin">
+                    sync
+                  </span>
+                  <p className="text-[15px]">Searching...</p>
                 </div>
               ) : searchResults.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)]">
