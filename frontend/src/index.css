@@ -5,21 +5,21 @@
 @theme {
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
-  
+
   --color-bg-primary: var(--bg-primary);
   --color-bg-secondary: var(--bg-secondary);
   --color-bg-tertiary: var(--bg-tertiary);
   --color-bg-modifier-hover: var(--bg-modifier-hover);
   --color-bg-modifier-active: var(--bg-modifier-active);
   --color-bg-modifier-selected: var(--bg-modifier-selected);
-  
+
   --color-text-normal: var(--text-normal);
   --color-text-muted: var(--text-muted);
   --color-text-link: var(--text-link);
-  
+
   --color-border: var(--border);
   --color-input-bg: var(--input-bg);
-  
+
   --color-status-online: #23a559;
   --color-status-offline: #80848e;
   --color-status-dnd: #da373c;
@@ -30,42 +30,42 @@
 
 :root {
   /* Light Theme */
-  --brand: #5865F2;
-  --brand-hover: #4752C4;
-  
-  --bg-primary: #FFFFFF;
-  --bg-secondary: #F2F3F5;
-  --bg-tertiary: #E3E5E8;
+  --brand: #5865f2;
+  --brand-hover: #4752c4;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f2f3f5;
+  --bg-tertiary: #e3e5e8;
   --bg-modifier-hover: rgba(6, 6, 7, 0.08);
   --bg-modifier-active: rgba(6, 6, 7, 0.12);
   --bg-modifier-selected: rgba(6, 6, 7, 0.16);
-  
+
   --text-normal: #313338;
-  --text-muted: #5C5E66;
-  --text-link: #006CE7;
-  
-  --border: #E3E5E8;
-  --input-bg: #E3E5E8;
+  --text-muted: #5c5e66;
+  --text-link: #006ce7;
+
+  --border: #e3e5e8;
+  --input-bg: #e3e5e8;
 }
 
 .dark {
   /* Dark Theme */
-  --brand: #5865F2;
-  --brand-hover: #4752C4;
-  
+  --brand: #5865f2;
+  --brand-hover: #4752c4;
+
   --bg-primary: #313338;
-  --bg-secondary: #2B2D31;
-  --bg-tertiary: #1E1F22;
+  --bg-secondary: #2b2d31;
+  --bg-tertiary: #1e1f22;
   --bg-modifier-hover: rgba(78, 80, 88, 0.3);
   --bg-modifier-active: rgba(78, 80, 88, 0.48);
   --bg-modifier-selected: rgba(78, 80, 88, 0.6);
-  
-  --text-normal: #DBDEE1;
-  --text-muted: #949BA4;
-  --text-link: #00A8FC;
-  
-  --border: #1E1F22;
-  --input-bg: #1E1F22;
+
+  --text-normal: #dbdee1;
+  --text-muted: #949ba4;
+  --text-link: #00a8fc;
+
+  --border: #1e1f22;
+  --input-bg: #1e1f22;
 }
 
 * {
@@ -77,7 +77,9 @@ body {
   font-family: 'Inter', sans-serif;
   color: var(--text-normal);
   overflow: hidden;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .material-symbols-outlined {

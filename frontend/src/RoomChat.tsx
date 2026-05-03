@@ -53,7 +53,9 @@ export default function RoomChat() {
     return (
       <div className="flex h-full items-center justify-center bg-[var(--bg-primary)]">
         <div className="text-center p-8 bg-[var(--bg-secondary)] rounded-md max-w-md">
-          <span className="material-symbols-outlined text-6xl text-[var(--color-status-dnd)] mb-4 block">error</span>
+          <span className="material-symbols-outlined text-6xl text-[var(--color-status-dnd)] mb-4 block">
+            error
+          </span>
           <h2 className="text-2xl font-bold mb-2 text-[var(--text-normal)]">Room Not Found</h2>
           <p className="text-[var(--text-muted)] mb-6">
             The room &quot;{roomName}&quot; does not exist or you don&apos;t have access to it.
@@ -80,10 +82,12 @@ export default function RoomChat() {
           >
             <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
-          
-          <span className="material-symbols-outlined text-[var(--text-muted)] text-[24px]">tag</span>
+
+          <span className="material-symbols-outlined text-[var(--text-muted)] text-[24px]">
+            tag
+          </span>
           <h2 className="font-bold text-[15px] leading-tight ml-1">{room.name}</h2>
-          
+
           {room.description && (
             <>
               <div className="w-[1px] h-6 bg-[var(--bg-modifier-active)] mx-2" />
@@ -112,10 +116,16 @@ export default function RoomChat() {
               {isConnected ? 'Join Room' : status}
             </button>
           )}
-          <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors" title="Start Voice Call">
+          <button
+            className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors"
+            title="Start Voice Call"
+          >
             <span className="material-symbols-outlined text-[22px]">call</span>
           </button>
-          <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors" title="Start Video Call">
+          <button
+            className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors"
+            title="Start Video Call"
+          >
             <span className="material-symbols-outlined text-[22px]">videocam</span>
           </button>
         </div>
@@ -131,32 +141,45 @@ export default function RoomChat() {
                 <div className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-4">
                   <span className="material-symbols-outlined text-4xl">tag</span>
                 </div>
-                <h2 className="text-xl font-bold text-[var(--text-normal)] mb-2">Welcome to #{room.name}!</h2>
+                <h2 className="text-xl font-bold text-[var(--text-normal)] mb-2">
+                  Welcome to #{room.name}!
+                </h2>
                 <p className="text-sm">This is the start of the #{room.name} channel.</p>
               </div>
             ) : (
               messages.map((msg, index) => {
                 const isSentByMe = msg.sender === myUsername;
-                
+
                 if (msg.type === 'system') {
                   return (
-                    <div key={msg.id || index} className="flex gap-4 -mx-4 px-4 py-1 hover:bg-[var(--bg-modifier-hover)]">
+                    <div
+                      key={msg.id || index}
+                      className="flex gap-4 -mx-4 px-4 py-1 hover:bg-[var(--bg-modifier-hover)]"
+                    >
                       <div className="w-10 shrink-0 flex justify-end">
-                        <span className="material-symbols-outlined text-[var(--color-status-offline)] text-[18px]">info</span>
+                        <span className="material-symbols-outlined text-[var(--color-status-offline)] text-[18px]">
+                          info
+                        </span>
                       </div>
-                      <div className="flex-1 text-[15px] text-[var(--text-muted)]">
-                        {msg.body}
-                      </div>
+                      <div className="flex-1 text-[15px] text-[var(--text-muted)]">{msg.body}</div>
                     </div>
                   );
                 }
 
-                const showHeader = index === 0 || messages[index - 1].sender !== msg.sender || messages[index - 1].type === 'system';
-                
+                const showHeader =
+                  index === 0 ||
+                  messages[index - 1].sender !== msg.sender ||
+                  messages[index - 1].type === 'system';
+
                 return (
-                  <div key={msg.id} className={`flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-4 px-4 py-1 ${!showHeader ? 'mt-[-12px]' : ''}`}>
+                  <div
+                    key={msg.id}
+                    className={`flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-4 px-4 py-1 ${!showHeader ? 'mt-[-12px]' : ''}`}
+                  >
                     {showHeader ? (
-                      <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm mt-1 cursor-pointer hover:opacity-90 ${isSentByMe ? 'bg-[var(--brand)]' : 'bg-[#23a559]'}`}>
+                      <div
+                        className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm mt-1 cursor-pointer hover:opacity-90 ${isSentByMe ? 'bg-[var(--brand)]' : 'bg-[#23a559]'}`}
+                      >
                         {msg.sender?.[0]?.toUpperCase() || '?'}
                       </div>
                     ) : (
@@ -164,7 +187,7 @@ export default function RoomChat() {
                         {/* Time hover could go here */}
                       </div>
                     )}
-                    
+
                     <div className="flex flex-col min-w-0">
                       {showHeader && (
                         <div className="flex items-baseline gap-2 mb-0.5">
@@ -193,7 +216,7 @@ export default function RoomChat() {
               <button className="w-6 h-6 rounded-full bg-[var(--text-muted)] text-[var(--input-bg)] flex items-center justify-center hover:bg-[var(--text-normal)] transition-colors">
                 <span className="material-symbols-outlined text-[16px]">add</span>
               </button>
-              
+
               <input
                 className="flex-1 bg-transparent border-none outline-none text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px]"
                 placeholder={`Message #${room.name}`}
@@ -206,7 +229,7 @@ export default function RoomChat() {
                   }
                 }}
               />
-              
+
               <div className="flex items-center gap-3">
                 <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors">
                   <span className="material-symbols-outlined text-[22px]">gif_box</span>
