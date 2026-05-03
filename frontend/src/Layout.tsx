@@ -43,7 +43,6 @@ export default function Layout() {
     }
   }, [location.pathname, unreadCounts, clearUnread]);
 
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && settingsOpen) {

@@ -279,7 +279,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
       }
       const msgId = (msg as any).id || `${from}:${msg.body}`;
-      
+
       // Increment unread count for the sender or room
       if (from !== myUser) {
         setUnreadCounts((prev) => ({
