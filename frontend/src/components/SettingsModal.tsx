@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../AuthContext';
+import { useTranslation } from '../LanguageContext';
 import { supabase } from '../supabase';
+import { Language } from '../i18n';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -10,22 +12,14 @@ interface SettingsModalProps {
 const LANGUAGES = [
   { code: 'en', label: 'English (US)' },
   { code: 'ro', label: 'Română' },
-  { code: 'fr', label: 'Français' },
-  { code: 'de', label: 'Deutsch' },
-  { code: 'es', label: 'Español' },
-  { code: 'it', label: 'Italiano' },
-  { code: 'pt', label: 'Português' },
-  { code: 'ja', label: '日本語' },
 ];
 
 export default function SettingsModal({ onClose, myUsername }: SettingsModalProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateProfile } = useAuth();
+  const { language, setLanguage, t } = useTranslation();
   const [activeTab, setActiveTab] = useState('General');
   const [theme, setTheme] = useState(
     document.documentElement.classList.contains('dark') ? 'dark' : 'light'
-  );
-  const [language, setLanguage] = useState(
-    () => localStorage.getItem('aether_lang') || 'en'
   );
 
   // Profile picture
@@ -47,11 +41,11 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const tabs = [
-    { name: 'General', icon: 'settings', category: 'USER SETTINGS' },
-    { name: 'My Account', icon: 'person', category: 'USER SETTINGS' },
-    { name: 'Appearance', icon: 'palette', category: 'APP SETTINGS' },
-    { name: 'Voice & Video', icon: 'mic', category: 'APP SETTINGS' },
-    { name: 'Integrations', icon: 'extension', category: 'APP SETTINGS' },
+    { name: 'General', label: t('general'), icon: 'settings', category: 'USER SETTINGS' },
+    { name: 'My Account', label: t('account'), icon: 'person', category: 'USER SETTINGS' },
+    { name: 'Appearance', label: t('appearance'), icon: 'palette', category: 'APP SETTINGS' },
+    { name: 'Voice & Video', label: t('voice_video'), icon: 'mic', category: 'APP SETTINGS' },
+    { name: 'Integrations', label: t('integrations'), icon: 'extension', category: 'APP SETTINGS' },
   ];
 
   const handleSignOut = async () => {
@@ -70,8 +64,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
   };
 
   const handleLanguageChange = (code: string) => {
-    setLanguage(code);
-    localStorage.setItem('aether_lang', code);
+    setLanguage(code as Language);
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +87,17 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
     if (data?.publicUrl) {
       setAvatarUrl(data.publicUrl);
       localStorage.setItem('aether_avatar', data.publicUrl);
+      
+      try {
+        await updateProfile({ avatar_url: data.publicUrl });
+        // Also update the public users table for others to see
+        await supabase
+          .from('users')
+          .update({ avatar_url: data.publicUrl } as any)
+          .eq('id', user?.id);
+      } catch (err) {
+        console.error('Failed to sync avatar to DB:', err);
+      }
     }
   };
 
@@ -127,17 +131,21 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
     }
 
     setIsChangingUsername(true);
-    // Store username in Supabase user metadata
-    const { error } = await supabase.auth.updateUser({
-      data: { display_name: newUsername.trim() },
-    });
-    setIsChangingUsername(false);
-
-    if (error) {
-      setUsernameMsg(`Error: ${error.message}`);
-    } else {
-      setUsernameMsg('Display name updated! Changes will apply on next login.');
+    try {
+      await updateProfile({ display_name: newUsername.trim() });
+      
+      // Update public users table
+      await supabase
+        .from('users')
+        .update({ full_name: newUsername.trim() })
+        .eq('id', user?.id);
+        
+      setUsernameMsg('Profile updated instantly!');
       setNewUsername('');
+    } catch (error: any) {
+      setUsernameMsg(`Error: ${error.message}`);
+    } finally {
+      setIsChangingUsername(false);
     }
   };
 
@@ -146,7 +154,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
       case 'General':
         return (
           <div className="max-w-2xl text-[var(--text-normal)]">
-            <h2 className="text-2xl font-bold mb-2 tracking-tight">General Settings</h2>
+            <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('general')}</h2>
             <p className="text-[var(--text-muted)] text-[15px] mb-8">
               Manage your profile, language, and account preferences.
             </p>
@@ -212,7 +220,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             {/* Language */}
             <div className="mb-8">
               <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
-                Language
+                {t('language')}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {LANGUAGES.map((lang) => (
@@ -269,7 +277,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
       case 'My Account':
         return (
           <div className="max-w-2xl text-[var(--text-normal)]">
-            <h2 className="text-2xl font-bold mb-2 tracking-tight">My Account</h2>
+            <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('account')}</h2>
             <p className="text-[var(--text-muted)] text-[15px] mb-8">
               Manage your account security and credentials.
             </p>
@@ -490,7 +498,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   }`}
                 >
                   <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
-                  {tab.name}
+                  {tab.label}
                 </button>
               </div>
             );
@@ -501,7 +509,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors flex items-center gap-3"
           >
             <span className="material-symbols-outlined text-[20px]">logout</span>
-            Log Out
+            {t('logout')}
           </button>
         </div>
       </div>

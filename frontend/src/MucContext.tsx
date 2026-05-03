@@ -42,6 +42,13 @@ interface MucContextType {
 
 const MucContext = createContext<MucContextType | undefined>(undefined);
 
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+};
+
 export function MucProvider({ children }: { children: ReactNode }) {
   const { client, myUsername, status } = useChatContext();
 
@@ -81,7 +88,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
     const sysKey = `sys:${room.id}:${sysMsgBody}`;
     recentPresenceKeys.current.set(sysKey, Date.now());
 
-    const msgId = crypto.randomUUID();
+    const msgId = generateId();
     seenRoomMessageIds.current.add(msgId);
 
     const sysMsg: RoomMessage = {
@@ -134,7 +141,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
       recentPresenceKeys.current.set(sysKey, now);
 
       const sysMsg: RoomMessage = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         room_id: roomId,
         sender: 'System',
         body: sysMsgBody,
@@ -553,7 +560,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
     if (!room) return;
 
     // Send via XMPP
-    const msgId = crypto.randomUUID();
+    const msgId = generateId();
     client.sendMessage({
       to: roomJid,
       body,

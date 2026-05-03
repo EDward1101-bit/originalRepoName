@@ -3,10 +3,10 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps && npm install vite-plugin-node-polyfills
 
 COPY . .
 
 EXPOSE 5173
 
-CMD ["sh", "-c", "npm install vite-plugin-node-polyfills && npm run dev -- --host"]
+CMD ["npm", "run", "dev", "--", "--host"]

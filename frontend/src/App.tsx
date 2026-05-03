@@ -9,7 +9,10 @@ import { MucProvider } from './MucContext';
 import RoomsPage from './RoomsPage';
 import RoomChat from './RoomChat';
 
+console.log('[App] Starting...');
+
 function AuthenticatedRoutes() {
+  console.log('[App] Rendering AuthenticatedRoutes');
   return (
     <ChatProvider>
       <MucProvider>
@@ -28,9 +31,23 @@ function AuthenticatedRoutes() {
 }
 
 function App() {
-  const { user, password } = useAuth();
+  const { user, password, loading } = useAuth();
+
+  console.log('[App] Auth state:', { user: !!user, hasPassword: !!password, loading });
+
+  if (loading) {
+    return (
+      <div className="h-screen w-full bg-[#0b0714] flex items-center justify-center text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[var(--brand)] border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-[var(--text-muted)] font-medium">Loading Aether...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user || !password) {
+    console.log('[App] No user/password, rendering Auth');
     return <Auth />;
   }
 

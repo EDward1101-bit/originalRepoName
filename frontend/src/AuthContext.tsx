@@ -10,6 +10,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+  updateProfile: (updates: { display_name?: string; avatar_url?: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,7 +31,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [password]);
 
   useEffect(() => {
+    // Safety timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('[Auth] Session check timed out, proceeding...');
+        setLoading(false);
+      }
+    }, 5000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeout);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -40,9 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setLoading(false); // Also set loading false on state change
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -57,16 +72,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setPassword(password);
   };
 
+  const refreshUser = async () => {
+    const { data: { user: updatedUser }, error } = await supabase.auth.getUser();
+    if (!error && updatedUser) {
+      setUser(updatedUser);
+    }
+  };
+
+  const updateProfile = async (updates: { display_name?: string; avatar_url?: string }) => {
+    const { data, error } = await supabase.auth.updateUser({
+      data: updates
+    });
+    if (error) throw error;
+    if (data.user) {
+      setUser(data.user);
+    }
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setPassword(null);
     localStorage.removeItem('xmpp_password');
     localStorage.removeItem('xmpp_jid');
+    localStorage.removeItem('aether_avatar');
+    localStorage.removeItem('aether_lang');
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, password, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, password, signIn, signUp, signOut, refreshUser, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

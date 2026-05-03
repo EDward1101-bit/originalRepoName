@@ -11,7 +11,7 @@ export default function Chat() {
   const navigate = useNavigate();
   const {
     messages,
-    allUsers,
+    getUserProfile,
     sendMessage,
     myUsername,
     deleteMessageForEveryone,
@@ -29,8 +29,10 @@ export default function Chat() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const recipient = username || '';
-  const recipientUser = allUsers.find((u) => u.username === recipient);
-  const isOnline = recipientUser?.online ?? false;
+  const recipientProfile = getUserProfile(recipient);
+  const displayName = recipientProfile?.displayName || recipient;
+  const avatarUrl = recipientProfile?.avatarUrl;
+  const isOnline = recipientProfile?.online ?? false;
 
   const filteredMessages = useMemo(
     () => (recipient ? messages.filter((m) => m.otherParty === recipient) : []),
@@ -126,15 +128,19 @@ export default function Chat() {
           <span className="material-symbols-outlined text-[24px]">arrow_back</span>
         </button>
         <div className="flex items-center gap-4">
-          <div className="relative w-10 h-10 rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-lg shadow-inner">
-            {recipient[0]?.toUpperCase()}
+          <div className="relative w-10 h-10 rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-lg shadow-inner overflow-hidden">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+            ) : (
+              recipient[0]?.toUpperCase()
+            )}
             <div
-              className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-secondary)] ${isOnline ? 'bg-[#10b981]' : 'bg-[#ef4444]'}`}
+              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--bg-secondary)] ${isOnline ? 'bg-[#10b981]' : 'bg-[#ef4444]'}`}
             />
           </div>
           <div>
             <h1 className="text-[16px] font-bold text-[var(--text-normal)] tracking-tight">
-              {recipient}
+              {displayName}
             </h1>
             <p className="text-[13px] text-[var(--text-muted)] font-medium">
               {isOnline ? 'Online' : 'Offline'}
@@ -179,7 +185,10 @@ export default function Chat() {
           filteredMessages.map((msg, index) => {
             const isSent = msg.type === 'sent';
             const showHeader = index === 0 || filteredMessages[index - 1].from !== msg.from;
-            const senderName = isSent ? myUsername : msg.from;
+            const senderProfile = getUserProfile(msg.from);
+            const senderName = isSent ? 'You' : (senderProfile?.displayName || msg.from);
+            const senderAvatar = isSent ? localStorage.getItem('aether_avatar') : senderProfile?.avatarUrl;
+            
             const isDeleted = msg.body === '\u{1F6AB} This message was deleted';
             const canEdit =
               isSent && !isDeleted && Date.now() - msg.time.getTime() < 15 * 60 * 1000;
@@ -190,8 +199,12 @@ export default function Chat() {
                 className={`group flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-6 px-6 py-2 transition-colors relative ${!showHeader ? 'mt-[-16px]' : ''}`}
               >
                 {showHeader ? (
-                  <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm">
-                    {senderName?.[0]?.toUpperCase()}
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm overflow-hidden">
+                    {senderAvatar ? (
+                      <img src={senderAvatar} alt={senderName} className="w-full h-full object-cover" />
+                    ) : (
+                      (isSent ? myUsername : msg.from)[0]?.toUpperCase()
+                    )}
                   </div>
                 ) : (
                   <div className="w-10 shrink-0 flex items-center justify-center"></div>

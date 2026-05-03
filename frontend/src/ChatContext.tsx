@@ -8,8 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
-import * as stanza from 'stanza';
-import { Client } from 'stanza';
+import { createClient, type Client } from 'stanza';
 import type { ReceivedMessage } from 'stanza/protocol';
 import { XMPP_DOMAIN, buildApiUrl, buildBareJid } from './config';
 import { supabase } from './supabase';
@@ -29,6 +28,8 @@ export interface ChatMessage {
 export interface RegisteredUser {
   username: string;
   online: boolean;
+  displayName?: string;
+  avatarUrl?: string;
 }
 
 export interface Friendship {
@@ -44,6 +45,7 @@ interface ChatContextType {
   jid: string;
   messages: ChatMessage[];
   allUsers: RegisteredUser[];
+  getUserProfile: (username: string) => RegisteredUser | undefined;
   friendships: Friendship[];
   myUsername: string;
   sendMessage: (recipient: string, body: string) => Promise<void>;
@@ -56,6 +58,13 @@ interface ChatContextType {
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
+
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+};
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { user, password } = useAuth();
@@ -126,15 +135,29 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const boshUrl = `${window.location.origin}/http-bind`;
 
-    const client = stanza.createClient({
-      jid: fullJid,
-      password: password,
-      server: XMPP_DOMAIN,
-      transports: {
-        bosh: boshUrl,
-      },
-      useStreamManagement: false,
-    }) as unknown as Client;
+    console.log('[XMPP] Initializing client for:', fullJid);
+    let client: Client | null = null;
+    try {
+      client = createClient({
+        jid: fullJid,
+        password: password,
+        server: XMPP_DOMAIN,
+        transports: {
+          bosh: boshUrl,
+        },
+        useStreamManagement: false,
+      });
+    } catch (err) {
+      console.error('[XMPP] Failed to create client:', err);
+      setStatus('Error: Failed to initialize XMPP client');
+      return;
+    }
+
+    if (!client) {
+      console.error('[XMPP] createClient returned null');
+      setStatus('Error: XMPP client is null');
+      return;
+    }
 
     clientRef.current = client;
     setClientInstance(client);
@@ -292,9 +315,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch(buildApiUrl('/api/users'));
-        const data = await res.json();
-        setAllUsers(data.map((u: any) => ({ username: u.username, online: false })));
+        const { data, error } = await supabase
+          .from('users')
+          .select('username, full_name, avatar_url');
+          
+        if (error) throw error;
+        
+        setAllUsers(data.map((u: any) => ({ 
+          username: u.username, 
+          displayName: u.full_name || u.username,
+          avatarUrl: u.avatar_url,
+          online: false 
+        })));
       } catch (err) {
         console.error('Failed to fetch users:', err);
       }
@@ -427,7 +459,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       type: 'chat' as const,
     });
 
-    const msgId = crypto.randomUUID();
+    const msgId = generateId();
     const msgKey = makeMessageKey(myUsername, recipientUsername, body);
     setMessages((prev) => [
       ...prev,
@@ -564,6 +596,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const getUserProfile = useCallback(
+    (username: string) => {
+      return allUsers.find((u) => u.username === username);
+    },
+    [allUsers]
+  );
+
   return (
     <ChatContext.Provider
       value={{
@@ -572,6 +611,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         jid,
         messages: messages.filter((m) => !hiddenMessageIds.has(m.id)),
         allUsers,
+        getUserProfile,
         friendships,
         myUsername,
         sendMessage,

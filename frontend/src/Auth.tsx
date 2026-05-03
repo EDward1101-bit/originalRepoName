@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from './AuthContext';
+import { useTranslation } from './LanguageContext';
 import { API_URL } from './config';
 import { supabase } from './supabase';
 
 export default function Auth() {
   const { signIn, signUp, signOut, user } = useAuth();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -182,7 +184,7 @@ export default function Auth() {
             </span>
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            {isSignUp ? 'Create an account' : 'Welcome to Aether'}
+            {isSignUp ? t('register') : t('welcome')}
           </h1>
           <p className="text-[#94a3b8] text-[15px] mt-2">
             {isSignUp
@@ -243,7 +245,7 @@ export default function Auth() {
                 }}
                 className="text-[#14b8a6] text-[13px] font-medium mt-2 block hover:underline"
               >
-                Forgot your password?
+                {t('forgot_password')}
               </button>
             )}
           </div>
@@ -253,7 +255,7 @@ export default function Auth() {
             disabled={loading}
             className="w-full bg-[#14b8a6] text-white font-bold text-[15px] py-3.5 rounded-xl hover:bg-[#0d9488] transition-colors mt-1 disabled:opacity-50 shadow-md"
           >
-            {loading ? 'Processing...' : isSignUp ? 'Create Account' : 'Sign In'}
+            {loading ? '...' : isSignUp ? t('register') : t('sign_in')}
           </button>
         </form>
 

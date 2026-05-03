@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useChatContext } from './ChatContext';
+import { useTranslation } from './LanguageContext';
 import SettingsModal from './components/SettingsModal';
 
 export default function Layout() {
   const { user } = useAuth();
   const { status, myUsername } = useChatContext();
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -93,11 +95,15 @@ export default function Layout() {
       <div className="p-4 bg-[var(--bg-tertiary)]/50 flex flex-col gap-3">
         <div className="flex items-center gap-3 p-2 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)]/50 shadow-sm">
           <div className="w-10 h-10 rounded-full flex-shrink-0 relative shadow-inner overflow-hidden">
-            {localStorage.getItem('aether_avatar') ? (
-              <img src={localStorage.getItem('aether_avatar')!} alt="Avatar" className="w-full h-full object-cover" />
+            {user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar') ? (
+              <img
+                src={user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar')!}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
             ) : (
               <div className="w-full h-full bg-[var(--brand)] text-white flex items-center justify-center text-sm font-bold">
-                {myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
+                {user?.user_metadata?.display_name?.[0]?.toUpperCase() || myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
               </div>
             )}
             <div
@@ -109,7 +115,7 @@ export default function Layout() {
               {myUsername}
             </p>
             <p className="text-[12px] text-[var(--text-muted)] truncate leading-tight font-medium">
-              {status}
+              {status === 'Connected' ? t('online') : status}
             </p>
           </div>
         </div>
