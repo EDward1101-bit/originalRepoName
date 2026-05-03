@@ -76,7 +76,7 @@ export default function DMsPage() {
           <span className="material-symbols-outlined text-[var(--text-muted)] text-[24px]">
             group
           </span>
-          <h1 className="text-[15px] font-bold leading-tight mr-4">Friends</h1>
+          <h1 className="text-[15px] font-bold leading-tight mr-4">Direct Messages</h1>
 
           <div className="w-[1px] h-6 bg-[var(--bg-modifier-active)] mx-2" />
 
@@ -120,7 +120,7 @@ export default function DMsPage() {
             <div className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-lg p-3 flex items-center focus-within:border-[var(--brand)] transition-colors">
               <input
                 type="text"
-                placeholder="You can add friends with their Discord username."
+                placeholder="You can add people with their Aether username."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
@@ -208,9 +208,7 @@ export default function DMsPage() {
             {pendingReceived.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
                 <div className="w-32 h-32 bg-[var(--bg-tertiary)] rounded-full mb-6"></div>
-                <p className="text-[16px]">
-                  There are no pending friend requests. Here&apos;s a Wumpus for now.
-                </p>
+                <p className="text-[16px]">There are no pending friend requests.</p>
               </div>
             ) : (
               <div className="flex flex-col">
@@ -259,9 +257,7 @@ export default function DMsPage() {
             {acceptedFriends.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
                 <div className="w-32 h-32 bg-[var(--bg-tertiary)] rounded-full mb-6"></div>
-                <p className="text-[16px]">
-                  Wumpus is waiting on friends. You don&apos;t have to though!
-                </p>
+                <p className="text-[16px]">Aether space is empty. Add someone to start chatting!</p>
               </div>
             ) : (
               <div className="flex flex-col">
