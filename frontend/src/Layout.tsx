@@ -30,7 +30,9 @@ export default function Layout() {
         to="/dms"
         className={({ isActive }) =>
           `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm ${
-            isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
+            isActive
+              ? '!rounded-[14px] bg-[var(--brand)] text-white'
+              : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
           }`
         }
       >
@@ -43,7 +45,9 @@ export default function Layout() {
         to="/rooms"
         className={({ isActive }) =>
           `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm ${
-            isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
+            isActive
+              ? '!rounded-[14px] bg-[var(--brand)] text-white'
+              : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
           }`
         }
       >
@@ -76,7 +80,9 @@ export default function Layout() {
           }
         >
           <span className="material-symbols-outlined text-[22px]">person</span>
-          <span className="font-medium text-[15px]">{t('direct_messages') || 'Direct Messages'}</span>
+          <span className="font-medium text-[15px]">
+            {t('direct_messages') || 'Direct Messages'}
+          </span>
         </NavLink>
         <NavLink
           to="/rooms"
@@ -87,7 +93,9 @@ export default function Layout() {
           }
         >
           <span className="material-symbols-outlined text-[22px]">explore</span>
-          <span className="font-medium text-[15px]">{t('explore_servers') || 'Explore Servers'}</span>
+          <span className="font-medium text-[15px]">
+            {t('explore_servers') || 'Explore Servers'}
+          </span>
         </NavLink>
       </div>
 
@@ -103,7 +111,10 @@ export default function Layout() {
               />
             ) : (
               <div className="w-full h-full bg-[var(--brand)] text-white flex items-center justify-center text-sm font-bold">
-                {user?.user_metadata?.display_name?.[0]?.toUpperCase() || myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
+                {user?.user_metadata?.display_name?.[0]?.toUpperCase() ||
+                  myUsername?.[0]?.toUpperCase() ||
+                  user?.email?.[0]?.toUpperCase() ||
+                  '?'}
               </div>
             )}
             <div
@@ -142,8 +153,8 @@ export default function Layout() {
     <div className="bg-[#0b0714] text-[var(--text-normal)] font-body h-screen flex overflow-hidden antialiased">
       {/* Dynamic Background */}
       <div className="fixed inset-0 pointer-events-none opacity-40 z-0">
-         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[var(--brand)] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
-         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#8b5cf6] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[var(--brand)] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#8b5cf6] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
       </div>
 
       {settingsOpen && (

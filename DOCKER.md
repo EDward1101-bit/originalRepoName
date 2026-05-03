@@ -9,11 +9,11 @@ This project runs fully in Docker. No local dependencies needed!
 
 ### Install Docker
 
-| OS | Installation |
-|---|---|
+| OS      | Installation                                                               |
+| ------- | -------------------------------------------------------------------------- |
 | Windows | [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) |
-| macOS | [Docker Desktop](https://docs.docker.com/desktop/install/mac-install/) |
-| Linux | [Docker Engine](https://docs.docker.com/engine/install/) |
+| macOS   | [Docker Desktop](https://docs.docker.com/desktop/install/mac-install/)     |
+| Linux   | [Docker Engine](https://docs.docker.com/engine/install/)                   |
 
 ## Quick Start
 
@@ -37,6 +37,7 @@ cp frontend/.env.example frontend/.env
 ```
 
 **Important**: Edit `backend/.env` and add your Supabase credentials:
+
 ```
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key-here
@@ -54,13 +55,13 @@ docker-compose up --build -d
 
 ### 4. Access the App
 
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8000 |
-| API Docs | http://localhost:8000/docs |
-| Prosody XMPP | localhost:5222 |
-| Prosody HTTP API | http://localhost:5280 |
+| Service          | URL                        |
+| ---------------- | -------------------------- |
+| Frontend         | http://localhost:5173      |
+| Backend API      | http://localhost:8000      |
+| API Docs         | http://localhost:8000/docs |
+| Prosody XMPP     | localhost:5222             |
+| Prosody HTTP API | http://localhost:5280      |
 
 ## Common Commands
 
@@ -94,15 +95,18 @@ docker-compose down -v
 Code changes on your host machine will be reflected in the running containers (hot-reload enabled).
 
 ### Backend
+
 - Python files are mounted directly
 - Uvicorn auto-reloads on changes
 
 ### Prosody (XMPP Server)
+
 - Configuration mounted from `prosody/prosody.cfg.lua`
 - Custom modules in `prosody/modules/`
 - HTTP API available at port 5280 for user management
 
 ### Frontend
+
 - Vite dev server with HMR enabled
 - Changes appear instantly in browser
 
@@ -114,7 +118,7 @@ If port 5173 or 8000 is busy, stop the service or edit `docker-compose.yml`:
 
 ```yaml
 ports:
-  - "5174:5173"  # Changed host port
+  - "5174:5173" # Changed host port
 ```
 
 ### Permission Errors (Linux)
@@ -129,6 +133,7 @@ sudo usermod -aG docker $USER
 ### Windows/Mac Performance
 
 For better performance on Windows/Mac, ensure:
+
 - Docker Desktop has enough resources (8GB RAM recommended)
 - WSL 2 backend enabled (Windows)
 

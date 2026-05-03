@@ -87,7 +87,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
     if (data?.publicUrl) {
       setAvatarUrl(data.publicUrl);
       localStorage.setItem('aether_avatar', data.publicUrl);
-      
+
       try {
         await updateProfile({ avatar_url: data.publicUrl });
         // Also update the public users table for others to see
@@ -133,13 +133,10 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
     setIsChangingUsername(true);
     try {
       await updateProfile({ display_name: newUsername.trim() });
-      
+
       // Update public users table
-      await supabase
-        .from('users')
-        .update({ full_name: newUsername.trim() })
-        .eq('id', user?.id);
-        
+      await supabase.from('users').update({ full_name: newUsername.trim() }).eq('id', user?.id);
+
       setUsernameMsg(t('profile_updated') || 'Your display name has been successfully updated.');
       setNewUsername('');
     } catch (error: any) {
@@ -254,7 +251,10 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                 {t('display_name') || 'Display Name'}
               </h3>
               <p className="text-[14px] text-[var(--text-muted)] mb-3">
-                Current: <span className="font-bold text-[var(--text-normal)]">{user?.user_metadata?.display_name || myUsername}</span>
+                Current:{' '}
+                <span className="font-bold text-[var(--text-normal)]">
+                  {user?.user_metadata?.display_name || myUsername}
+                </span>
               </p>
               <div className="flex gap-3">
                 <input

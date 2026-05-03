@@ -67,22 +67,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, username?: string) => {
-    const { error } = await supabase.auth.signUp({ 
-      email, 
+    const { error } = await supabase.auth.signUp({
+      email,
       password,
       options: {
         data: {
           username: username || email.split('@')[0],
-          display_name: username || email.split('@')[0]
-        }
-      }
+          display_name: username || email.split('@')[0],
+        },
+      },
     });
     if (error) throw error;
     setPassword(password);
   };
 
   const refreshUser = async () => {
-    const { data: { user: updatedUser }, error } = await supabase.auth.getUser();
+    const {
+      data: { user: updatedUser },
+      error,
+    } = await supabase.auth.getUser();
     if (!error && updatedUser) {
       setUser(updatedUser);
     }
@@ -90,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateProfile = async (updates: { display_name?: string; avatar_url?: string }) => {
     const { data, error } = await supabase.auth.updateUser({
-      data: updates
+      data: updates,
     });
     if (error) throw error;
     if (data.user) {
@@ -109,7 +112,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, password, signIn, signUp, signOut, refreshUser, updateProfile }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        password,
+        signIn,
+        signUp,
+        signOut,
+        refreshUser,
+        updateProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

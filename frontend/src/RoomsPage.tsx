@@ -53,7 +53,9 @@ export default function RoomsPage() {
       {/* Header */}
       <div className="flex-none p-6 bg-[var(--bg-secondary)] border-b border-[var(--border)] text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand)] to-[#8b5cf6] opacity-20 pointer-events-none" />
-        <h1 className="text-2xl font-bold relative z-10">{t('explore_servers') || 'Explore Servers'}</h1>
+        <h1 className="text-2xl font-bold relative z-10">
+          {t('explore_servers') || 'Explore Servers'}
+        </h1>
         <p className="text-sm text-[var(--text-muted)] mt-1 relative z-10">
           Find a community to chat, play, and hang out with.
         </p>
@@ -131,7 +133,9 @@ export default function RoomsPage() {
 
         {/* Create Room Sidebar */}
         <div className="w-[340px] bg-[var(--bg-secondary)] border-l border-[var(--border)] flex flex-col p-6 overflow-y-auto hidden lg:flex">
-          <h2 className="text-[20px] font-bold text-[var(--text-normal)] mb-6">{t('create_server') || 'Create a Server'}</h2>
+          <h2 className="text-[20px] font-bold text-[var(--text-normal)] mb-6">
+            {t('create_server') || 'Create a Server'}
+          </h2>
           <form onSubmit={handleCreateRoom} className="flex flex-col gap-4">
             <div>
               <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">
@@ -150,7 +154,8 @@ export default function RoomsPage() {
             </div>
             <div>
               <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">
-                {t('description') || 'Description'} <span className="lowercase text-[10px]">(optional)</span>
+                {t('description') || 'Description'}{' '}
+                <span className="lowercase text-[10px]">(optional)</span>
               </label>
               <textarea
                 value={newRoomDesc}
@@ -165,7 +170,7 @@ export default function RoomsPage() {
               disabled={isCreating || !newRoomName.trim()}
               className="mt-2 w-full bg-[var(--brand)] text-white py-2.5 rounded-[3px] font-medium hover:bg-[var(--brand-hover)] disabled:opacity-50 transition-colors"
             >
-              {isCreating ? '...' : (t('create') || 'Create')}
+              {isCreating ? '...' : t('create') || 'Create'}
             </button>
           </form>
         </div>

@@ -24,6 +24,7 @@ hotfix/description
 ```
 
 Examples:
+
 ```
 feature/user-authentication
 feature/xmpp-server-setup
@@ -36,6 +37,7 @@ hotfix/security-patch
 PR titles follow commit message format: `<type>: <description>`
 
 Examples:
+
 - `feat: add user authentication endpoints`
 - `fix: resolve message timeout issue`
 - `refactor: restructure database models`
@@ -43,12 +45,14 @@ Examples:
 ## Coding Standards
 
 ### Python (Backend)
+
 - Follow PEP 8
 - Use type hints (strict mypy)
 - Run `ruff check .` before committing
 - Run `mypy .` to verify types
 
 ### TypeScript/React (Frontend)
+
 - Use strict TypeScript
 - Run `npm run lint` before committing
 - Run `npm run typecheck` to verify types
@@ -59,6 +63,7 @@ Examples:
 Format: `<type>: <description>`
 
 Types:
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation
@@ -67,6 +72,7 @@ Types:
 - `chore`: Maintenance
 
 Example:
+
 ```
 feat: add user authentication endpoints
 fix: resolve message delivery timeout issue
@@ -85,6 +91,7 @@ docker-compose up --build
 ```
 
 Access:
+
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs

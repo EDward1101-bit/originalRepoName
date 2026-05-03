@@ -20,6 +20,7 @@ docker-compose up --build
 ```
 
 Access:
+
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
@@ -61,8 +62,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines and [DOCKER.md
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|-------|------------|
+| Layer    | Technology                              |
+| -------- | --------------------------------------- |
 | Frontend | React 19, Vite, TypeScript, TailwindCSS |
-| Backend | Python 3.12, FastAPI, Slixmpp |
-| Database | Supabase |
+| Backend  | Python 3.12, FastAPI, Slixmpp           |
+| Database | Supabase                                |

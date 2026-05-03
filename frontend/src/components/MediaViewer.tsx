@@ -16,16 +16,12 @@ export default function MediaViewer({ url }: MediaViewerProps) {
       {/* Inline Media */}
       <div className="mt-2 max-w-sm rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--bg-tertiary)] shadow-sm">
         {isVideo ? (
-          <video 
-            src={url} 
-            controls 
-            className="w-full max-h-[300px] object-contain bg-black" 
-          />
+          <video src={url} controls className="w-full max-h-[300px] object-contain bg-black" />
         ) : (
-          <img 
-            src={url} 
-            alt="Attachment" 
-            className="w-full max-h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+          <img
+            src={url}
+            alt="Attachment"
+            className="w-full max-h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
             onClick={toggleFullscreen}
           />
         )}

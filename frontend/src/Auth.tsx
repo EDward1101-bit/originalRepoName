@@ -187,9 +187,7 @@ export default function Auth() {
             {isSignUp ? t('register') : t('welcome')}
           </h1>
           <p className="text-[#94a3b8] text-[15px] mt-2">
-            {isSignUp
-              ? 'Set up your Aether identity'
-              : 'Sign in to continue chatting'}
+            {isSignUp ? 'Set up your Aether identity' : 'Sign in to continue chatting'}
           </p>
         </div>
 

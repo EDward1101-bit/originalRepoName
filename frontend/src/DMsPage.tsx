@@ -71,7 +71,7 @@ export default function DMsPage() {
       if (!error && data) {
         // Remove duplicates by username in case the DB has any redundant records
         const uniqueUsers = Array.from(new Map(data.map((u: any) => [u.username, u])).values());
-        
+
         setSearchResults(
           uniqueUsers
             .filter((u: any) => u.username !== myUsername)
@@ -177,7 +177,9 @@ export default function DMsPage() {
             <h2 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
               {t('no_conversations') || 'No conversations yet'}
             </h2>
-            <p className="text-[15px] mb-6">{t('add_friend_to_chat') || 'Add a friend to start chatting!'}</p>
+            <p className="text-[15px] mb-6">
+              {t('add_friend_to_chat') || 'Add a friend to start chatting!'}
+            </p>
             <button
               onClick={() => setShowAddFriend(true)}
               className="bg-[var(--brand)] text-white px-6 py-3 rounded-xl font-bold hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
@@ -271,7 +273,9 @@ export default function DMsPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-[var(--border)]">
               <div>
-                <h2 className="text-[20px] font-bold tracking-tight">{t('add_friend') || 'Add Friend'}</h2>
+                <h2 className="text-[20px] font-bold tracking-tight">
+                  {t('add_friend') || 'Add Friend'}
+                </h2>
                 <p className="text-[14px] text-[var(--text-muted)] mt-1">
                   Search for users by their Aether username.
                 </p>
@@ -325,9 +329,7 @@ export default function DMsPage() {
                   <span className="material-symbols-outlined text-6xl mb-4 opacity-30">
                     search_off
                   </span>
-                  <p className="text-[15px]">
-                    No users found matching &quot;{searchQuery}&quot;
-                  </p>
+                  <p className="text-[15px]">No users found matching &quot;{searchQuery}&quot;</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">

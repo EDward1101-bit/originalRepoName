@@ -31,22 +31,22 @@ export default function Chat() {
   const [editText, setEditText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
-    
+
     if (!isTyping) {
       setIsTyping(true);
       sendTypingIndicator(recipient, true);
     }
-    
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
+
     typingTimeoutRef.current = setTimeout(() => {
       setIsTyping(false);
       sendTypingIndicator(recipient, false);
@@ -65,12 +65,12 @@ export default function Chat() {
   );
 
   useEffect(() => {
-      if (isTyping) {
-        setIsTyping(false);
-        sendTypingIndicator(recipient, false);
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      }
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isTyping) {
+      setIsTyping(false);
+      sendTypingIndicator(recipient, false);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [filteredMessages.length]);
 
   const handleSend = async () => {
@@ -216,16 +216,16 @@ export default function Chat() {
             const isSent = msg.type === 'sent';
             const showHeader = index === 0 || filteredMessages[index - 1].from !== msg.from;
             const senderProfile = getUserProfile(msg.from);
-            
+
             // For 'You', use the most fresh metadata from AuthContext
-            const senderName = isSent 
-              ? (user?.user_metadata?.display_name || 'You') 
-              : (senderProfile?.displayName || msg.from);
-              
-            const senderAvatar = isSent 
-              ? (user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar')) 
+            const senderName = isSent
+              ? user?.user_metadata?.display_name || 'You'
+              : senderProfile?.displayName || msg.from;
+
+            const senderAvatar = isSent
+              ? user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar')
               : senderProfile?.avatarUrl;
-            
+
             const isDeleted = msg.body === '\u{1F6AB} This message was deleted';
             const canEdit =
               isSent && !isDeleted && Date.now() - msg.time.getTime() < 15 * 60 * 1000;
@@ -238,7 +238,11 @@ export default function Chat() {
                 {showHeader ? (
                   <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm overflow-hidden">
                     {senderAvatar ? (
-                      <img src={senderAvatar} alt={senderName} className="w-full h-full object-cover" />
+                      <img
+                        src={senderAvatar}
+                        alt={senderName}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       (isSent ? myUsername : msg.from)[0]?.toUpperCase()
                     )}
@@ -362,15 +366,26 @@ export default function Chat() {
             );
           })
         )}
-        
+
         {typingUsers[recipient] && (
           <div className="flex items-center gap-3 px-2 py-1">
             <div className="flex gap-1">
-              <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-              <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-              <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              <span
+                className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce"
+                style={{ animationDelay: '0ms' }}
+              ></span>
+              <span
+                className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce"
+                style={{ animationDelay: '150ms' }}
+              ></span>
+              <span
+                className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce"
+                style={{ animationDelay: '300ms' }}
+              ></span>
             </div>
-            <span className="text-[12px] text-[var(--text-muted)] font-medium">{displayName} is typing...</span>
+            <span className="text-[12px] text-[var(--text-muted)] font-medium">
+              {displayName} is typing...
+            </span>
           </div>
         )}
         <div ref={messagesEndRef} />

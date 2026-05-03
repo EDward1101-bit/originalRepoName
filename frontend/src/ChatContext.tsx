@@ -254,9 +254,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       // Handle typing indicators (XEP-0085)
       if (msg.chatstate && from !== myUser) {
         if (msg.chatstate === 'composing') {
-          setTypingUsers(prev => ({ ...prev, [from]: Date.now() }));
+          setTypingUsers((prev) => ({ ...prev, [from]: Date.now() }));
         } else {
-          setTypingUsers(prev => {
+          setTypingUsers((prev) => {
             const next = { ...prev };
             delete next[from];
             return next;
@@ -266,10 +266,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       if (msg.type !== 'chat') return;
       if (!msg.body) return;
-      
+
       // Clear typing indicator when a message is actually received
       if (from !== myUser) {
-        setTypingUsers(prev => {
+        setTypingUsers((prev) => {
           const next = { ...prev };
           delete next[from];
           return next;
@@ -345,15 +345,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const { data, error } = await supabase
           .from('users')
           .select('username, full_name, avatar_url');
-          
+
         if (error) throw error;
-        
-        setAllUsers(data.map((u: any) => ({ 
-          username: u.username, 
-          displayName: u.full_name || u.username,
-          avatarUrl: u.avatar_url,
-          online: false 
-        })));
+
+        setAllUsers(
+          data.map((u: any) => ({
+            username: u.username,
+            displayName: u.full_name || u.username,
+            avatarUrl: u.avatar_url,
+            online: false,
+          }))
+        );
       } catch (err) {
         console.error('Failed to fetch users:', err);
       }
@@ -577,9 +579,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setMessages((prev) =>
-      prev.map((m) => (m.id === messageId ? { ...m, body: editedBody } : m))
-    );
+    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, body: editedBody } : m)));
   };
 
   const sendFriendRequest = async (targetUsername: string) => {
