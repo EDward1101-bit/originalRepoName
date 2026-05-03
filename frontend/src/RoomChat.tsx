@@ -23,12 +23,10 @@ export default function RoomChat() {
   );
 
   useEffect(() => {
-    // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleJoin = async () => {
-    console.log('[RoomChat] handleJoin clicked for roomName:', roomName);
     if (roomName) {
       await joinRoom(roomName);
     }
@@ -53,18 +51,18 @@ export default function RoomChat() {
 
   if (!room) {
     return (
-      <div className="flex h-full items-center justify-center bg-surface">
-        <div className="text-center p-8 bg-surface-container rounded-3xl max-w-md">
-          <span className="material-symbols-outlined text-6xl text-error mb-4 block">error</span>
-          <h2 className="text-2xl font-bold mb-2 text-on-surface">Room Not Found</h2>
-          <p className="text-on-surface-variant mb-6">
+      <div className="flex h-full items-center justify-center bg-[var(--bg-primary)]">
+        <div className="text-center p-8 bg-[var(--bg-secondary)] rounded-md max-w-md">
+          <span className="material-symbols-outlined text-6xl text-[var(--color-status-dnd)] mb-4 block">error</span>
+          <h2 className="text-2xl font-bold mb-2 text-[var(--text-normal)]">Room Not Found</h2>
+          <p className="text-[var(--text-muted)] mb-6">
             The room &quot;{roomName}&quot; does not exist or you don&apos;t have access to it.
           </p>
           <button
             onClick={() => navigate('/rooms')}
-            className="bg-primary text-on-primary px-6 py-3 rounded-xl font-bold transition-all hover:bg-primary/90"
+            className="bg-[var(--brand)] text-white px-6 py-2 rounded font-medium transition-all hover:bg-[var(--brand-hover)]"
           >
-            Back to Rooms
+            Back to Servers
           </button>
         </div>
       </div>
@@ -72,101 +70,116 @@ export default function RoomChat() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-surface">
+    <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-normal)]">
       {/* Header */}
-      <div className="h-16 flex-none border-b border-surface-variant bg-surface-container-low flex items-center justify-between px-6">
-        <div className="flex items-center gap-4">
+      <div className="h-12 flex-none border-b border-[var(--border)] flex items-center justify-between px-4 z-10 shadow-sm">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/rooms')}
-            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-variant transition-colors text-on-surface-variant"
+            className="lg:hidden w-8 h-8 rounded flex items-center justify-center hover:text-[var(--text-normal)] text-[var(--text-muted)] transition-colors"
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
           </button>
-          <div>
-            <h2 className="font-bold flex items-center gap-2 text-on-surface text-lg">
-              <span className="text-primary">#</span> {room.name}
-            </h2>
-            {room.description && (
-              <p className="text-xs text-on-surface-variant truncate max-w-md">
+          
+          <span className="material-symbols-outlined text-[var(--text-muted)] text-[24px]">tag</span>
+          <h2 className="font-bold text-[15px] leading-tight ml-1">{room.name}</h2>
+          
+          {room.description && (
+            <>
+              <div className="w-[1px] h-6 bg-[var(--bg-modifier-active)] mx-2" />
+              <p className="text-[13px] font-medium text-[var(--text-muted)] truncate max-w-md">
                 {room.description}
               </p>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
-        <div>
+        <div className="flex items-center gap-4">
           {isJoined ? (
             <button
               onClick={handleLeave}
-              className="px-4 py-2 text-sm font-medium text-error hover:bg-error/10 rounded-xl transition-colors border border-error/20"
+              className="text-[var(--text-muted)] hover:text-[var(--color-status-dnd)] transition-colors"
+              title="Leave Room"
             >
-              Leave Room
+              <span className="material-symbols-outlined text-[22px]">logout</span>
             </button>
           ) : (
             <button
               onClick={handleJoin}
               disabled={!isConnected}
-              title={!isConnected ? `XMPP ${status}` : 'Join this room'}
-              className="px-6 py-2 text-sm font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-xs bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white font-medium px-3 py-1 rounded transition-colors disabled:opacity-50"
             >
               {isConnected ? 'Join Room' : status}
             </button>
           )}
+          <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors" title="Start Voice Call">
+            <span className="material-symbols-outlined text-[22px]">call</span>
+          </button>
+          <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors" title="Start Video Call">
+            <span className="material-symbols-outlined text-[22px]">videocam</span>
+          </button>
         </div>
       </div>
 
       {/* Main Content Area */}
       {isJoined ? (
-        <div className="flex-1 flex flex-col min-h-0 bg-surface">
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
+          <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
             {messages.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-on-surface-variant">
-                <div className="w-16 h-16 bg-surface-variant rounded-full flex items-center justify-center mb-4 text-primary">
-                  <span className="material-symbols-outlined text-3xl">waving_hand</span>
+              <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] opacity-60">
+                <div className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-4">
+                  <span className="material-symbols-outlined text-4xl">tag</span>
                 </div>
-                <p>Welcome to #{room.name}!</p>
-                <p className="text-sm mt-1">Be the first to send a message.</p>
+                <h2 className="text-xl font-bold text-[var(--text-normal)] mb-2">Welcome to #{room.name}!</h2>
+                <p className="text-sm">This is the start of the #{room.name} channel.</p>
               </div>
             ) : (
-              messages.map((msg, idx) => {
+              messages.map((msg, index) => {
                 const isSentByMe = msg.sender === myUsername;
-
+                
                 if (msg.type === 'system') {
                   return (
-                    <div key={msg.id || idx} className="flex justify-center my-2">
-                      <span className="bg-surface-variant text-on-surface-variant px-4 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 shadow-sm">
-                        <span className="material-symbols-outlined text-[14px]">info</span>
+                    <div key={msg.id || index} className="flex gap-4 -mx-4 px-4 py-1 hover:bg-[var(--bg-modifier-hover)]">
+                      <div className="w-10 shrink-0 flex justify-end">
+                        <span className="material-symbols-outlined text-[var(--color-status-offline)] text-[18px]">info</span>
+                      </div>
+                      <div className="flex-1 text-[15px] text-[var(--text-muted)]">
                         {msg.body}
-                      </span>
+                      </div>
                     </div>
                   );
                 }
 
+                const showHeader = index === 0 || messages[index - 1].sender !== msg.sender || messages[index - 1].type === 'system';
+                
                 return (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${isSentByMe ? 'items-end' : 'items-start'} group max-w-full`}
-                  >
-                    {!isSentByMe && (
-                      <span className="text-xs text-on-surface-variant mb-1 ml-1 font-medium">
-                        {msg.sender}
-                      </span>
+                  <div key={msg.id} className={`flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-4 px-4 py-1 ${!showHeader ? 'mt-[-12px]' : ''}`}>
+                    {showHeader ? (
+                      <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm mt-1 cursor-pointer hover:opacity-90 ${isSentByMe ? 'bg-[var(--brand)]' : 'bg-[#23a559]'}`}>
+                        {msg.sender?.[0]?.toUpperCase() || '?'}
+                      </div>
+                    ) : (
+                      <div className="w-10 shrink-0 flex items-center justify-center">
+                        {/* Time hover could go here */}
+                      </div>
                     )}
-                    <div className="flex items-end gap-2 max-w-[85%]">
-                      <div
-                        className={`px-5 py-3 rounded-2xl shadow-sm text-[15px] ${
-                          isSentByMe
-                            ? 'bg-primary text-on-primary rounded-br-sm'
-                            : 'bg-surface-container-high text-on-surface rounded-bl-sm border border-surface-variant'
-                        } wrap-break-word whitespace-pre-wrap leading-relaxed`}
-                      >
+                    
+                    <div className="flex flex-col min-w-0">
+                      {showHeader && (
+                        <div className="flex items-baseline gap-2 mb-0.5">
+                          <span className="font-medium text-[15px] text-[var(--text-normal)] hover:underline cursor-pointer">
+                            {msg.sender}
+                          </span>
+                          <span className="text-xs text-[var(--text-muted)] font-medium">
+                            {formatMessageTimestamp(msg.created_at)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="text-[15px] text-[var(--text-normal)] whitespace-pre-wrap break-words leading-[1.375rem]">
                         {msg.body}
                       </div>
                     </div>
-                    <span className="text-[10px] text-on-surface-variant mt-1 opacity-0 group-hover:opacity-100 transition-opacity mx-1">
-                      {formatMessageTimestamp(msg.created_at)}
-                    </span>
                   </div>
                 );
               })
@@ -175,35 +188,42 @@ export default function RoomChat() {
           </div>
 
           {/* Input Area */}
-          <div className="p-4 bg-surface-container-lowest border-t border-surface-variant">
-            <form
-              onSubmit={handleSend}
-              className="flex gap-3 bg-surface-container-low p-2 rounded-3xl border border-surface-variant focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all"
-            >
+          <div className="px-4 pb-6 pt-2">
+            <div className="flex items-center gap-3 bg-[var(--input-bg)] rounded-lg p-2.5">
+              <button className="w-6 h-6 rounded-full bg-[var(--text-muted)] text-[var(--input-bg)] flex items-center justify-center hover:bg-[var(--text-normal)] transition-colors">
+                <span className="material-symbols-outlined text-[16px]">add</span>
+              </button>
+              
               <input
+                className="flex-1 bg-transparent border-none outline-none text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px]"
+                placeholder={`Message #${room.name}`}
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={`Message #${room.name}...`}
-                className="flex-1 bg-transparent border-none outline-none px-4 text-on-surface placeholder:text-on-surface-variant"
-                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSend(e as unknown as React.FormEvent);
+                  }
+                }}
               />
-              <button
-                type="submit"
-                disabled={!input.trim()}
-                className="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-on-primary disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors shrink-0 shadow-sm"
-              >
-                <span className="material-symbols-outlined text-[20px]">send</span>
-              </button>
-            </form>
+              
+              <div className="flex items-center gap-3">
+                <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors">
+                  <span className="material-symbols-outlined text-[22px]">gif_box</span>
+                </button>
+                <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors">
+                  <span className="material-symbols-outlined text-[22px]">sentiment_satisfied</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center bg-surface text-on-surface-variant">
-          <div className="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mb-6 text-primary shadow-sm border border-surface-variant">
+        <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)]">
+          <div className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-6 text-[var(--text-normal)] shadow-sm">
             <span className="material-symbols-outlined text-4xl">lock</span>
           </div>
-          <h3 className="text-xl font-bold text-on-surface mb-2">
+          <h3 className="text-xl font-bold text-[var(--text-normal)] mb-2">
             You haven&apos;t joined this room
           </h3>
           <p className="mb-6 text-center max-w-sm">
@@ -212,8 +232,7 @@ export default function RoomChat() {
           <button
             onClick={handleJoin}
             disabled={!isConnected}
-            title={!isConnected ? `XMPP ${status}` : 'Join this room'}
-            className="px-8 py-3 font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-8 py-3 font-medium text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)] rounded transition-all disabled:opacity-50"
           >
             {isConnected ? `Join #${room.name}` : status}
           </button>
