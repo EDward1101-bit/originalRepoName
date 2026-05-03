@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from './AuthContext';
-import { API_URL, XMPP_DOMAIN } from './config';
+import { API_URL } from './config';
 
 export default function Auth() {
   const { signIn, signUp, signOut, user } = useAuth();

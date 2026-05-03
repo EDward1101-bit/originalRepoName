@@ -209,7 +209,7 @@ export default function DMsPage() {
               <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
                 <div className="w-32 h-32 bg-[var(--bg-tertiary)] rounded-full mb-6"></div>
                 <p className="text-[16px]">
-                  There are no pending friend requests. Here's a Wumpus for now.
+                  There are no pending friend requests. Here&apos;s a Wumpus for now.
                 </p>
               </div>
             ) : (
@@ -260,7 +260,7 @@ export default function DMsPage() {
               <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
                 <div className="w-32 h-32 bg-[var(--bg-tertiary)] rounded-full mb-6"></div>
                 <p className="text-[16px]">
-                  Wumpus is waiting on friends. You don't have to though!
+                  Wumpus is waiting on friends. You don&apos;t have to though!
                 </p>
               </div>
             ) : (

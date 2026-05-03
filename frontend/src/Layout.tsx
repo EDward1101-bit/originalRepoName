@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useChatContext } from './ChatContext';
 import SettingsModal from './components/SettingsModal';
 
 export default function Layout() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const { status, myUsername } = useChatContext();
-  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
