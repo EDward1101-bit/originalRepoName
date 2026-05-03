@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChatContext } from './ChatContext';
+import { useAuth } from './AuthContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
@@ -9,6 +10,7 @@ import EmojiPicker from 'emoji-picker-react';
 export default function Chat() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     messages,
     getUserProfile,
@@ -186,8 +188,15 @@ export default function Chat() {
             const isSent = msg.type === 'sent';
             const showHeader = index === 0 || filteredMessages[index - 1].from !== msg.from;
             const senderProfile = getUserProfile(msg.from);
-            const senderName = isSent ? 'You' : (senderProfile?.displayName || msg.from);
-            const senderAvatar = isSent ? localStorage.getItem('aether_avatar') : senderProfile?.avatarUrl;
+            
+            // For 'You', use the most fresh metadata from AuthContext
+            const senderName = isSent 
+              ? (user?.user_metadata?.display_name || 'You') 
+              : (senderProfile?.displayName || msg.from);
+              
+            const senderAvatar = isSent 
+              ? (user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar')) 
+              : senderProfile?.avatarUrl;
             
             const isDeleted = msg.body === '\u{1F6AB} This message was deleted';
             const canEdit =

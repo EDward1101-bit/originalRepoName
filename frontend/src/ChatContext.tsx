@@ -348,15 +348,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     fetchUsers();
     fetchFriendships();
 
-    const channel = supabase
-      .channel('friendships_changes')
+    // Subscribe to changes (one channel for both users and friendships)
+    const realtimeChannel = supabase
+      .channel(`chat_realtime_${Math.random().toString(36).substring(7)}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
+        fetchUsers();
+      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => {
         fetchFriendships();
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(realtimeChannel);
     };
   }, [user, myUsername]);
 

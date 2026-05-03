@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMucContext } from './MucContext';
 import { useChatContext } from './ChatContext';
+import { useAuth } from './AuthContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
@@ -12,7 +13,8 @@ export default function RoomChat() {
   const navigate = useNavigate();
   const { availableRooms, joinedRooms, joinRoom, leaveRoom, roomMessages, sendRoomMessage } =
     useMucContext();
-  const { myUsername, status } = useChatContext();
+  const { user } = useAuth();
+  const { myUsername, status, getUserProfile } = useChatContext();
   const isConnected = status === 'Connected';
 
   const [input, setInput] = useState('');
@@ -207,6 +209,15 @@ export default function RoomChat() {
             ) : (
               messages.map((msg, index) => {
                 const isSentByMe = msg.sender === myUsername;
+                const senderProfile = getUserProfile(msg.sender);
+                
+                const senderName = isSentByMe 
+                  ? (user?.user_metadata?.display_name || 'You') 
+                  : (senderProfile?.displayName || msg.sender);
+                
+                const senderAvatar = isSentByMe 
+                  ? (user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar')) 
+                  : senderProfile?.avatarUrl;
 
                 if (msg.type === 'system') {
                   return (
@@ -238,9 +249,13 @@ export default function RoomChat() {
                   >
                     {showHeader ? (
                       <div
-                        className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm ${isSentByMe ? 'bg-[var(--brand)]' : 'bg-[#8b5cf6]'}`}
+                        className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm overflow-hidden ${isSentByMe ? 'bg-[var(--brand)]' : 'bg-[#8b5cf6]'}`}
                       >
-                        {msg.sender?.[0]?.toUpperCase() || '?'}
+                        {senderAvatar ? (
+                          <img src={senderAvatar} alt={senderName} className="w-full h-full object-cover" />
+                        ) : (
+                          senderName?.[0]?.toUpperCase() || '?'
+                        )}
                       </div>
                     ) : (
                       <div className="w-10 shrink-0 flex items-center justify-center"></div>
@@ -250,7 +265,7 @@ export default function RoomChat() {
                       {showHeader && (
                         <div className="flex items-baseline gap-2 mb-1">
                           <span className="font-bold text-[15px] text-[var(--text-normal)]">
-                            {msg.sender}
+                            {senderName}
                           </span>
                           <span className="text-[12px] text-[var(--text-muted)] font-medium">
                             {formatMessageTimestamp(msg.created_at)}
