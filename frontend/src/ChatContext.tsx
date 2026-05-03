@@ -315,15 +315,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     client.on('connected', handleConnected);
     client.on('session:started', handleSessionStarted);
     client.on('disconnected', handleDisconnected);
+    // @ts-expect-error stanza client types don't include 'error' in AgentEvents
     client.on('error', handleError);
     client.on('message', handleMessage);
     client.on('presence', handlePresence);
     client.on('raw:incoming', handleRawIncoming);
 
-    client.connect().catch((err) => {
+    try {
+      client.connect();
+    } catch (err: any) {
       console.error('Connect error:', err);
       setStatus('Error: ' + err.message);
-    });
+    }
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
