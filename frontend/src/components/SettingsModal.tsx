@@ -1,25 +1,57 @@
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../AuthContext';
+import { supabase } from '../supabase';
 
 interface SettingsModalProps {
   onClose: () => void;
   myUsername?: string;
 }
 
+const LANGUAGES = [
+  { code: 'en', label: 'English (US)' },
+  { code: 'ro', label: 'Română' },
+  { code: 'fr', label: 'Français' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'es', label: 'Español' },
+  { code: 'it', label: 'Italiano' },
+  { code: 'pt', label: 'Português' },
+  { code: 'ja', label: '日本語' },
+];
+
 export default function SettingsModal({ onClose, myUsername }: SettingsModalProps) {
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState('My Account');
+  const [activeTab, setActiveTab] = useState('General');
   const [theme, setTheme] = useState(
     document.documentElement.classList.contains('dark') ? 'dark' : 'light'
   );
+  const [language, setLanguage] = useState(
+    () => localStorage.getItem('aether_lang') || 'en'
+  );
+
+  // Profile picture
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    () => localStorage.getItem('aether_avatar') || null
+  );
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  // Username change
+  const [newUsername, setNewUsername] = useState('');
+  const [usernameMsg, setUsernameMsg] = useState('');
+  const [isChangingUsername, setIsChangingUsername] = useState(false);
+
+  // Password change
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMsg, setPasswordMsg] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const tabs = [
-    { name: 'My Account', category: 'USER SETTINGS' },
-    { name: 'Profiles', category: 'USER SETTINGS' },
-    { name: 'Appearance', category: 'APP SETTINGS' },
-    { name: 'Language', category: 'APP SETTINGS' },
-    { name: 'Voice & Video', category: 'APP SETTINGS' },
-    { name: 'Integrations', category: 'APP SETTINGS' },
+    { name: 'General', icon: 'settings', category: 'USER SETTINGS' },
+    { name: 'My Account', icon: 'person', category: 'USER SETTINGS' },
+    { name: 'Appearance', icon: 'palette', category: 'APP SETTINGS' },
+    { name: 'Voice & Video', icon: 'mic', category: 'APP SETTINGS' },
+    { name: 'Integrations', icon: 'extension', category: 'APP SETTINGS' },
   ];
 
   const handleSignOut = async () => {
@@ -29,6 +61,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
   const handleThemeChange = (newTheme: 'dark' | 'light') => {
     setTheme(newTheme);
+    localStorage.setItem('aether_theme', newTheme);
     if (newTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -36,115 +69,398 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
     }
   };
 
+  const handleLanguageChange = (code: string) => {
+    setLanguage(code);
+    localStorage.setItem('aether_lang', code);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `avatar_${myUsername}_${Date.now()}.${fileExt}`;
+
+    const { error } = await supabase.storage.from('chat-media').upload(fileName, file);
+    setIsUploadingAvatar(false);
+
+    if (error) {
+      console.error('Avatar upload error:', error);
+      return;
+    }
+
+    const { data } = supabase.storage.from('chat-media').getPublicUrl(fileName);
+    if (data?.publicUrl) {
+      setAvatarUrl(data.publicUrl);
+      localStorage.setItem('aether_avatar', data.publicUrl);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordMsg('Password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg('Passwords do not match.');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setIsChangingPassword(false);
+
+    if (error) {
+      setPasswordMsg(`Error: ${error.message}`);
+    } else {
+      setPasswordMsg('Password updated successfully!');
+      setNewPassword('');
+      setConfirmPassword('');
+    }
+  };
+
+  const handleChangeUsername = async () => {
+    if (!newUsername.trim()) {
+      setUsernameMsg('Username cannot be empty.');
+      return;
+    }
+
+    setIsChangingUsername(true);
+    // Store username in Supabase user metadata
+    const { error } = await supabase.auth.updateUser({
+      data: { display_name: newUsername.trim() },
+    });
+    setIsChangingUsername(false);
+
+    if (error) {
+      setUsernameMsg(`Error: ${error.message}`);
+    } else {
+      setUsernameMsg('Display name updated! Changes will apply on next login.');
+      setNewUsername('');
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
+      case 'General':
+        return (
+          <div className="max-w-2xl text-[var(--text-normal)]">
+            <h2 className="text-2xl font-bold mb-2 tracking-tight">General Settings</h2>
+            <p className="text-[var(--text-muted)] text-[15px] mb-8">
+              Manage your profile, language, and account preferences.
+            </p>
+
+            {/* Profile Picture */}
+            <div className="mb-8">
+              <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
+                Profile Picture
+              </h3>
+              <div className="flex items-center gap-6">
+                <div className="relative group">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="Avatar"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-[var(--border)] shadow-md"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-3xl font-bold border-2 border-[var(--border)] shadow-md">
+                      {myUsername?.[0]?.toUpperCase() || '?'}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                    className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <span className="material-symbols-outlined text-white text-[28px]">
+                      {isUploadingAvatar ? 'hourglass_empty' : 'photo_camera'}
+                    </span>
+                  </button>
+                  <input
+                    type="file"
+                    ref={avatarInputRef}
+                    onChange={handleAvatarUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                </div>
+                <div>
+                  <button
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                    className="bg-[var(--brand)] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    {isUploadingAvatar ? 'Uploading...' : 'Change Avatar'}
+                  </button>
+                  {avatarUrl && (
+                    <button
+                      onClick={() => {
+                        setAvatarUrl(null);
+                        localStorage.removeItem('aether_avatar');
+                      }}
+                      className="ml-3 text-[14px] text-[var(--text-muted)] hover:text-[#ef4444] transition-colors font-medium"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Language */}
+            <div className="mb-8">
+              <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
+                Language
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {LANGUAGES.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => handleLanguageChange(lang.code)}
+                    className={`px-4 py-3 rounded-xl text-[14px] font-medium border transition-all ${
+                      language === lang.code
+                        ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-sm'
+                        : 'bg-[var(--bg-tertiary)] text-[var(--text-normal)] border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)]'
+                    }`}
+                  >
+                    {lang.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Display Name Change */}
+            <div className="mb-8">
+              <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
+                Display Name
+              </h3>
+              <p className="text-[14px] text-[var(--text-muted)] mb-3">
+                Current: <span className="font-bold text-[var(--text-normal)]">{myUsername}</span>
+              </p>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  placeholder="Enter new display name"
+                  className="flex-1 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] outline-none focus:border-[var(--brand)] transition-colors"
+                />
+                <button
+                  onClick={handleChangeUsername}
+                  disabled={isChangingUsername || !newUsername.trim()}
+                  className="bg-[var(--brand)] text-white px-6 py-3 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors disabled:opacity-50 shadow-sm"
+                >
+                  {isChangingUsername ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+              {usernameMsg && (
+                <p
+                  className={`mt-2 text-[13px] font-medium ${usernameMsg.includes('Error') ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+                >
+                  {usernameMsg}
+                </p>
+              )}
+            </div>
+          </div>
+        );
+
       case 'My Account':
         return (
           <div className="max-w-2xl text-[var(--text-normal)]">
-            <h2 className="text-xl font-bold mb-6">My Account</h2>
-            <div className="bg-[var(--bg-tertiary)] rounded-xl p-4 flex gap-4 items-center">
-              <div className="w-20 h-20 bg-[var(--brand)] rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                {myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
-              </div>
+            <h2 className="text-2xl font-bold mb-2 tracking-tight">My Account</h2>
+            <p className="text-[var(--text-muted)] text-[15px] mb-8">
+              Manage your account security and credentials.
+            </p>
+
+            {/* Account Info Card */}
+            <div className="bg-[var(--bg-tertiary)] rounded-2xl p-6 flex gap-5 items-center mb-8 border border-[var(--border)]">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Avatar"
+                  className="w-16 h-16 rounded-full object-cover shadow-md"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-[var(--brand)] rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                  {myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
+                </div>
+              )}
               <div className="flex-1">
-                <div className="text-lg font-bold">{myUsername}</div>
-                <div className="text-sm text-[var(--text-muted)]">{user?.email}</div>
+                <div className="text-[18px] font-bold">{myUsername}</div>
+                <div className="text-[14px] text-[var(--text-muted)]">{user?.email}</div>
               </div>
-              <button className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white px-4 py-2 rounded transition-colors text-sm font-semibold">
-                Edit User Profile
-              </button>
+            </div>
+
+            {/* Change Password */}
+            <div className="mb-8">
+              <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
+                Change Password
+              </h3>
+              <div className="flex flex-col gap-3">
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="New password (min. 6 characters)"
+                  className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] outline-none focus:border-[var(--brand)] transition-colors"
+                />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                  className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] outline-none focus:border-[var(--brand)] transition-colors"
+                />
+                <div className="flex items-center gap-3 mt-1">
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={isChangingPassword || !newPassword}
+                    className="bg-[var(--brand)] text-white px-6 py-3 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors disabled:opacity-50 shadow-sm"
+                  >
+                    {isChangingPassword ? 'Updating...' : 'Update Password'}
+                  </button>
+                  {passwordMsg && (
+                    <p
+                      className={`text-[13px] font-medium ${passwordMsg.includes('Error') ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+                    >
+                      {passwordMsg}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Danger Zone */}
+            <div>
+              <h3 className="text-[13px] font-bold text-[#ef4444] mb-4 uppercase tracking-wide">
+                Danger Zone
+              </h3>
+              <div className="bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-[15px]">Delete Account</p>
+                    <p className="text-[13px] text-[var(--text-muted)]">
+                      Permanently delete your account and all data.
+                    </p>
+                  </div>
+                  <button className="bg-[#ef4444] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[#dc2626] transition-colors shadow-sm">
+                    Delete Account
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         );
+
       case 'Appearance':
         return (
           <div className="max-w-2xl text-[var(--text-normal)]">
-            <h2 className="text-xl font-bold mb-6">Appearance</h2>
-            <div className="mb-4">
-              <h3 className="text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-wide">
+            <h2 className="text-2xl font-bold mb-2 tracking-tight">Appearance</h2>
+            <p className="text-[var(--text-muted)] text-[15px] mb-8">
+              Customize the look and feel of Aether.
+            </p>
+
+            <div className="mb-8">
+              <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
                 Theme
               </h3>
               <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="theme"
-                    checked={theme === 'dark'}
-                    onChange={() => handleThemeChange('dark')}
-                    className="accent-[var(--brand)]"
-                  />
-                  <span>Dark</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="theme"
-                    checked={theme === 'light'}
-                    onChange={() => handleThemeChange('light')}
-                    className="accent-[var(--brand)]"
-                  />
-                  <span>Light</span>
-                </label>
+                <button
+                  onClick={() => handleThemeChange('dark')}
+                  className={`flex-1 p-6 rounded-2xl border-2 transition-all ${
+                    theme === 'dark'
+                      ? 'border-[var(--brand)] bg-[var(--brand)]/10 shadow-md'
+                      : 'border-[var(--border)] hover:border-[var(--text-muted)]'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-[#0b0714] mb-4 border border-[#241a38] flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[#14b8a6]">dark_mode</span>
+                  </div>
+                  <p className="font-bold text-[16px] text-left">Dark</p>
+                  <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
+                    Easy on the eyes
+                  </p>
+                </button>
+                <button
+                  onClick={() => handleThemeChange('light')}
+                  className={`flex-1 p-6 rounded-2xl border-2 transition-all ${
+                    theme === 'light'
+                      ? 'border-[var(--brand)] bg-[var(--brand)]/10 shadow-md'
+                      : 'border-[var(--border)] hover:border-[var(--text-muted)]'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-xl bg-[#f8fafc] mb-4 border border-[#e2e8f0] flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[#0d9488]">light_mode</span>
+                  </div>
+                  <p className="font-bold text-[16px] text-left">Light</p>
+                  <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
+                    Clean and bright
+                  </p>
+                </button>
               </div>
             </div>
           </div>
         );
-      case 'Language':
-        return (
-          <div className="max-w-2xl text-[var(--text-normal)]">
-            <h2 className="text-xl font-bold mb-6">Language</h2>
-            <select className="bg-[var(--input-bg)] border-none text-[var(--text-normal)] rounded p-2 outline-none w-64">
-              <option value="en">English (US)</option>
-              <option value="ro">Română</option>
-              <option value="fr">Français</option>
-            </select>
-          </div>
-        );
-      case 'Integrations':
-        return (
-          <div className="max-w-2xl text-[var(--text-normal)]">
-            <h2 className="text-xl font-bold mb-6">Integrations</h2>
-            <p className="text-[var(--text-muted)] text-sm mb-4">Connect your favorite apps.</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-[var(--bg-tertiary)] p-4 rounded-xl flex items-center justify-between">
-                <span className="font-bold">Third-party Service Placeholder</span>
-                <button className="text-[var(--brand)] text-sm font-semibold">Connect</button>
-              </div>
-            </div>
-          </div>
-        );
+
       case 'Voice & Video':
         return (
           <div className="max-w-2xl text-[var(--text-normal)]">
-            <h2 className="text-xl font-bold mb-6">Voice & Video Settings</h2>
-            <p className="text-[var(--text-muted)] text-sm">
+            <h2 className="text-2xl font-bold mb-2 tracking-tight">Voice &amp; Video</h2>
+            <p className="text-[var(--text-muted)] text-[15px] mb-8">
               Select your input and output devices.
             </p>
-            {/* Placeholders for settings */}
-            <div className="mt-4 grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">
+                <label className="block text-[13px] font-bold text-[var(--text-muted)] uppercase mb-3 tracking-wide">
                   Input Device
                 </label>
-                <select className="bg-[var(--input-bg)] border-none text-[var(--text-normal)] rounded p-2 outline-none w-full">
+                <select className="w-full bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] rounded-xl px-4 py-3 outline-none focus:border-[var(--brand)] transition-colors">
                   <option>Default</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">
+                <label className="block text-[13px] font-bold text-[var(--text-muted)] uppercase mb-3 tracking-wide">
                   Output Device
                 </label>
-                <select className="bg-[var(--input-bg)] border-none text-[var(--text-normal)] rounded p-2 outline-none w-full">
+                <select className="w-full bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] rounded-xl px-4 py-3 outline-none focus:border-[var(--brand)] transition-colors">
                   <option>Default</option>
                 </select>
               </div>
             </div>
           </div>
         );
+
+      case 'Integrations':
+        return (
+          <div className="max-w-2xl text-[var(--text-normal)]">
+            <h2 className="text-2xl font-bold mb-2 tracking-tight">Integrations</h2>
+            <p className="text-[var(--text-muted)] text-[15px] mb-8">
+              Connect your favorite apps and services.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-[var(--bg-tertiary)] p-5 rounded-2xl flex items-center justify-between border border-[var(--border)]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#8b5cf6] flex items-center justify-center">
+                    <span className="material-symbols-outlined text-white text-[22px]">
+                      extension
+                    </span>
+                  </div>
+                  <span className="font-bold text-[15px]">Coming Soon</span>
+                </div>
+                <button className="text-[var(--brand)] text-[14px] font-bold opacity-50 cursor-not-allowed">
+                  Connect
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="text-[var(--text-normal)]">
-            <h2 className="text-xl font-bold mb-4">{activeTab}</h2>
+            <h2 className="text-2xl font-bold mb-4 tracking-tight">{activeTab}</h2>
             <p className="text-[var(--text-muted)]">This section is under construction.</p>
           </div>
         );
@@ -154,35 +470,37 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
   return (
     <div className="fixed inset-0 z-[100] flex bg-[var(--bg-primary)]">
       {/* Sidebar */}
-      <div className="w-[30%] bg-[var(--bg-secondary)] flex justify-end">
+      <div className="w-[30%] bg-[var(--bg-secondary)] flex justify-end border-r border-[var(--border)]">
         <div className="w-64 py-14 px-4 flex flex-col gap-1">
           {tabs.map((tab, idx) => {
             const isNewCategory = idx === 0 || tabs[idx - 1].category !== tab.category;
             return (
               <div key={tab.name}>
                 {isNewCategory && (
-                  <div className="text-xs font-bold text-[var(--text-muted)] mb-2 mt-4 px-2 uppercase">
+                  <div className="text-[11px] font-bold text-[var(--text-muted)] mb-2 mt-6 px-3 uppercase tracking-widest">
                     {tab.category}
                   </div>
                 )}
                 <button
                   onClick={() => setActiveTab(tab.name)}
-                  className={`w-full text-left px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                  className={`w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium transition-all flex items-center gap-3 ${
                     activeTab === tab.name
-                      ? 'bg-[var(--bg-modifier-selected)] text-[var(--text-normal)]'
+                      ? 'bg-[var(--brand)]/10 text-[var(--brand)]'
                       : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
                   }`}
                 >
+                  <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
                   {tab.name}
                 </button>
               </div>
             );
           })}
-          <div className="h-[1px] bg-[var(--border)] my-2 mx-2" />
+          <div className="h-[1px] bg-[var(--border)] my-3 mx-2" />
           <button
             onClick={handleSignOut}
-            className="w-full text-left px-3 py-1.5 rounded text-sm font-medium text-[var(--color-status-dnd)] hover:bg-[var(--bg-modifier-hover)] transition-colors"
+            className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors flex items-center gap-3"
           >
+            <span className="material-symbols-outlined text-[20px]">logout</span>
             Log Out
           </button>
         </div>
@@ -196,11 +514,11 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
         <div className="absolute top-14 right-10 flex flex-col items-center gap-1">
           <button
             onClick={onClose}
-            className="w-9 h-9 border-2 border-[var(--text-muted)] rounded-full flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] transition-colors"
+            className="w-10 h-10 border-2 border-[var(--text-muted)] rounded-full flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--text-normal)] hover:text-[var(--text-normal)] transition-colors"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
-          <span className="text-xs font-semibold text-[var(--text-muted)]">ESC</span>
+          <span className="text-[11px] font-bold text-[var(--text-muted)] tracking-wide">ESC</span>
         </div>
       </div>
     </div>

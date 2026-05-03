@@ -4,18 +4,31 @@ import { useChatContext } from './ChatContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
+import EmojiPicker from 'emoji-picker-react';
 
 export default function Chat() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const { messages, allUsers, sendMessage, myUsername } = useChatContext();
+  const {
+    messages,
+    allUsers,
+    sendMessage,
+    myUsername,
+    deleteMessageForEveryone,
+    deleteMessageForMe,
+    editMessage,
+  } = useChatContext();
   const [input, setInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const recipient = username || '';
-
   const recipientUser = allUsers.find((u) => u.username === recipient);
   const isOnline = recipientUser?.online ?? false;
 
@@ -28,106 +41,156 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [filteredMessages.length]);
 
-  const handleSend = () => {
-    if (!input.trim() || !recipient) return;
-    sendMessage(recipient, input);
-    setInput('');
+  const handleSend = async () => {
+    if (!recipient) return;
+    if (!input.trim() && stagedFiles.length === 0) return;
+
+    setShowEmojiPicker(false);
+
+    // Upload all staged files first
+    if (stagedFiles.length > 0) {
+      setIsUploading(true);
+      const uploadPromises = stagedFiles.map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+        const { error } = await supabase.storage.from('chat-media').upload(fileName, file);
+        if (error) {
+          console.error('Error uploading file:', error);
+          return null;
+        }
+        const { data } = supabase.storage.from('chat-media').getPublicUrl(fileName);
+        return data?.publicUrl || null;
+      });
+
+      const urls = await Promise.all(uploadPromises);
+      setIsUploading(false);
+
+      for (const url of urls) {
+        if (url) {
+          await sendMessage(recipient, url);
+        }
+      }
+      setStagedFiles([]);
+    }
+
+    // Send text message if any
+    if (input.trim()) {
+      await sendMessage(recipient, input);
+      setInput('');
+    }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !recipient) return;
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    setStagedFiles((prev) => [...prev, ...Array.from(files)]);
+    // Reset the input so the same file can be selected again
+    e.target.value = '';
+  };
 
-    setIsUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-
-    const { error } = await supabase.storage.from('chat-media').upload(fileName, file);
-    setIsUploading(false);
-
-    if (error) {
-      console.error('Error uploading file:', error);
-      alert('Failed to upload file. Make sure the chat-media bucket exists and is public.');
-      return;
-    }
-
-    const { data } = supabase.storage.from('chat-media').getPublicUrl(fileName);
-
-    if (data?.publicUrl) {
-      sendMessage(recipient, data.publicUrl);
-    }
+  const removeStagedFile = (index: number) => {
+    setStagedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const isMediaUrl = (text: string) => {
     return text.startsWith('http') && text.includes('supabase') && text.includes('chat-media');
   };
 
+  const handleStartEdit = (msgId: string, currentBody: string) => {
+    setEditingId(msgId);
+    setEditText(currentBody);
+    setActiveMenu(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingId && editText.trim()) {
+      await editMessage(editingId, editText);
+      setEditingId(null);
+      setEditText('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditText('');
+  };
+
   return (
     <div className="flex flex-col h-full bg-[var(--bg-primary)]">
       {/* Chat Header */}
-      <header className="h-12 flex items-center px-4 border-b border-[var(--border)] flex-shrink-0 z-10 shadow-sm">
+      <header className="h-16 flex items-center px-6 border-b border-[var(--border)] flex-shrink-0 z-10 shadow-sm bg-[var(--bg-secondary)]/50 backdrop-blur-sm">
         <button
           onClick={() => navigate('/dms')}
-          className="lg:hidden mr-4 w-8 h-8 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors cursor-pointer"
+          className="lg:hidden mr-4 w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors cursor-pointer"
         >
-          <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+          <span className="material-symbols-outlined text-[24px]">arrow_back</span>
         </button>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <span className="material-symbols-outlined text-[var(--text-muted)] text-[24px]">
-              alternate_email
-            </span>
+        <div className="flex items-center gap-4">
+          <div className="relative w-10 h-10 rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-lg shadow-inner">
+            {recipient[0]?.toUpperCase()}
+            <div
+              className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-secondary)] ${isOnline ? 'bg-[#10b981]' : 'bg-[#ef4444]'}`}
+            />
           </div>
           <div>
-            <h1 className="text-[15px] font-bold text-[var(--text-normal)] leading-tight">
+            <h1 className="text-[16px] font-bold text-[var(--text-normal)] tracking-tight">
               {recipient}
             </h1>
+            <p className="text-[13px] text-[var(--text-muted)] font-medium">
+              {isOnline ? 'Online' : 'Offline'}
+            </p>
           </div>
-          <div
-            className={`w-2 h-2 rounded-full ${isOnline ? 'bg-[var(--color-status-online)]' : 'bg-[var(--color-status-dnd)]'}`}
-          />
         </div>
 
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-2">
           <button
-            className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
             title="Start Voice Call"
           >
-            <span className="material-symbols-outlined text-[22px]">call</span>
+            <span className="material-symbols-outlined text-[24px]">call</span>
           </button>
           <button
-            className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
             title="Start Video Call"
           >
-            <span className="material-symbols-outlined text-[22px]">videocam</span>
+            <span className="material-symbols-outlined text-[24px]">videocam</span>
           </button>
         </div>
       </header>
 
       {/* Message Feed */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
+      <div
+        className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5"
+        onClick={() => setActiveMenu(null)}
+      >
         {filteredMessages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] opacity-60">
-            <div className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-4xl">alternate_email</span>
+          <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] opacity-80">
+            <div className="w-24 h-24 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-6 shadow-inner border border-[var(--border)]">
+              <span className="material-symbols-outlined text-5xl text-[var(--brand)]">
+                chat_bubble
+              </span>
             </div>
-            <h2 className="text-xl font-bold text-[var(--text-normal)] mb-2">
-              This is the beginning of your direct message history with @{recipient}
+            <h2 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
+              Say hello to {recipient}!
             </h2>
+            <p className="text-[15px]">This is the beginning of your direct message history.</p>
           </div>
         ) : (
           filteredMessages.map((msg, index) => {
             const isSent = msg.type === 'sent';
-            const showHeader = index === 0 || messages[index - 1].from !== msg.from;
+            const showHeader = index === 0 || filteredMessages[index - 1].from !== msg.from;
             const senderName = isSent ? myUsername : msg.from;
+            const isDeleted = msg.body === '\u{1F6AB} This message was deleted';
+            const canEdit =
+              isSent && !isDeleted && Date.now() - msg.time.getTime() < 15 * 60 * 1000;
 
             return (
               <div
                 key={msg.id}
-                className={`flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-4 px-4 py-1 ${!showHeader ? 'mt-[-12px]' : ''}`}
+                className={`group flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-6 px-6 py-2 transition-colors relative ${!showHeader ? 'mt-[-16px]' : ''}`}
               >
                 {showHeader ? (
-                  <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm mt-1 cursor-pointer hover:opacity-90">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm">
                     {senderName?.[0]?.toUpperCase()}
                   </div>
                 ) : (
@@ -136,23 +199,115 @@ export default function Chat() {
 
                 <div className="flex flex-col min-w-0 w-full">
                   {showHeader && (
-                    <div className="flex items-baseline gap-2 mb-0.5">
-                      <span className="font-medium text-[15px] text-[var(--text-normal)] hover:underline cursor-pointer">
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="font-bold text-[15px] text-[var(--text-normal)]">
                         {senderName}
                       </span>
-                      <span className="text-xs text-[var(--text-muted)] font-medium">
+                      <span className="text-[12px] text-[var(--text-muted)] font-medium">
                         {formatMessageTimestamp(msg.time)}
                       </span>
                     </div>
                   )}
-                  {isMediaUrl(msg.body) ? (
+
+                  {editingId === msg.id ? (
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="text"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit();
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        className="bg-[var(--bg-secondary)] border border-[var(--brand)] rounded-xl px-4 py-2 text-[var(--text-normal)] text-[15px] outline-none"
+                        autoFocus
+                      />
+                      <div className="flex gap-2 text-[13px]">
+                        <button
+                          onClick={handleSaveEdit}
+                          className="text-[var(--brand)] font-medium hover:underline"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="text-[var(--text-muted)] hover:underline"
+                        >
+                          Cancel
+                        </button>
+                        <span className="text-[var(--text-muted)]">
+                          (press Enter to save, Esc to cancel)
+                        </span>
+                      </div>
+                    </div>
+                  ) : isMediaUrl(msg.body) ? (
                     <MediaViewer url={msg.body} />
                   ) : (
-                    <div className="text-[15px] text-[var(--text-normal)] whitespace-pre-wrap break-words leading-[1.375rem]">
+                    <div
+                      className={`text-[15px] whitespace-pre-wrap break-words leading-[1.4rem] ${isDeleted ? 'text-[var(--text-muted)] italic' : 'text-[var(--text-normal)]'}`}
+                    >
                       {msg.body}
                     </div>
                   )}
                 </div>
+
+                {/* Message Actions Button */}
+                {!isDeleted && !editingId && (
+                  <div className="absolute right-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenu(activeMenu === msg.id ? null : msg.id);
+                      }}
+                      className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+                    </button>
+
+                    {activeMenu === msg.id && (
+                      <div className="absolute right-0 top-9 z-50 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl shadow-2xl py-2 min-w-[200px] overflow-hidden">
+                        {canEdit && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStartEdit(msg.id, msg.body);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] flex items-center gap-3"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                            Edit Message
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteMessageForMe(msg.id);
+                            setActiveMenu(null);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] flex items-center gap-3"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">
+                            visibility_off
+                          </span>
+                          Delete for Me
+                        </button>
+                        {isSent && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteMessageForEveryone(msg.id);
+                              setActiveMenu(null);
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-[14px] text-[#ef4444] hover:bg-[#ef4444]/10 flex items-center gap-3"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                            Delete for Everyone
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })
@@ -161,27 +316,75 @@ export default function Chat() {
       </div>
 
       {/* Composition Area */}
-      <footer className="px-4 pb-6 pt-2">
-        <div className="flex items-center gap-3 bg-[var(--input-bg)] rounded-lg p-2.5">
+      <footer className="px-6 pb-6 pt-2 relative">
+        {showEmojiPicker && (
+          <div className="absolute bottom-[80px] right-6 z-50 shadow-2xl rounded-2xl overflow-hidden border border-[var(--border)]">
+            <EmojiPicker
+              onEmojiClick={(emojiData) => setInput((prev) => prev + emojiData.emoji)}
+              theme={'dark' as any}
+              lazyLoadEmojis={true}
+            />
+          </div>
+        )}
+
+        {/* Staged Files Preview */}
+        {stagedFiles.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-3 p-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl">
+            {stagedFiles.map((file, index) => (
+              <div
+                key={`${file.name}-${index}`}
+                className="relative group/staged w-20 h-20 rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center justify-center"
+              >
+                {file.type.startsWith('image/') ? (
+                  <img
+                    src={URL.createObjectURL(file)}
+                    alt={file.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : file.type.startsWith('video/') ? (
+                  <span className="material-symbols-outlined text-[32px] text-[var(--text-muted)]">
+                    videocam
+                  </span>
+                ) : (
+                  <span className="material-symbols-outlined text-[32px] text-[var(--text-muted)]">
+                    description
+                  </span>
+                )}
+                <button
+                  onClick={() => removeStagedFile(index)}
+                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#ef4444] text-white flex items-center justify-center opacity-0 group-hover/staged:opacity-100 transition-opacity shadow-md"
+                >
+                  <span className="material-symbols-outlined text-[14px]">close</span>
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1 py-0.5 truncate text-center">
+                  {file.name}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center gap-3 bg-[var(--bg-secondary)] border border-[var(--border)]/50 rounded-2xl p-2 shadow-sm focus-within:border-[var(--brand)]/50 focus-within:ring-1 focus-within:ring-[var(--brand)]/20 transition-all">
           <input
             type="file"
             ref={fileInputRef}
-            onChange={handleFileUpload}
+            onChange={handleFileSelect}
             className="hidden"
             accept="image/*,video/*,image/gif"
+            multiple
           />
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className={`w-6 h-6 rounded-full bg-[var(--text-muted)] text-[var(--input-bg)] flex items-center justify-center hover:bg-[var(--text-normal)] transition-colors ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--brand)] hover:text-white transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            <span className="material-symbols-outlined text-[16px]">
+            <span className="material-symbols-outlined text-[22px]">
               {isUploading ? 'hourglass_empty' : 'add'}
             </span>
           </button>
 
           <input
-            className="flex-1 bg-transparent border-none outline-none text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px]"
+            className="flex-1 bg-transparent border-none outline-none text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] px-2"
             placeholder={`Message @${recipient}`}
             type="text"
             value={input}
@@ -190,13 +393,28 @@ export default function Chat() {
             disabled={isUploading}
           />
 
-          <div className="flex items-center gap-3">
-            <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors">
-              <span className="material-symbols-outlined text-[22px]">gif_box</span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)] transition-colors"
+            >
+              <span className="material-symbols-outlined text-[24px]">gif_box</span>
             </button>
-            <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors">
-              <span className="material-symbols-outlined text-[22px]">sentiment_satisfied</span>
+            <button
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${showEmojiPicker ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)]'}`}
+            >
+              <span className="material-symbols-outlined text-[24px]">sentiment_satisfied</span>
             </button>
+            {(input.trim() || stagedFiles.length > 0) && (
+              <button
+                onClick={handleSend}
+                disabled={isUploading}
+                className="w-10 h-10 rounded-xl bg-[var(--brand)] text-white flex items-center justify-center hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[22px]">send</span>
+              </button>
+            )}
           </div>
         </div>
       </footer>

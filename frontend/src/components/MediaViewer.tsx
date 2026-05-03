@@ -13,54 +13,51 @@ export default function MediaViewer({ url }: MediaViewerProps) {
 
   return (
     <>
-      {/* Inline Thumbnail */}
-      <div
-        className="mt-2 max-w-sm rounded-lg overflow-hidden border border-[var(--border)] bg-[var(--bg-tertiary)] cursor-pointer hover:opacity-90 transition-opacity"
-        onClick={toggleFullscreen}
-      >
+      {/* Inline Media */}
+      <div className="mt-2 max-w-sm rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--bg-tertiary)] shadow-sm">
         {isVideo ? (
-          <video src={url} className="w-full max-h-64 object-cover" />
+          <video 
+            src={url} 
+            controls 
+            className="w-full max-h-[300px] object-contain bg-black" 
+          />
         ) : (
-          <img src={url} alt="Attachment" className="w-full max-h-64 object-cover" />
+          <img 
+            src={url} 
+            alt="Attachment" 
+            className="w-full max-h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+            onClick={toggleFullscreen}
+          />
         )}
       </div>
 
-      {/* Fullscreen Modal */}
-      {isFullscreen && (
+      {/* Fullscreen Modal (Mainly for images, or video fallback if needed) */}
+      {isFullscreen && !isVideo && (
         <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-md"
           onClick={toggleFullscreen}
         >
           {/* Close Button */}
           <button
-            className="absolute top-6 right-6 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors"
+            className="absolute top-6 right-6 w-12 h-12 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition-colors backdrop-blur-sm"
             onClick={(e) => {
               e.stopPropagation();
               toggleFullscreen();
             }}
           >
-            <span className="material-symbols-outlined">close</span>
+            <span className="material-symbols-outlined text-[28px]">close</span>
           </button>
 
           {/* Media Container */}
           <div
-            className="max-w-5xl max-h-[90vh] flex items-center justify-center"
-            onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to the backdrop
+            className="max-w-6xl max-h-[90vh] flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
           >
-            {isVideo ? (
-              <video
-                src={url}
-                controls
-                autoPlay
-                className="max-w-full max-h-[90vh] rounded-lg shadow-2xl"
-              />
-            ) : (
-              <img
-                src={url}
-                alt="Attachment Fullscreen"
-                className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain"
-              />
-            )}
+            <img
+              src={url}
+              alt="Attachment Fullscreen"
+              className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain"
+            />
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from './config';
+import { supabase } from './supabase';
 
 export default function Auth() {
   const { signIn, signUp, signOut, user } = useAuth();
@@ -10,6 +11,7 @@ export default function Auth() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
 
   const syncUserToProsody = async (username: string, password: string) => {
     try {
@@ -24,6 +26,27 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setMessage('Please enter your email address.');
+      return;
+    }
+    setLoading(true);
+    setMessage('');
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}`,
+    });
+
+    setLoading(false);
+    if (error) {
+      setMessage(`Error: ${error.message}`);
+    } else {
+      setMessage('Password reset email sent! Check your inbox.');
+    }
+  };
+
   const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -34,19 +57,18 @@ export default function Auth() {
         if (!username) {
           throw new Error('Username is required for sign up.');
         }
-        await signUp(email, password); // Note: Assuming signUp saves metadata or we do it post-signup
+        await signUp(email, password);
         setMessage('Account created! Check email to confirm, then login.');
         const synced = await syncUserToProsody(username, password);
         if (synced) {
-          setMessage('Account created and synced to Prosody!');
+          setMessage('Account created and synced!');
         }
       } else {
         await signIn(email, password);
-        // We use email localpart as a fallback if username isn't known at sign-in time
         const localpart = email.split('@')[0];
         const synced = await syncUserToProsody(localpart, password);
         if (synced) {
-          setMessage('Logged in and synced to Prosody!');
+          setMessage('Logged in successfully!');
         } else {
           setMessage('Logged in but sync failed.');
         }
@@ -60,15 +82,13 @@ export default function Auth() {
 
   if (user) {
     return (
-      <div className="h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center p-6 text-[var(--text-normal)]">
-        <div className="w-full max-w-sm bg-[var(--bg-secondary)] rounded p-8 shadow-md">
+      <div className="h-screen w-full bg-[#0b0714] flex items-center justify-center p-6 text-white">
+        <div className="w-full max-w-sm bg-[#120c1d] border border-[#241a38] rounded-2xl p-8 shadow-2xl">
           <h2 className="text-xl font-bold mb-2">Logged in as {user.email}</h2>
-          <p className="text-sm text-[var(--text-muted)] mb-6">
-            You are authenticated with Supabase.
-          </p>
+          <p className="text-sm text-[#94a3b8] mb-6">You are authenticated with Aether.</p>
           <button
             onClick={signOut}
-            className="w-full bg-[var(--color-status-dnd)] text-white font-semibold py-3 rounded hover:opacity-90 transition-opacity"
+            className="w-full bg-[#ef4444] text-white font-bold py-3 rounded-xl hover:bg-[#dc2626] transition-colors"
           >
             Log Out
           </button>
@@ -77,109 +97,184 @@ export default function Auth() {
     );
   }
 
+  // Forgot Password form
+  if (isForgotPassword) {
+    return (
+      <div className="h-screen w-full bg-[#0b0714] flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Background glow */}
+        <div className="fixed inset-0 pointer-events-none opacity-40 z-0">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#14b8a6] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#8b5cf6] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
+        </div>
+
+        <div className="w-full max-w-[440px] bg-[#120c1d] border border-[#241a38] rounded-2xl p-8 shadow-2xl relative z-10">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-2xl bg-[#14b8a6] mx-auto mb-4 flex items-center justify-center shadow-lg">
+              <span className="material-symbols-outlined text-white text-[32px]">lock_reset</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Reset Password</h1>
+            <p className="text-[#94a3b8] text-[15px] mt-2">
+              Enter your email and we&apos;ll send you a reset link.
+            </p>
+          </div>
+
+          <form onSubmit={handleForgotPassword} className="flex flex-col gap-5">
+            <div>
+              <label className="block text-[12px] font-bold uppercase tracking-widest text-[#94a3b8] mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-[#191228] border border-[#241a38] outline-none text-white text-[15px] px-4 py-3 rounded-xl focus:border-[#14b8a6] transition-colors"
+                required
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#14b8a6] text-white font-bold text-[15px] py-3 rounded-xl hover:bg-[#0d9488] transition-colors disabled:opacity-50 shadow-md"
+            >
+              {loading ? 'Sending...' : 'Send Reset Link'}
+            </button>
+          </form>
+
+          <div className="mt-5 text-center">
+            <button
+              onClick={() => {
+                setIsForgotPassword(false);
+                setMessage('');
+              }}
+              className="text-[#14b8a6] text-[14px] font-medium hover:underline"
+            >
+              ← Back to Login
+            </button>
+          </div>
+
+          {message && (
+            <p
+              className={`mt-4 text-sm text-center font-medium ${message.includes('Error') ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+            >
+              {message}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen w-full bg-[#313338] flex items-center justify-center p-4">
-      <div className="w-full max-w-[480px] bg-[#313338] sm:bg-[#2B2D31] sm:shadow-lg rounded-[5px] p-8">
+    <div className="h-screen w-full bg-[#0b0714] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background glow */}
+      <div className="fixed inset-0 pointer-events-none opacity-40 z-0">
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#14b8a6] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#8b5cf6] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
+      </div>
+
+      <div className="w-full max-w-[440px] bg-[#120c1d] border border-[#241a38] rounded-2xl p-8 shadow-2xl relative z-10">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[#F2F3F5]">
-            {isSignUp ? 'Create an account' : 'Welcome back!'}
+          <div className="w-16 h-16 rounded-2xl bg-[#14b8a6] mx-auto mb-4 flex items-center justify-center shadow-lg">
+            <span className="material-symbols-outlined text-white text-[32px]">
+              {isSignUp ? 'person_add' : 'waving_hand'}
+            </span>
+          </div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            {isSignUp ? 'Create an account' : 'Welcome to Aether'}
           </h1>
-          <p className="text-[#B5BAC1] text-[15px] mt-2">
-            {isSignUp ? '' : "We're so excited to see you again!"}
+          <p className="text-[#94a3b8] text-[15px] mt-2">
+            {isSignUp
+              ? 'Set up your Aether identity'
+              : 'Sign in to continue chatting'}
           </p>
         </div>
 
-        <form onSubmit={handleAuth} className="flex flex-col gap-4">
+        <form onSubmit={handleAuth} className="flex flex-col gap-5">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#B5BAC1] mb-2">
-              Email <span className="text-[#DA373C]">*</span>
+            <label className="block text-[12px] font-bold uppercase tracking-widest text-[#94a3b8] mb-2">
+              Email <span className="text-[#ef4444]">*</span>
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#1E1F22] outline-none text-[#DBDEE1] text-[15px] p-[10px] rounded focus:ring-2 focus:ring-[#00A8FC]"
+              className="w-full bg-[#191228] border border-[#241a38] outline-none text-white text-[15px] px-4 py-3 rounded-xl focus:border-[#14b8a6] transition-colors"
               required
+              placeholder="you@example.com"
             />
           </div>
 
           {isSignUp && (
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wide text-[#B5BAC1] mb-2">
-                Username <span className="text-[#DA373C]">*</span>
+              <label className="block text-[12px] font-bold uppercase tracking-widest text-[#94a3b8] mb-2">
+                Username <span className="text-[#ef4444]">*</span>
               </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-[#1E1F22] outline-none text-[#DBDEE1] text-[15px] p-[10px] rounded focus:ring-2 focus:ring-[#00A8FC]"
+                className="w-full bg-[#191228] border border-[#241a38] outline-none text-white text-[15px] px-4 py-3 rounded-xl focus:border-[#14b8a6] transition-colors"
                 required
+                placeholder="Choose a username"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wide text-[#B5BAC1] mb-2">
-              Password <span className="text-[#DA373C]">*</span>
+            <label className="block text-[12px] font-bold uppercase tracking-widest text-[#94a3b8] mb-2">
+              Password <span className="text-[#ef4444]">*</span>
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#1E1F22] outline-none text-[#DBDEE1] text-[15px] p-[10px] rounded focus:ring-2 focus:ring-[#00A8FC]"
+              className="w-full bg-[#191228] border border-[#241a38] outline-none text-white text-[15px] px-4 py-3 rounded-xl focus:border-[#14b8a6] transition-colors"
               required
+              placeholder="••••••••"
             />
             {!isSignUp && (
-              <a href="#" className="text-[#00A8FC] text-sm font-medium mt-2 block hover:underline">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotPassword(true);
+                  setMessage('');
+                }}
+                className="text-[#14b8a6] text-[13px] font-medium mt-2 block hover:underline"
+              >
                 Forgot your password?
-              </a>
+              </button>
             )}
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#5865F2] text-white font-medium text-[15px] py-[10px] rounded hover:bg-[#4752C4] transition-colors mt-2 disabled:opacity-50"
+            className="w-full bg-[#14b8a6] text-white font-bold text-[15px] py-3.5 rounded-xl hover:bg-[#0d9488] transition-colors mt-1 disabled:opacity-50 shadow-md"
           >
-            {loading ? 'Processing...' : isSignUp ? 'Continue' : 'Log In'}
+            {loading ? 'Processing...' : isSignUp ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
-        <div className="mt-4 text-sm">
-          <span className="text-[#949BA4]">
-            {isSignUp ? (
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsSignUp(false);
-                }}
-                className="text-[#00A8FC] hover:underline"
-              >
-                Already have an account?
-              </a>
-            ) : (
-              'Need an account? '
-            )}
+        <div className="mt-5 text-[14px] text-center">
+          <span className="text-[#94a3b8]">
+            {isSignUp ? 'Already have an account? ' : 'Need an account? '}
           </span>
-          {!isSignUp && (
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                setIsSignUp(true);
-                setMessage('');
-              }}
-              className="text-[#00A8FC] hover:underline"
-            >
-              Register
-            </a>
-          )}
+          <button
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setMessage('');
+            }}
+            className="text-[#14b8a6] font-medium hover:underline"
+          >
+            {isSignUp ? 'Sign In' : 'Register'}
+          </button>
         </div>
 
         {message && (
           <p
-            className={`mt-4 text-sm ${message.includes('fail') || message.includes('error') ? 'text-[#DA373C]' : 'text-[#23A559]'}`}
+            className={`mt-4 text-sm text-center font-medium ${message.includes('fail') || message.includes('Error') || message.includes('error') ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
           >
             {message}
           </p>

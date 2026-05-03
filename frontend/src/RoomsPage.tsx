@@ -50,8 +50,8 @@ export default function RoomsPage() {
     <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-normal)]">
       {/* Header */}
       <div className="flex-none p-6 bg-[var(--bg-secondary)] border-b border-[var(--border)] text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand)] to-[#8A2BE2] opacity-20 pointer-events-none" />
-        <h1 className="text-2xl font-bold relative z-10">Discover Servers</h1>
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand)] to-[#8b5cf6] opacity-20 pointer-events-none" />
+        <h1 className="text-2xl font-bold relative z-10">Explore Servers</h1>
         <p className="text-sm text-[var(--text-muted)] mt-1 relative z-10">
           Find a community to chat, play, and hang out with.
         </p>

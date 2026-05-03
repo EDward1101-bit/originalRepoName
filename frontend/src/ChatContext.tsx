@@ -50,6 +50,9 @@ interface ChatContextType {
   sendFriendRequest: (targetUsername: string) => Promise<void>;
   acceptFriendRequest: (friendshipId: string) => Promise<void>;
   removeFriendship: (friendshipId: string) => Promise<void>;
+  deleteMessageForEveryone: (messageId: string) => Promise<void>;
+  deleteMessageForMe: (messageId: string) => void;
+  editMessage: (messageId: string, newBody: string) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -59,6 +62,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<string>('Connecting...');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [allUsers, setAllUsers] = useState<RegisteredUser[]>([]);
+  const [hiddenMessageIds, setHiddenMessageIds] = useState<Set<string>>(() => {
+    const stored = localStorage.getItem('hidden_message_ids');
+    if (!stored) return new Set();
+    try {
+      return new Set(JSON.parse(stored));
+    } catch {
+      return new Set();
+    }
+  });
   const [friendships, setFriendships] = useState<Friendship[]>([]);
   const [jid, setJid] = useState(() => {
     const stored = localStorage.getItem('xmpp_jid');
@@ -438,6 +450,75 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (error) console.error('Failed to persist message:', error);
   };
 
+  const deleteMessageForEveryone = async (messageId: string) => {
+    const msg = messages.find((m) => m.id === messageId);
+    if (!msg) return;
+
+    // If it's a media URL, delete the file from storage
+    if (msg.body.startsWith('http') && msg.body.includes('chat-media')) {
+      const parts = msg.body.split('/');
+      const fileName = parts[parts.length - 1];
+      if (fileName) {
+        await supabase.storage.from('chat-media').remove([fileName]);
+      }
+    }
+
+    // Update message body in DB
+    const { error } = await supabase
+      .from('messages')
+      .update({ body: '\u{1F6AB} This message was deleted' })
+      .eq('id', messageId);
+
+    if (error) {
+      console.error('Failed to delete message:', error);
+      return;
+    }
+
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === messageId ? { ...m, body: '\u{1F6AB} This message was deleted' } : m
+      )
+    );
+  };
+
+  const deleteMessageForMe = (messageId: string) => {
+    setHiddenMessageIds((prev) => {
+      const next = new Set(prev);
+      next.add(messageId);
+      localStorage.setItem('hidden_message_ids', JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  const editMessage = async (messageId: string, newBody: string) => {
+    if (!newBody.trim()) return;
+
+    const msg = messages.find((m) => m.id === messageId);
+    if (!msg) return;
+
+    // Check 15-minute window
+    const diffMs = Date.now() - msg.time.getTime();
+    if (diffMs > 15 * 60 * 1000) {
+      alert('You can only edit messages within 15 minutes of sending.');
+      return;
+    }
+
+    const editedBody = newBody.trim();
+    const { error } = await supabase
+      .from('messages')
+      .update({ body: editedBody })
+      .eq('id', messageId);
+
+    if (error) {
+      console.error('Failed to edit message:', error);
+      return;
+    }
+
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, body: editedBody } : m))
+    );
+  };
+
   const sendFriendRequest = async (targetUsername: string) => {
     if (!myUsername) return;
 
@@ -489,7 +570,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         client: clientInstance,
         status,
         jid,
-        messages,
+        messages: messages.filter((m) => !hiddenMessageIds.has(m.id)),
         allUsers,
         friendships,
         myUsername,
@@ -497,6 +578,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         sendFriendRequest,
         acceptFriendRequest,
         removeFriendship,
+        deleteMessageForEveryone,
+        deleteMessageForMe,
+        editMessage,
       }}
     >
       {children}

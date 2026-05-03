@@ -30,19 +30,19 @@
 
 :root {
   /* Light Theme */
-  --brand: #2563eb;
-  --brand-hover: #1d4ed8;
+  --brand: #0d9488;
+  --brand-hover: #0f766e;
 
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
   --bg-tertiary: #f1f5f9;
-  --bg-modifier-hover: rgba(15, 23, 42, 0.05);
-  --bg-modifier-active: rgba(15, 23, 42, 0.1);
-  --bg-modifier-selected: rgba(15, 23, 42, 0.15);
+  --bg-modifier-hover: rgba(15, 23, 42, 0.04);
+  --bg-modifier-active: rgba(15, 23, 42, 0.08);
+  --bg-modifier-selected: rgba(15, 23, 42, 0.12);
 
   --text-normal: #0f172a;
   --text-muted: #64748b;
-  --text-link: #3b82f6;
+  --text-link: #0d9488;
 
   --border: #e2e8f0;
   --input-bg: #e2e8f0;
@@ -50,22 +50,22 @@
 
 .dark {
   /* Dark Theme */
-  --brand: #3b82f6;
-  --brand-hover: #2563eb;
+  --brand: #14b8a6;
+  --brand-hover: #0d9488;
 
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #020617;
-  --bg-modifier-hover: rgba(248, 250, 252, 0.05);
-  --bg-modifier-active: rgba(248, 250, 252, 0.1);
-  --bg-modifier-selected: rgba(248, 250, 252, 0.15);
+  --bg-primary: #0b0714;
+  --bg-secondary: #120c1d;
+  --bg-tertiary: #191228;
+  --bg-modifier-hover: rgba(255, 255, 255, 0.05);
+  --bg-modifier-active: rgba(255, 255, 255, 0.1);
+  --bg-modifier-selected: rgba(255, 255, 255, 0.15);
 
   --text-normal: #f8fafc;
   --text-muted: #94a3b8;
-  --text-link: #60a5fa;
+  --text-link: #2dd4bf;
 
-  --border: #334155;
-  --input-bg: #1e293b;
+  --border: #241a38;
+  --input-bg: #1e1530;
 }
 
 * {
