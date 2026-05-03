@@ -42,19 +42,31 @@ export default function Chat() {
         </button>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <span className="material-symbols-outlined text-[var(--text-muted)] text-[24px]">alternate_email</span>
+            <span className="material-symbols-outlined text-[var(--text-muted)] text-[24px]">
+              alternate_email
+            </span>
           </div>
           <div>
-            <h1 className="text-[15px] font-bold text-[var(--text-normal)] leading-tight">{recipient}</h1>
+            <h1 className="text-[15px] font-bold text-[var(--text-normal)] leading-tight">
+              {recipient}
+            </h1>
           </div>
-          <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-[var(--color-status-online)]' : 'bg-[var(--color-status-dnd)]'}`} />
+          <div
+            className={`w-2 h-2 rounded-full ${isOnline ? 'bg-[var(--color-status-online)]' : 'bg-[var(--color-status-dnd)]'}`}
+          />
         </div>
-        
+
         <div className="ml-auto flex items-center gap-4">
-          <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors" title="Start Voice Call">
+          <button
+            className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors"
+            title="Start Voice Call"
+          >
             <span className="material-symbols-outlined text-[22px]">call</span>
           </button>
-          <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors" title="Start Video Call">
+          <button
+            className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors"
+            title="Start Video Call"
+          >
             <span className="material-symbols-outlined text-[22px]">videocam</span>
           </button>
         </div>
@@ -65,18 +77,23 @@ export default function Chat() {
         {filteredMessages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] opacity-60">
             <div className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-4">
-               <span className="material-symbols-outlined text-4xl">alternate_email</span>
+              <span className="material-symbols-outlined text-4xl">alternate_email</span>
             </div>
-            <h2 className="text-xl font-bold text-[var(--text-normal)] mb-2">This is the beginning of your direct message history with @{recipient}</h2>
+            <h2 className="text-xl font-bold text-[var(--text-normal)] mb-2">
+              This is the beginning of your direct message history with @{recipient}
+            </h2>
           </div>
         ) : (
           filteredMessages.map((msg, index) => {
             const isSent = msg.type === 'sent';
             const showHeader = index === 0 || messages[index - 1].from !== msg.from;
             const senderName = isSent ? myUsername : msg.from;
-            
+
             return (
-              <div key={msg.id} className={`flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-4 px-4 py-1 ${!showHeader ? 'mt-[-12px]' : ''}`}>
+              <div
+                key={msg.id}
+                className={`flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-4 px-4 py-1 ${!showHeader ? 'mt-[-12px]' : ''}`}
+              >
                 {showHeader ? (
                   <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm mt-1 cursor-pointer hover:opacity-90">
                     {senderName?.[0]?.toUpperCase()}
@@ -86,7 +103,7 @@ export default function Chat() {
                     {/* Time hover could go here */}
                   </div>
                 )}
-                
+
                 <div className="flex flex-col min-w-0">
                   {showHeader && (
                     <div className="flex items-baseline gap-2 mb-0.5">
@@ -115,7 +132,7 @@ export default function Chat() {
           <button className="w-6 h-6 rounded-full bg-[var(--text-muted)] text-[var(--input-bg)] flex items-center justify-center hover:bg-[var(--text-normal)] transition-colors">
             <span className="material-symbols-outlined text-[16px]">add</span>
           </button>
-          
+
           <input
             className="flex-1 bg-transparent border-none outline-none text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px]"
             placeholder={`Message @${recipient}`}
@@ -124,7 +141,7 @@ export default function Chat() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           />
-          
+
           <div className="flex items-center gap-3">
             <button className="text-[var(--text-muted)] hover:text-[var(--text-normal)] transition-colors">
               <span className="material-symbols-outlined text-[22px]">gif_box</span>

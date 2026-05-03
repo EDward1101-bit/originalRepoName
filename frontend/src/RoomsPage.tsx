@@ -60,7 +60,9 @@ export default function RoomsPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Room List */}
         <div className="flex-1 overflow-y-auto p-8">
-          <h2 className="text-[20px] font-bold text-[var(--text-normal)] mb-6">Featured Communities</h2>
+          <h2 className="text-[20px] font-bold text-[var(--text-normal)] mb-6">
+            Featured Communities
+          </h2>
           {error && (
             <div className="mb-4 p-3 bg-[var(--color-status-dnd)] text-white rounded-md text-sm">
               {error}
@@ -79,11 +81,11 @@ export default function RoomsPage() {
                   onClick={() => navigate(`/rooms/${room.name}`)}
                 >
                   <div className="h-24 bg-gradient-to-r from-[var(--bg-tertiary)] to-[var(--bg-modifier-hover)] relative">
-                     <div className="absolute -bottom-6 left-4 w-12 h-12 rounded-xl bg-[var(--bg-primary)] p-1">
-                        <div className="w-full h-full rounded-lg bg-[var(--brand)] flex items-center justify-center text-white font-bold text-lg">
-                           #
-                        </div>
-                     </div>
+                    <div className="absolute -bottom-6 left-4 w-12 h-12 rounded-xl bg-[var(--bg-primary)] p-1">
+                      <div className="w-full h-full rounded-lg bg-[var(--brand)] flex items-center justify-center text-white font-bold text-lg">
+                        #
+                      </div>
+                    </div>
                   </div>
                   <div className="p-4 pt-8 flex-1 flex flex-col">
                     <div className="flex items-start justify-between mb-2">
@@ -130,7 +132,9 @@ export default function RoomsPage() {
           <h2 className="text-[20px] font-bold text-[var(--text-normal)] mb-6">Create a Server</h2>
           <form onSubmit={handleCreateRoom} className="flex flex-col gap-4">
             <div>
-              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Server Name</label>
+              <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">
+                Server Name
+              </label>
               <input
                 type="text"
                 value={newRoomName}

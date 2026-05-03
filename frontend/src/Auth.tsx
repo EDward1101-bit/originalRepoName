@@ -63,7 +63,9 @@ export default function Auth() {
       <div className="h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center p-6 text-[var(--text-normal)]">
         <div className="w-full max-w-sm bg-[var(--bg-secondary)] rounded p-8 shadow-md">
           <h2 className="text-xl font-bold mb-2">Logged in as {user.email}</h2>
-          <p className="text-sm text-[var(--text-muted)] mb-6">You are authenticated with Supabase.</p>
+          <p className="text-sm text-[var(--text-muted)] mb-6">
+            You are authenticated with Supabase.
+          </p>
           <button
             onClick={signOut}
             className="w-full bg-[var(--color-status-dnd)] text-white font-semibold py-3 rounded hover:opacity-90 transition-opacity"
@@ -145,7 +147,20 @@ export default function Auth() {
 
         <div className="mt-4 text-sm">
           <span className="text-[#949BA4]">
-            {isSignUp ? <a href="#" onClick={(e) => { e.preventDefault(); setIsSignUp(false); }} className="text-[#00A8FC] hover:underline">Already have an account?</a> : 'Need an account? '}
+            {isSignUp ? (
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsSignUp(false);
+                }}
+                className="text-[#00A8FC] hover:underline"
+              >
+                Already have an account?
+              </a>
+            ) : (
+              'Need an account? '
+            )}
           </span>
           {!isSignUp && (
             <a
@@ -163,7 +178,9 @@ export default function Auth() {
         </div>
 
         {message && (
-          <p className={`mt-4 text-sm ${message.includes('fail') || message.includes('error') ? 'text-[#DA373C]' : 'text-[#23A559]'}`}>
+          <p
+            className={`mt-4 text-sm ${message.includes('fail') || message.includes('error') ? 'text-[#DA373C]' : 'text-[#23A559]'}`}
+          >
             {message}
           </p>
         )}

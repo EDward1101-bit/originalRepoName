@@ -9,7 +9,9 @@ interface SettingsModalProps {
 export default function SettingsModal({ onClose, myUsername }: SettingsModalProps) {
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('My Account');
-  const [theme, setTheme] = useState(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+  const [theme, setTheme] = useState(
+    document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+  );
 
   const tabs = [
     { name: 'My Account', category: 'USER SETTINGS' },
@@ -59,14 +61,28 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
           <div className="max-w-2xl text-[var(--text-normal)]">
             <h2 className="text-xl font-bold mb-6">Appearance</h2>
             <div className="mb-4">
-              <h3 className="text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-wide">Theme</h3>
+              <h3 className="text-xs font-bold text-[var(--text-muted)] mb-2 uppercase tracking-wide">
+                Theme
+              </h3>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="theme" checked={theme === 'dark'} onChange={() => handleThemeChange('dark')} className="accent-[var(--brand)]" />
+                  <input
+                    type="radio"
+                    name="theme"
+                    checked={theme === 'dark'}
+                    onChange={() => handleThemeChange('dark')}
+                    className="accent-[var(--brand)]"
+                  />
                   <span>Dark</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="theme" checked={theme === 'light'} onChange={() => handleThemeChange('light')} className="accent-[var(--brand)]" />
+                  <input
+                    type="radio"
+                    name="theme"
+                    checked={theme === 'light'}
+                    onChange={() => handleThemeChange('light')}
+                    className="accent-[var(--brand)]"
+                  />
                   <span>Light</span>
                 </label>
               </div>
@@ -101,17 +117,23 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
         return (
           <div className="max-w-2xl text-[var(--text-normal)]">
             <h2 className="text-xl font-bold mb-6">Voice & Video Settings</h2>
-            <p className="text-[var(--text-muted)] text-sm">Select your input and output devices.</p>
+            <p className="text-[var(--text-muted)] text-sm">
+              Select your input and output devices.
+            </p>
             {/* Placeholders for settings */}
             <div className="mt-4 grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Input Device</label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">
+                  Input Device
+                </label>
                 <select className="bg-[var(--input-bg)] border-none text-[var(--text-normal)] rounded p-2 outline-none w-full">
                   <option>Default</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">Output Device</label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-2">
+                  Output Device
+                </label>
                 <select className="bg-[var(--input-bg)] border-none text-[var(--text-normal)] rounded p-2 outline-none w-full">
                   <option>Default</option>
                 </select>
@@ -168,10 +190,8 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
       {/* Main Content */}
       <div className="flex-1 bg-[var(--bg-primary)] relative">
-        <div className="py-14 px-10 h-full overflow-y-auto">
-          {renderContent()}
-        </div>
-        
+        <div className="py-14 px-10 h-full overflow-y-auto">{renderContent()}</div>
+
         {/* Close Button */}
         <div className="absolute top-14 right-10 flex flex-col items-center gap-1">
           <button

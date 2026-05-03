@@ -66,19 +66,26 @@ export default function Layout() {
       {/* Channels List */}
       <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-[2px]">
         {/* Placeholder links, actual sub-routes might dictate content here */}
-        <NavLink to="/dms" end className={({ isActive }) =>
+        <NavLink
+          to="/dms"
+          end
+          className={({ isActive }) =>
             `flex items-center gap-3 px-2 py-1.5 rounded text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors ${
               isActive ? 'bg-[var(--bg-modifier-selected)] !text-[var(--text-normal)]' : ''
             }`
-          }>
+          }
+        >
           <span className="material-symbols-outlined text-[20px]">person</span>
           <span className="font-medium text-[15px]">Friends</span>
         </NavLink>
-        <NavLink to="/rooms" className={({ isActive }) =>
+        <NavLink
+          to="/rooms"
+          className={({ isActive }) =>
             `flex items-center gap-3 px-2 py-1.5 rounded text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors ${
               isActive ? 'bg-[var(--bg-modifier-selected)] !text-[var(--text-normal)]' : ''
             }`
-          }>
+          }
+        >
           <span className="material-symbols-outlined text-[20px]">explore</span>
           <span className="font-medium text-[15px]">Explore Servers</span>
         </NavLink>
@@ -88,13 +95,17 @@ export default function Layout() {
       <div className="h-[52px] bg-[var(--bg-tertiary)] flex items-center px-2 gap-2 flex-shrink-0">
         <div className="w-8 h-8 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-sm font-bold flex-shrink-0 relative cursor-pointer hover:opacity-80">
           {myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
-          <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-tertiary)] ${isConnected ? 'bg-[var(--color-status-online)]' : 'bg-[var(--color-status-dnd)]'}`} />
+          <div
+            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-tertiary)] ${isConnected ? 'bg-[var(--color-status-online)]' : 'bg-[var(--color-status-dnd)]'}`}
+          />
         </div>
         <div className="flex-1 min-w-0 cursor-pointer hover:bg-[var(--bg-modifier-hover)] rounded py-1 px-1">
-          <p className="text-[13px] font-bold text-[var(--text-normal)] truncate leading-tight">{myUsername}</p>
+          <p className="text-[13px] font-bold text-[var(--text-normal)] truncate leading-tight">
+            {myUsername}
+          </p>
           <p className="text-[11px] text-[var(--text-muted)] truncate leading-tight">{status}</p>
         </div>
-        
+
         <div className="flex items-center">
           <button className="w-8 h-8 rounded flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors">
             <span className="material-symbols-outlined text-[20px]">mic</span>
@@ -102,7 +113,7 @@ export default function Layout() {
           <button className="w-8 h-8 rounded flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors">
             <span className="material-symbols-outlined text-[20px]">headphones</span>
           </button>
-          <button 
+          <button
             onClick={() => setSettingsOpen(true)}
             className="w-8 h-8 rounded flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
           >
@@ -115,7 +126,9 @@ export default function Layout() {
 
   return (
     <div className="bg-[var(--bg-primary)] text-[var(--text-normal)] font-body h-screen flex overflow-hidden antialiased">
-      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} myUsername={myUsername} />}
+      {settingsOpen && (
+        <SettingsModal onClose={() => setSettingsOpen(false)} myUsername={myUsername} />
+      )}
 
       {/* ── Mobile overlay ── */}
       {sidebarOpen && (
@@ -140,7 +153,7 @@ export default function Layout() {
         `}
       >
         <div className="flex lg:hidden h-full">
-           <ServersColumn />
+          <ServersColumn />
         </div>
         <ChannelsColumn />
       </aside>
@@ -155,7 +168,9 @@ export default function Layout() {
           >
             <span className="material-symbols-outlined">menu</span>
           </button>
-          <span className="text-base font-bold text-[var(--text-normal)] tracking-tight">Aether Chat</span>
+          <span className="text-base font-bold text-[var(--text-normal)] tracking-tight">
+            Aether Chat
+          </span>
         </div>
 
         {/* Content */}
