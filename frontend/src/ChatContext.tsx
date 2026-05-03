@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
-import { createClient, type Client } from 'stanza';
+import { createClient, type Agent } from 'stanza';
 import type { ReceivedMessage } from 'stanza/protocol';
 import { XMPP_DOMAIN, buildBareJid } from './config';
 import { supabase } from './supabase';
@@ -40,7 +40,7 @@ export interface Friendship {
 }
 
 interface ChatContextType {
-  client: Client | null;
+  client: Agent | null;
   status: string;
   jid: string;
   messages: ChatMessage[];
@@ -90,8 +90,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const jidRef = useRef(jid);
   const seenIds = useRef(new Set<string>());
   const seenMessageKeys = useRef(new Set<string>());
-  const [clientInstance, setClientInstance] = useState<Client | null>(null);
-  const clientRef = useRef<Client | null>(null);
+  const [clientInstance, setClientInstance] = useState<Agent | null>(null);
+  const clientRef = useRef<Agent | null>(null);
   const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
 
   const myUsername = user?.email?.split('@')[0] || '';
@@ -139,7 +139,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const boshUrl = `${window.location.origin}/http-bind`;
 
     console.log('[XMPP] Initializing client for:', fullJid);
-    let client: Client | null = null;
+    let client: Agent | null = null;
     try {
       client = createClient({
         jid: fullJid,
@@ -252,8 +252,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const myUser = jidRef.current.split('@')[0];
 
       // Handle typing indicators (XEP-0085)
-      if (msg.chatstate && from !== myUser) {
-        if (msg.chatstate === 'composing') {
+      if ((msg as any).chatState && from !== myUser) {
+        if ((msg as any).chatState === 'composing') {
           setTypingUsers((prev) => ({ ...prev, [from]: Date.now() }));
         } else {
           setTypingUsers((prev) => {
@@ -640,7 +640,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       clientInstance.sendMessage({
         to: buildBareJid(recipient),
         type: 'chat',
-        chatstate: isTyping ? 'composing' : 'active',
+        chatState: isTyping ? 'composing' : 'active',
       } as any);
     },
     [clientInstance]
