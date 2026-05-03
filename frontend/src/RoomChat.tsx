@@ -11,8 +11,16 @@ import EmojiPicker from 'emoji-picker-react';
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
   const navigate = useNavigate();
-  const { availableRooms, joinedRooms, joinRoom, leaveRoom, roomMessages, sendRoomMessage } =
-    useMucContext();
+  const {
+    availableRooms,
+    joinedRooms,
+    joinRoom,
+    leaveRoom,
+    roomMessages,
+    sendRoomMessage,
+    deleteRoomMessageForEveryone,
+    deleteRoomMessageForMe,
+  } = useMucContext();
   const { user } = useAuth();
   const { myUsername, status, getUserProfile } = useChatContext();
   const isConnected = status === 'Connected';
@@ -21,6 +29,7 @@ export default function RoomChat() {
   const [isUploading, setIsUploading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -191,7 +200,7 @@ export default function RoomChat() {
 
       {/* Main Content Area */}
       {isJoined ? (
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0" onClick={() => setActiveMenu(null)}>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
             {messages.length === 0 ? (
@@ -242,10 +251,12 @@ export default function RoomChat() {
                   messages[index - 1].sender !== msg.sender ||
                   messages[index - 1].type === 'system';
 
+                const isDeleted = msg.body === '\u{1F6AB} This message was deleted';
+
                 return (
                   <div
                     key={msg.id}
-                    className={`flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-6 px-6 py-2 transition-colors ${!showHeader ? 'mt-[-16px]' : ''}`}
+                    className={`group flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-6 px-6 py-2 transition-colors relative ${!showHeader ? 'mt-[-16px]' : ''}`}
                   >
                     {showHeader ? (
                       <div
@@ -279,11 +290,63 @@ export default function RoomChat() {
                       {isMediaUrl(msg.body) ? (
                         <MediaViewer url={msg.body} />
                       ) : (
-                        <div className="text-[15px] text-[var(--text-normal)] whitespace-pre-wrap break-words leading-[1.4rem]">
+                        <div
+                          className={`text-[15px] whitespace-pre-wrap break-words leading-[1.4rem] ${isDeleted ? 'text-[var(--text-muted)] italic' : 'text-[var(--text-normal)]'}`}
+                        >
                           {msg.body}
                         </div>
                       )}
                     </div>
+
+                    {/* Message Actions Button */}
+                    {!isDeleted && msg.type !== 'system' && (
+                      <div className="absolute right-6 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveMenu(activeMenu === msg.id ? null : msg.id);
+                          }}
+                          className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] shadow-sm"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+                        </button>
+
+                        {activeMenu === msg.id && (
+                          <div className="absolute right-0 top-9 z-50 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl shadow-2xl py-2 min-w-[200px] overflow-hidden">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteRoomMessageForMe(roomName, msg.id);
+                                setActiveMenu(null);
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] flex items-center gap-3"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">
+                                visibility_off
+                              </span>
+                              Delete for Me
+                            </button>
+                            {isSentByMe && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (room) {
+                                    deleteRoomMessageForEveryone(room.id, roomName, msg.id);
+                                  }
+                                  setActiveMenu(null);
+                                }}
+                                className="w-full text-left px-4 py-2.5 text-[14px] text-[#ef4444] hover:bg-[#ef4444]/10 flex items-center gap-3"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">
+                                  delete
+                                </span>
+                                Delete for Everyone
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })

@@ -38,6 +38,12 @@ interface MucContextType {
   joinRoom: (roomName: string) => Promise<void>;
   leaveRoom: (roomName: string) => void;
   sendRoomMessage: (roomName: string, body: string) => Promise<void>;
+  deleteRoomMessageForEveryone: (
+    roomId: string,
+    roomName: string,
+    messageId: string
+  ) => Promise<void>;
+  deleteRoomMessageForMe: (roomName: string, messageId: string) => void;
 }
 
 const MucContext = createContext<MucContextType | undefined>(undefined);
@@ -64,6 +70,15 @@ export function MucProvider({ children }: { children: ReactNode }) {
     }
   });
   const [roomMessages, setRoomMessages] = useState<Record<string, RoomMessage[]>>({});
+  const [hiddenRoomMessageIds, setHiddenRoomMessageIds] = useState<Set<string>>(() => {
+    const stored = localStorage.getItem('hidden_room_message_ids');
+    if (!stored) return new Set();
+    try {
+      return new Set(JSON.parse(stored));
+    } catch {
+      return new Set();
+    }
+  });
 
   const joinedRoomsRef = useRef<Set<string>>(new Set(joinedRooms));
   const seenRoomMessageIds = useRef<Set<string>>(new Set());
@@ -595,17 +610,74 @@ export function MucProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteRoomMessageForEveryone = async (
+    roomId: string,
+    roomName: string,
+    messageId: string
+  ) => {
+    const roomMsgs = roomMessages[roomName] || [];
+    const msg = roomMsgs.find((m) => m.id === messageId);
+    if (!msg) return;
+
+    if (msg.body.startsWith('http') && msg.body.includes('chat-media')) {
+      const parts = msg.body.split('/');
+      const fileName = parts[parts.length - 1];
+      if (fileName) {
+        await supabase.storage.from('chat-media').remove([fileName]);
+      }
+    }
+
+    const { error } = await supabase
+      .from('room_messages')
+      .update({ body: '\u{1F6AB} This message was deleted' })
+      .eq('id', messageId);
+
+    if (error) {
+      console.error('Failed to delete room message:', error);
+      return;
+    }
+
+    setRoomMessages((prev) => {
+      const msgs = prev[roomName] || [];
+      return {
+        ...prev,
+        [roomName]: msgs.map((m) =>
+          m.id === messageId ? { ...m, body: '\u{1F6AB} This message was deleted' } : m
+        ),
+      };
+    });
+  };
+
+  const deleteRoomMessageForMe = (roomName: string, messageId: string) => {
+    setHiddenRoomMessageIds((prev) => {
+      const next = new Set(prev);
+      next.add(messageId);
+      localStorage.setItem('hidden_room_message_ids', JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  // We filter out hidden messages right before returning
+  const filteredRoomMessages = Object.fromEntries(
+    Object.entries(roomMessages).map(([room, msgs]) => [
+      room,
+      msgs.filter((m) => !hiddenRoomMessageIds.has(m.id)),
+    ])
+  );
+
   return (
     <MucContext.Provider
       value={{
         availableRooms,
         joinedRooms,
-        roomMessages,
+        roomMessages: filteredRoomMessages,
         createRoom,
         deleteRoom,
         joinRoom,
         leaveRoom,
         sendRoomMessage,
+        deleteRoomMessageForEveryone,
+        deleteRoomMessageForMe,
       }}
     >
       {children}
