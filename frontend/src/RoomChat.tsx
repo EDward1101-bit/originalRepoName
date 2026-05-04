@@ -7,6 +7,7 @@ import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
+import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star } from 'lucide-react';
 
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
@@ -35,6 +36,49 @@ export default function RoomChat() {
 
   const room = availableRooms.find((r) => r.name === roomName);
   const isJoined = roomName ? joinedRooms.includes(roomName) : false;
+
+  // Favorites from Supabase
+  const [favoriteId, setFavoriteId] = useState<string | null>(null);
+
+  // Check if this room is favorited
+  useEffect(() => {
+    if (!user || !roomName) return;
+    const checkFavorite = async () => {
+      const { data } = await supabase
+        .from('favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('type', 'room')
+        .eq('name', roomName)
+        .single();
+      if (data) {
+        setFavoriteId(data.id);
+      } else {
+        setFavoriteId(null);
+      }
+    };
+    checkFavorite();
+  }, [user, roomName]);
+
+  const toggleFavorite = async () => {
+    if (!user || !roomName) return;
+    if (favoriteId) {
+      // Remove from favorites
+      await supabase.from('favorites').delete().eq('id', favoriteId);
+      setFavoriteId(null);
+    } else {
+      // Add to favorites
+      const { data } = await supabase
+        .from('favorites')
+        .insert({ user_id: user.id, type: 'room', name: roomName })
+        .select('id')
+        .single();
+      if (data) {
+        setFavoriteId(data.id);
+      }
+    }
+  };
+  const isFavorite = !!favoriteId;
   const messages = useMemo(
     () => (roomName ? roomMessages[roomName] || [] : []),
     [roomName, roomMessages]
@@ -118,9 +162,7 @@ export default function RoomChat() {
     return (
       <div className="flex h-full items-center justify-center bg-[var(--bg-primary)]">
         <div className="text-center p-8 bg-[var(--bg-secondary)] rounded-2xl max-w-md border border-[var(--border)] shadow-xl">
-          <span className="material-symbols-outlined text-6xl text-[#ef4444] mb-4 block">
-            error
-          </span>
+          <div className="text-6xl text-[#ef4444] mb-4">⚠️</div>
           <h2 className="text-2xl font-bold mb-2 text-[var(--text-normal)] tracking-tight">
             Room Not Found
           </h2>
@@ -147,11 +189,11 @@ export default function RoomChat() {
             onClick={() => navigate('/rooms')}
             className="lg:hidden w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] text-[var(--text-muted)] transition-colors"
           >
-            <span className="material-symbols-outlined text-[24px]">arrow_back</span>
+            <ArrowLeft size={24} />
           </button>
 
           <div className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--brand)] shadow-inner">
-            <span className="material-symbols-outlined text-[24px]">tag</span>
+            <Hash size={24} />
           </div>
           <h2 className="font-bold text-[16px] tracking-tight ml-1">{room.name}</h2>
 
@@ -172,7 +214,7 @@ export default function RoomChat() {
               className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[#ef4444]/10 hover:text-[#ef4444] transition-colors"
               title="Leave Room"
             >
-              <span className="material-symbols-outlined text-[24px]">logout</span>
+              <LogOut size={24} />
             </button>
           ) : (
             <button
@@ -183,17 +225,30 @@ export default function RoomChat() {
               {isConnected ? 'Join Room' : status}
             </button>
           )}
+
+          <button
+            onClick={toggleFavorite}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+              isFavorite
+                ? 'bg-[#f59e0b]/10 text-[#f59e0b]'
+                : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
+            }`}
+            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          >
+            <Star size={20} fill={favoriteId ? '#f59e0b' : 'none'} />
+          </button>
+
           <button
             className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
             title="Start Voice Call"
           >
-            <span className="material-symbols-outlined text-[24px]">call</span>
+            <Phone size={24} />
           </button>
           <button
             className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
             title="Start Video Call"
           >
-            <span className="material-symbols-outlined text-[24px]">videocam</span>
+            <Video size={24} />
           </button>
         </div>
       </div>
@@ -206,9 +261,7 @@ export default function RoomChat() {
             {messages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] opacity-80">
                 <div className="w-24 h-24 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-6 shadow-inner border border-[var(--border)]">
-                  <span className="material-symbols-outlined text-5xl text-[var(--brand)]">
-                    tag
-                  </span>
+                  <Hash size={48} className="text-[var(--brand)]" />
                 </div>
                 <h2 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
                   Welcome to #{room.name}!
@@ -235,9 +288,7 @@ export default function RoomChat() {
                       className="flex gap-4 -mx-6 px-6 py-2 hover:bg-[var(--bg-modifier-hover)] transition-colors"
                     >
                       <div className="w-10 shrink-0 flex justify-end items-center">
-                        <span className="material-symbols-outlined text-[#10b981] text-[20px]">
-                          info
-                        </span>
+                        <Info size={20} className="text-[#10b981]" />
                       </div>
                       <div className="flex-1 text-[14px] text-[var(--text-muted)] font-medium italic">
                         {msg.body}
@@ -308,7 +359,7 @@ export default function RoomChat() {
                           }}
                           className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] shadow-sm"
                         >
-                          <span className="material-symbols-outlined text-[18px]">more_horiz</span>
+                          <MoreHorizontal size={18} />
                         </button>
 
                         {activeMenu === msg.id && (
@@ -321,9 +372,7 @@ export default function RoomChat() {
                               }}
                               className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] flex items-center gap-3"
                             >
-                              <span className="material-symbols-outlined text-[18px]">
-                                visibility_off
-                              </span>
+                              <EyeOff size={18} />
                               Delete for Me
                             </button>
                             {isSentByMe && (
@@ -337,9 +386,7 @@ export default function RoomChat() {
                                 }}
                                 className="w-full text-left px-4 py-2.5 text-[14px] text-[#ef4444] hover:bg-[#ef4444]/10 flex items-center gap-3"
                               >
-                                <span className="material-symbols-outlined text-[18px]">
-                                  delete
-                                </span>
+                                <Trash2 size={18} />
                                 Delete for Everyone
                               </button>
                             )}
@@ -360,7 +407,7 @@ export default function RoomChat() {
               <div className="absolute bottom-[80px] right-6 z-50 shadow-2xl rounded-2xl overflow-hidden border border-[var(--border)]">
                 <EmojiPicker
                   onEmojiClick={(emojiData) => setInput((prev) => prev + emojiData.emoji)}
-                  theme={'dark' as any}
+                  theme={'light' as any}
                   lazyLoadEmojis={true}
                 />
               </div>
@@ -381,19 +428,15 @@ export default function RoomChat() {
                         className="w-full h-full object-cover"
                       />
                     ) : file.type.startsWith('video/') ? (
-                      <span className="material-symbols-outlined text-[32px] text-[var(--text-muted)]">
-                        videocam
-                      </span>
+                      <Image size={32} className="text-[var(--text-muted)]" />
                     ) : (
-                      <span className="material-symbols-outlined text-[32px] text-[var(--text-muted)]">
-                        description
-                      </span>
+                      <FileText size={32} className="text-[var(--text-muted)]" />
                     )}
                     <button
                       onClick={() => removeStagedFile(index)}
                       className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#ef4444] text-white flex items-center justify-center opacity-0 group-hover/staged:opacity-100 transition-opacity shadow-md"
                     >
-                      <span className="material-symbols-outlined text-[14px]">close</span>
+                      <X size={14} />
                     </button>
                     <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1 py-0.5 truncate text-center">
                       {file.name}
@@ -417,9 +460,7 @@ export default function RoomChat() {
                 disabled={isUploading}
                 className={`w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--brand)] hover:text-white transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <span className="material-symbols-outlined text-[22px]">
-                  {isUploading ? 'hourglass_empty' : 'add'}
-                </span>
+                {isUploading ? <Loader2 size={22} className="animate-spin" /> : <Plus size={22} />}
               </button>
 
               <input
@@ -441,13 +482,13 @@ export default function RoomChat() {
                   onClick={() => fileInputRef.current?.click()}
                   className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)] transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[24px]">gif_box</span>
+                  <Image size={24} />
                 </button>
                 <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                   className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${showEmojiPicker ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)]'}`}
                 >
-                  <span className="material-symbols-outlined text-[24px]">sentiment_satisfied</span>
+                  <Smile size={24} />
                 </button>
                 {(input.trim() || stagedFiles.length > 0) && (
                   <button
@@ -455,7 +496,7 @@ export default function RoomChat() {
                     disabled={isUploading}
                     className="w-10 h-10 rounded-xl bg-[var(--brand)] text-white flex items-center justify-center hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
                   >
-                    <span className="material-symbols-outlined text-[22px]">send</span>
+                    <Send size={22} />
                   </button>
                 )}
               </div>
@@ -465,7 +506,7 @@ export default function RoomChat() {
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)]">
           <div className="w-24 h-24 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-6 text-[var(--text-normal)] shadow-inner border border-[var(--border)]">
-            <span className="material-symbols-outlined text-5xl">lock</span>
+            <Lock size={48} />
           </div>
           <h3 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
             You haven&apos;t joined this room

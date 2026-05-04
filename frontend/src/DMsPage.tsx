@@ -9,6 +9,7 @@ import {
 import { formatMessageTimestamp } from './utils/time';
 import { supabase } from './supabase';
 import { useTranslation } from './LanguageContext';
+import { MessageSquare, Inbox, Check, X, UserPlus, Users, MessageCircle, UserMinus, Search, Loader2 } from 'lucide-react';
 
 export default function DMsPage() {
   const { t } = useTranslation();
@@ -128,7 +129,7 @@ export default function DMsPage() {
       {/* Header */}
       <header className="h-16 flex items-center px-6 border-b border-[var(--border)] shrink-0 z-10 shadow-sm bg-[var(--bg-secondary)]/50 backdrop-blur-sm">
         <div className="flex items-center gap-4 flex-1">
-          <span className="material-symbols-outlined text-[var(--brand)] text-[28px]">chat</span>
+          <MessageSquare size={28} className="text-[var(--brand)]" />
           <h1 className="text-[18px] font-bold tracking-tight">{t('messages') || 'Messages'}</h1>
         </div>
 
@@ -144,7 +145,7 @@ export default function DMsPage() {
               }`}
               title="Friend Requests"
             >
-              <span className="material-symbols-outlined text-[24px]">inbox</span>
+              <Inbox size={24} />
               {pendingReceived.length > 0 && (
                 <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--bg-secondary)]" />
               )}
@@ -166,9 +167,7 @@ export default function DMsPage() {
                   <div className="max-h-[300px] overflow-y-auto">
                     {pendingReceived.length === 0 ? (
                       <div className="p-6 flex flex-col items-center justify-center text-[var(--text-muted)] text-center">
-                        <span className="material-symbols-outlined text-4xl mb-2 opacity-50 text-[var(--brand)]">
-                          inbox
-                        </span>
+                        <Inbox size={40} className="mb-2 opacity-50 text-[var(--brand)]" />
                         <p className="text-sm font-medium">No pending requests</p>
                       </div>
                     ) : (
@@ -197,7 +196,7 @@ export default function DMsPage() {
                               className="w-8 h-8 rounded-lg bg-[#10b981] text-white flex items-center justify-center hover:bg-[#059669] transition-colors shadow-sm"
                               title="Accept"
                             >
-                              <span className="material-symbols-outlined text-[16px]">check</span>
+                              <Check size={16} />
                             </button>
                             <button
                               onClick={() => {
@@ -207,7 +206,7 @@ export default function DMsPage() {
                               className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[#ef4444] hover:text-white transition-colors border border-[var(--border)]"
                               title="Decline"
                             >
-                              <span className="material-symbols-outlined text-[16px]">close</span>
+                              <X size={16} />
                             </button>
                           </div>
                         </div>
@@ -223,7 +222,7 @@ export default function DMsPage() {
             onClick={() => setShowAddFriend(true)}
             className="flex items-center gap-2 bg-[var(--brand)] text-white px-4 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
           >
-            <span className="material-symbols-outlined text-[20px]">person_add</span>
+            <UserPlus size={20} />
             {t('add_friend') || 'Add Friend'}
           </button>
         </div>
@@ -234,9 +233,7 @@ export default function DMsPage() {
         {sortedFriends.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
             <div className="w-24 h-24 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-6 shadow-inner border border-[var(--border)]">
-              <span className="material-symbols-outlined text-5xl text-[var(--brand)]">
-                group_add
-              </span>
+              <Users size={48} className="text-[var(--brand)]" />
             </div>
             <h2 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
               {t('no_conversations') || 'No conversations yet'}
@@ -263,20 +260,22 @@ export default function DMsPage() {
                   onClick={() => navigate(`/dms/${u.username}`)}
                   className="flex items-center gap-4 px-6 py-4 hover:bg-[var(--bg-modifier-hover)] cursor-pointer transition-colors border-b border-[var(--border)]/30"
                 >
-                  <div className="relative flex-shrink-0">
-                    {u.avatarUrl ? (
-                      <img
-                        src={u.avatarUrl}
-                        alt={`${u.username}'s avatar`}
-                        className="w-12 h-12 rounded-full object-cover shadow-sm bg-[var(--bg-tertiary)]"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-                        {u.username[0].toUpperCase()}
-                      </div>
-                    )}
+                  <div className="relative flex-shrink-0 w-12 h-12">
+                    <div className="w-full h-full rounded-full overflow-hidden shadow-sm">
+                      {u.avatarUrl ? (
+                        <img
+                          src={u.avatarUrl}
+                          alt={`${u.username}'s avatar`}
+                          className="w-full h-full object-cover bg-[var(--bg-tertiary)]"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-lg">
+                          {u.username[0].toUpperCase()}
+                        </div>
+                      )}
+                    </div>
                     <div
-                      className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[2.5px] border-[var(--bg-primary)] ${u.online ? 'bg-[#10b981]' : 'bg-[#64748b]'}`}
+                      className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[2.5px] border-[var(--bg-primary)] z-10 ${u.online ? 'bg-[#10b981]' : 'bg-[#9ca3af]'}`}
                     />
                   </div>
 
@@ -308,7 +307,7 @@ export default function DMsPage() {
                       }}
                       className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand)]/10 transition-colors"
                     >
-                      <span className="material-symbols-outlined text-[22px]">chat_bubble</span>
+                      <MessageCircle size={22} />
                     </button>
                     <button
                       onClick={(e) => {
@@ -319,7 +318,7 @@ export default function DMsPage() {
                       }}
                       className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"
                     >
-                      <span className="material-symbols-outlined text-[22px]">person_remove</span>
+                      <UserMinus size={22} />
                     </button>
                   </div>
                 </div>
@@ -359,16 +358,14 @@ export default function DMsPage() {
                 }}
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
               >
-                <span className="material-symbols-outlined">close</span>
+                <X size={20} />
               </button>
             </div>
 
             {/* Search Input */}
             <div className="px-6 py-4">
               <div className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-[var(--brand)] transition-colors">
-                <span className="material-symbols-outlined text-[var(--text-muted)] text-[22px]">
-                  search
-                </span>
+                <Search size={22} className="text-[var(--text-muted)]" />
                 <input
                   type="text"
                   placeholder={t('search_users') || 'Search users by name...'}
@@ -384,23 +381,17 @@ export default function DMsPage() {
             <div className="flex-1 overflow-y-auto px-6 pb-6">
               {!searchQuery.trim() ? (
                 <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)]">
-                  <span className="material-symbols-outlined text-6xl mb-4 opacity-30">
-                    person_search
-                  </span>
+                  <Search size={60} className="mb-4 opacity-30" />
                   <p className="text-[15px]">Start typing to search for users</p>
                 </div>
               ) : isSearching ? (
                 <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)]">
-                  <span className="material-symbols-outlined text-6xl mb-4 opacity-30 animate-spin">
-                    sync
-                  </span>
+                  <Loader2 size={60} className="mb-4 opacity-30 animate-spin" />
                   <p className="text-[15px]">Searching...</p>
                 </div>
               ) : searchResults.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)]">
-                  <span className="material-symbols-outlined text-6xl mb-4 opacity-30">
-                    search_off
-                  </span>
+                  <Search size={60} className="mb-4 opacity-30" />
                   <p className="text-[15px]">No users found matching &quot;{searchQuery}&quot;</p>
                 </div>
               ) : (
@@ -408,23 +399,25 @@ export default function DMsPage() {
                   {searchResults.map((u: any) => (
                     <div
                       key={u.username}
-                      className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg-tertiary)]/50 border border-[var(--border)]/50 hover:bg-[var(--bg-modifier-hover)] transition-colors"
+                      className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg-tertiary)]/50 border border-[var(--border)]/50 hover:bg-[var(--bg-modifier-hover)] transition-colors relative"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="relative">
-                          {u.avatarUrl ? (
-                            <img
-                              src={u.avatarUrl}
-                              alt={`${u.username}'s avatar`}
-                              className="w-12 h-12 rounded-full object-cover shadow-sm bg-[var(--bg-tertiary)]"
-                            />
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-[var(--brand)] flex items-center justify-center font-bold text-white text-lg shadow-sm">
-                              {u.username[0].toUpperCase()}
-                            </div>
-                          )}
+                        <div className="relative flex-shrink-0 w-12 h-12">
+                          <div className="w-full h-full rounded-full overflow-hidden shadow-sm">
+                            {u.avatarUrl ? (
+                              <img
+                                src={u.avatarUrl}
+                                alt={`${u.username}'s avatar`}
+                                className="w-full h-full object-cover bg-[var(--bg-tertiary)]"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-[var(--brand)] flex items-center justify-center font-bold text-white text-lg">
+                                {u.username[0].toUpperCase()}
+                              </div>
+                            )}
+                          </div>
                           <div
-                            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-tertiary)] ${u.online ? 'bg-[#10b981]' : 'bg-[#64748b]'}`}
+                            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-tertiary)] z-10 ${u.online ? 'bg-[#10b981]' : 'bg-[#9ca3af]'}`}
                           />
                         </div>
                         <div>

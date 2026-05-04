@@ -37,7 +37,7 @@ function App() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full bg-[#0b0714] flex items-center justify-center text-white">
+      <div className="h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[var(--brand)] border-t-transparent rounded-full animate-spin"></div>
           <p className="text-[var(--text-muted)] font-medium">Loading Aether...</p>

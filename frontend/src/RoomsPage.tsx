@@ -3,6 +3,7 @@ import { useMucContext } from './MucContext';
 import { useChatContext } from './ChatContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from './LanguageContext';
+import { Loader2, Trash2 } from 'lucide-react';
 
 export default function RoomsPage() {
   const { availableRooms, createRoom, deleteRoom } = useMucContext();
@@ -111,11 +112,9 @@ export default function RoomsPage() {
                           className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--color-status-dnd)] hover:text-white transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100 disabled:opacity-50"
                         >
                           {deletingId === room.id ? (
-                            <span className="material-symbols-outlined text-[18px] animate-spin">
-                              progress_activity
-                            </span>
+                            <Loader2 size={18} className="animate-spin" />
                           ) : (
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                            <Trash2 size={18} />
                           )}
                         </button>
                       )}

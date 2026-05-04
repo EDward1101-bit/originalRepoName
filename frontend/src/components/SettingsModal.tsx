@@ -3,6 +3,7 @@ import { useAuth } from '../AuthContext';
 import { useTranslation } from '../LanguageContext';
 import { supabase } from '../supabase';
 import { Language } from '../i18n';
+import { Settings, User, Palette, Mic, Puzzle, LogOut, X, Camera, Loader2, Moon, Sun } from 'lucide-react';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -41,11 +42,11 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const tabs = [
-    { name: 'General', label: t('general'), icon: 'settings', category: 'USER SETTINGS' },
-    { name: 'My Account', label: t('account'), icon: 'person', category: 'USER SETTINGS' },
-    { name: 'Appearance', label: t('appearance'), icon: 'palette', category: 'APP SETTINGS' },
-    { name: 'Voice & Video', label: t('voice_video'), icon: 'mic', category: 'APP SETTINGS' },
-    { name: 'Integrations', label: t('integrations'), icon: 'extension', category: 'APP SETTINGS' },
+    { name: 'General', label: t('general'), Icon: Settings, category: 'USER SETTINGS' },
+    { name: 'My Account', label: t('account'), Icon: User, category: 'USER SETTINGS' },
+    { name: 'Appearance', label: t('appearance'), Icon: Palette, category: 'APP SETTINGS' },
+    { name: 'Voice & Video', label: t('voice_video'), Icon: Mic, category: 'APP SETTINGS' },
+    { name: 'Integrations', label: t('integrations'), Icon: Puzzle, category: 'APP SETTINGS' },
   ];
 
   const handleSignOut = async () => {
@@ -179,9 +180,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                     disabled={isUploadingAvatar}
                     className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <span className="material-symbols-outlined text-white text-[28px]">
-                      {isUploadingAvatar ? 'hourglass_empty' : 'photo_camera'}
-                    </span>
+                    {isUploadingAvatar ? <Loader2 size={28} className="text-white animate-spin" /> : <Camera size={28} className="text-white" />}
                   </button>
                   <input
                     type="file"
@@ -392,8 +391,8 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                       : 'border-[var(--border)] hover:border-[var(--text-muted)]'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[#0b0714] mb-4 border border-[#241a38] flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[#14b8a6]">dark_mode</span>
+                  <div className="w-12 h-12 rounded-xl bg-[#0f172a] mb-4 border border-[#334155] flex items-center justify-center">
+                    <Moon size={24} className="text-[#a78bfa]" />
                   </div>
                   <p className="font-bold text-[16px] text-left">Dark</p>
                   <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
@@ -409,7 +408,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   }`}
                 >
                   <div className="w-12 h-12 rounded-xl bg-[#f8fafc] mb-4 border border-[#e2e8f0] flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[#0d9488]">light_mode</span>
+                    <Sun size={24} className="text-[#7c3aed]" />
                   </div>
                   <p className="font-bold text-[16px] text-left">Light</p>
                   <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
@@ -460,9 +459,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
               <div className="bg-[var(--bg-tertiary)] p-5 rounded-2xl flex items-center justify-between border border-[var(--border)]">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[#8b5cf6] flex items-center justify-center">
-                    <span className="material-symbols-outlined text-white text-[22px]">
-                      extension
-                    </span>
+                    <Puzzle size={22} className="text-white" />
                   </div>
                   <span className="font-bold text-[15px]">Coming Soon</span>
                 </div>
@@ -506,7 +503,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                       : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
+                  <tab.Icon size={20} />
                   {tab.label}
                 </button>
               </div>
@@ -517,7 +514,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             onClick={handleSignOut}
             className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors flex items-center gap-3"
           >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
+            <LogOut size={20} />
             {t('logout')}
           </button>
         </div>
@@ -533,7 +530,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             onClick={onClose}
             className="w-10 h-10 border-2 border-[var(--text-muted)] rounded-full flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--text-normal)] hover:text-[var(--text-normal)] transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            <X size={20} />
           </button>
           <span className="text-[11px] font-bold text-[var(--text-muted)] tracking-wide">ESC</span>
         </div>

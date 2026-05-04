@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import { useTranslation } from './LanguageContext';
 import { API_URL } from './config';
 import { supabase } from './supabase';
+import { Lock, UserPlus, Hand } from 'lucide-react';
 
 export default function Auth() {
   const { signIn, signUp, signOut, user } = useAuth();
@@ -84,10 +85,10 @@ export default function Auth() {
 
   if (user) {
     return (
-      <div className="h-screen w-full bg-[#0b0714] flex items-center justify-center p-6 text-white">
-        <div className="w-full max-w-sm bg-[#120c1d] border border-[#241a38] rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-xl font-bold mb-2">Logged in as {user.email}</h2>
-          <p className="text-sm text-[#94a3b8] mb-6">You are authenticated with Aether.</p>
+      <div className="h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center p-6">
+        <div className="w-full max-w-sm bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-8 shadow-lg">
+          <h2 className="text-xl font-bold mb-2 text-[var(--text-normal)]">Logged in as {user.email}</h2>
+          <p className="text-sm text-[var(--text-muted)] mb-6">You are authenticated with Aether.</p>
           <button
             onClick={signOut}
             className="w-full bg-[#ef4444] text-white font-bold py-3 rounded-xl hover:bg-[#dc2626] transition-colors"
@@ -102,34 +103,28 @@ export default function Auth() {
   // Forgot Password form
   if (isForgotPassword) {
     return (
-      <div className="h-screen w-full bg-[#0b0714] flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Background glow */}
-        <div className="fixed inset-0 pointer-events-none opacity-40 z-0">
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#14b8a6] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
-          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#8b5cf6] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
-        </div>
-
-        <div className="w-full max-w-[440px] bg-[#120c1d] border border-[#241a38] rounded-2xl p-8 shadow-2xl relative z-10">
+      <div className="h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center p-4">
+        <div className="w-full max-w-[440px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-8 shadow-lg">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-[#14b8a6] mx-auto mb-4 flex items-center justify-center shadow-lg">
-              <span className="material-symbols-outlined text-white text-[32px]">lock_reset</span>
+            <div className="w-16 h-16 rounded-2xl bg-[var(--brand)] mx-auto mb-4 flex items-center justify-center shadow-lg">
+              <Lock size={32} className="text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Reset Password</h1>
-            <p className="text-[#94a3b8] text-[15px] mt-2">
+            <h1 className="text-2xl font-bold text-[var(--text-normal)] tracking-tight">Reset Password</h1>
+            <p className="text-[var(--text-muted)] text-[15px] mt-2">
               Enter your email and we&apos;ll send you a reset link.
             </p>
           </div>
 
           <form onSubmit={handleForgotPassword} className="flex flex-col gap-5">
             <div>
-              <label className="block text-[12px] font-bold uppercase tracking-widest text-[#94a3b8] mb-2">
+              <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
                 Email Address
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#191228] border border-[#241a38] outline-none text-white text-[15px] px-4 py-3 rounded-xl focus:border-[#14b8a6] transition-colors"
+                className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
                 required
                 placeholder="you@example.com"
               />
@@ -138,7 +133,7 @@ export default function Auth() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#14b8a6] text-white font-bold text-[15px] py-3 rounded-xl hover:bg-[#0d9488] transition-colors disabled:opacity-50 shadow-md"
+              className="w-full bg-[var(--brand)] text-white font-bold text-[15px] py-3 rounded-xl hover:bg-[var(--brand-hover)] transition-colors disabled:opacity-50 shadow-sm"
             >
               {loading ? 'Sending...' : 'Send Reset Link'}
             </button>
@@ -150,7 +145,7 @@ export default function Auth() {
                 setIsForgotPassword(false);
                 setMessage('');
               }}
-              className="text-[#14b8a6] text-[14px] font-medium hover:underline"
+              className="text-[var(--brand)] text-[14px] font-medium hover:underline"
             >
               ← Back to Login
             </button>
@@ -169,38 +164,30 @@ export default function Auth() {
   }
 
   return (
-    <div className="h-screen w-full bg-[#0b0714] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background glow */}
-      <div className="fixed inset-0 pointer-events-none opacity-40 z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#14b8a6] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#8b5cf6] rounded-full blur-[120px] mix-blend-screen opacity-20"></div>
-      </div>
-
-      <div className="w-full max-w-[440px] bg-[#120c1d] border border-[#241a38] rounded-2xl p-8 shadow-2xl relative z-10">
+    <div className="h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center p-4">
+      <div className="w-full max-w-[440px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-8 shadow-lg">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-[#14b8a6] mx-auto mb-4 flex items-center justify-center shadow-lg">
-            <span className="material-symbols-outlined text-white text-[32px]">
-              {isSignUp ? 'person_add' : 'waving_hand'}
-            </span>
+          <div className="w-16 h-16 rounded-2xl bg-[var(--brand)] mx-auto mb-4 flex items-center justify-center shadow-lg">
+            {isSignUp ? <UserPlus size={32} className="text-white" /> : <Hand size={32} className="text-white" />}
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-[var(--text-normal)] tracking-tight">
             {isSignUp ? t('register') : t('welcome')}
           </h1>
-          <p className="text-[#94a3b8] text-[15px] mt-2">
+          <p className="text-[var(--text-muted)] text-[15px] mt-2">
             {isSignUp ? 'Set up your Aether identity' : 'Sign in to continue chatting'}
           </p>
         </div>
 
         <form onSubmit={handleAuth} className="flex flex-col gap-5">
           <div>
-            <label className="block text-[12px] font-bold uppercase tracking-widest text-[#94a3b8] mb-2">
+            <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
               Email <span className="text-[#ef4444]">*</span>
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[#191228] border border-[#241a38] outline-none text-white text-[15px] px-4 py-3 rounded-xl focus:border-[#14b8a6] transition-colors"
+              className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
               required
               placeholder="you@example.com"
             />
@@ -208,14 +195,14 @@ export default function Auth() {
 
           {isSignUp && (
             <div>
-              <label className="block text-[12px] font-bold uppercase tracking-widest text-[#94a3b8] mb-2">
+              <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
                 Username <span className="text-[#ef4444]">*</span>
               </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-[#191228] border border-[#241a38] outline-none text-white text-[15px] px-4 py-3 rounded-xl focus:border-[#14b8a6] transition-colors"
+                className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
                 required
                 placeholder="Choose a username"
               />
@@ -223,14 +210,14 @@ export default function Auth() {
           )}
 
           <div>
-            <label className="block text-[12px] font-bold uppercase tracking-widest text-[#94a3b8] mb-2">
+            <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
               Password <span className="text-[#ef4444]">*</span>
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#191228] border border-[#241a38] outline-none text-white text-[15px] px-4 py-3 rounded-xl focus:border-[#14b8a6] transition-colors"
+              className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
               required
               placeholder="••••••••"
             />
@@ -241,7 +228,7 @@ export default function Auth() {
                   setIsForgotPassword(true);
                   setMessage('');
                 }}
-                className="text-[#14b8a6] text-[13px] font-medium mt-2 block hover:underline"
+                className="text-[var(--brand)] text-[13px] font-medium mt-2 block hover:underline"
               >
                 {t('forgot_password')}
               </button>
@@ -251,14 +238,14 @@ export default function Auth() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#14b8a6] text-white font-bold text-[15px] py-3.5 rounded-xl hover:bg-[#0d9488] transition-colors mt-1 disabled:opacity-50 shadow-md"
+            className="w-full bg-[var(--brand)] text-white font-bold text-[15px] py-3.5 rounded-xl hover:bg-[var(--brand-hover)] transition-colors mt-1 disabled:opacity-50 shadow-sm"
           >
             {loading ? '...' : isSignUp ? t('register') : t('sign_in')}
           </button>
         </form>
 
         <div className="mt-5 text-[14px] text-center">
-          <span className="text-[#94a3b8]">
+          <span className="text-[var(--text-muted)]">
             {isSignUp ? 'Already have an account? ' : 'Need an account? '}
           </span>
           <button
@@ -266,7 +253,7 @@ export default function Auth() {
               setIsSignUp(!isSignUp);
               setMessage('');
             }}
-            className="text-[#14b8a6] font-medium hover:underline"
+            className="text-[var(--brand)] font-medium hover:underline"
           >
             {isSignUp ? 'Sign In' : 'Register'}
           </button>
