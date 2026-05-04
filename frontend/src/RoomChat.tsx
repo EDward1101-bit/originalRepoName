@@ -7,7 +7,7 @@ import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
-import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star } from 'lucide-react';
+import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Pencil } from 'lucide-react';
 
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
@@ -18,7 +18,9 @@ export default function RoomChat() {
     joinRoom,
     leaveRoom,
     roomMessages,
+    roomTypingUsers,
     sendRoomMessage,
+    sendRoomTypingIndicator,
     deleteRoomMessageForEveryone,
     deleteRoomMessageForMe,
   } = useMucContext();
@@ -33,6 +35,9 @@ export default function RoomChat() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const room = availableRooms.find((r) => r.name === roomName);
   const isJoined = roomName ? joinedRooms.includes(roomName) : false;
@@ -86,7 +91,7 @@ export default function RoomChat() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, roomTypingUsers, roomName]);
 
   const handleJoin = async () => {
     if (roomName) {
@@ -146,6 +151,28 @@ export default function RoomChat() {
     if (!files) return;
     setStagedFiles((prev) => [...prev, ...Array.from(files)]);
     e.target.value = '';
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+
+    if (!isTyping) {
+      setIsTyping(true);
+      if (roomName) {
+        sendRoomTypingIndicator(roomName, true);
+      }
+    }
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      if (roomName) {
+        sendRoomTypingIndicator(roomName, false);
+      }
+    }, 3000);
   };
 
   const removeStagedFile = (index: number) => {
@@ -398,6 +425,37 @@ export default function RoomChat() {
                 );
               })
             )}
+
+            {/* Room Typing Indicator */}
+            {roomName && roomTypingUsers[roomName] && Object.keys(roomTypingUsers[roomName]).length > 0 && (
+              <div className="flex items-center gap-3 px-2 py-2">
+                <div className="flex -space-x-1">
+                  {Object.keys(roomTypingUsers[roomName]).slice(0, 3).map((username, i) => {
+                    const profile = getUserProfile(username);
+                    return (
+                      <div
+                        key={username}
+                        className="w-5 h-5 rounded-full bg-[var(--brand)] flex items-center justify-center text-[8px] text-white font-bold border-2 border-[var(--bg-primary)]"
+                        style={{ zIndex: 3 - i }}
+                      >
+                        {profile?.displayName?.[0]?.toUpperCase() || username[0].toUpperCase()}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-1">
+                  <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+                <span className="text-[12px] text-[var(--text-muted)] font-medium">
+                  {Object.keys(roomTypingUsers[roomName]).length === 1
+                    ? `${getUserProfile(Object.keys(roomTypingUsers[roomName])[0])?.displayName || Object.keys(roomTypingUsers[roomName])[0]} is typing...`
+                    : `${Object.keys(roomTypingUsers[roomName]).length} people are typing...`}
+                </span>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
@@ -468,7 +526,7 @@ export default function RoomChat() {
                 placeholder={`Message #${room.name}`}
                 type="text"
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleSend(e as unknown as React.FormEvent);

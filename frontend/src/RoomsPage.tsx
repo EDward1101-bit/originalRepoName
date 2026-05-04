@@ -3,10 +3,10 @@ import { useMucContext } from './MucContext';
 import { useChatContext } from './ChatContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from './LanguageContext';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, Pencil } from 'lucide-react';
 
 export default function RoomsPage() {
-  const { availableRooms, createRoom, deleteRoom } = useMucContext();
+  const { availableRooms, joinedRooms, roomTypingUsers, createRoom, deleteRoom } = useMucContext();
   const { myUsername } = useChatContext();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -123,6 +123,18 @@ export default function RoomsPage() {
                     <p className="text-[14px] text-[var(--text-muted)] flex-1 mt-2 line-clamp-3">
                       {room.description || 'Welcome to our server! Hang out and chat with us.'}
                     </p>
+
+                    {/* Typing indicator */}
+                    {joinedRooms.includes(room.name) && roomTypingUsers[room.name] && Object.keys(roomTypingUsers[room.name]).length > 0 && (
+                      <div className="mt-3 flex items-center gap-2 text-[var(--brand)]">
+                        <Pencil size={14} className="animate-pulse" />
+                        <span className="text-[12px] font-medium italic">
+                          {Object.keys(roomTypingUsers[room.name]).length === 1
+                            ? '1 person typing...'
+                            : `${Object.keys(roomTypingUsers[room.name]).length} people typing...`}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

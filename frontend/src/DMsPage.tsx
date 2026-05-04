@@ -9,7 +9,7 @@ import {
 import { formatMessageTimestamp } from './utils/time';
 import { supabase } from './supabase';
 import { useTranslation } from './LanguageContext';
-import { MessageSquare, Inbox, Check, X, UserPlus, Users, MessageCircle, UserMinus, Search, Loader2 } from 'lucide-react';
+import { MessageSquare, Inbox, Check, X, UserPlus, Users, MessageCircle, UserMinus, Search, Loader2, Pencil } from 'lucide-react';
 
 export default function DMsPage() {
   const { t } = useTranslation();
@@ -21,6 +21,7 @@ export default function DMsPage() {
     sendFriendRequest,
     acceptFriendRequest,
     removeFriendship,
+    typingUsers,
   } = useChatContext();
   const navigate = useNavigate();
 
@@ -290,8 +291,13 @@ export default function DMsPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[14px] text-[var(--text-muted)] truncate">
-                      {lastMsg
+                    <p className={`text-[14px] truncate ${typingUsers[u.username] ? 'text-[var(--brand)] font-medium italic' : 'text-[var(--text-muted)]'}`}>
+                      {typingUsers[u.username] ? (
+                        <span className="flex items-center gap-1">
+                          <Pencil size={12} className="animate-pulse" />
+                          typing...
+                        </span>
+                      ) : lastMsg
                         ? lastMsg.body.includes('chat-media')
                           ? '📎 Attachment'
                           : lastMsg.body

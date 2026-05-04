@@ -129,6 +129,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     jidRef.current = jid;
   }, [jid]);
 
+  // Clean up expired typing indicators (older than 6 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setTypingUsers((prev) => {
+        const next: Record<string, number> = {};
+        let hasExpired = false;
+        for (const [user, timestamp] of Object.entries(prev)) {
+          if (now - timestamp < 6000) {
+            next[user] = timestamp;
+          } else {
+            hasExpired = true;
+          }
+        }
+        return hasExpired ? next : prev;
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   // ── XMPP Connection ──
   useEffect(() => {
     if (!user || !password) return;

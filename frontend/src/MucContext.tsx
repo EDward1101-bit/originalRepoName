@@ -33,11 +33,13 @@ interface MucContextType {
   availableRooms: Room[];
   joinedRooms: string[]; // room names
   roomMessages: Record<string, RoomMessage[]>; // room name -> messages
+  roomTypingUsers: Record<string, Record<string, number>>; // room name -> {username: timestamp}
   createRoom: (name: string, description?: string) => Promise<void>;
   deleteRoom: (roomId: string, roomName: string) => Promise<void>;
   joinRoom: (roomName: string) => Promise<void>;
   leaveRoom: (roomName: string) => void;
   sendRoomMessage: (roomName: string, body: string) => Promise<void>;
+  sendRoomTypingIndicator: (roomName: string, isTyping: boolean) => void;
   deleteRoomMessageForEveryone: (
     roomId: string,
     roomName: string,
@@ -70,6 +72,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
     }
   });
   const [roomMessages, setRoomMessages] = useState<Record<string, RoomMessage[]>>({});
+  const [roomTypingUsers, setRoomTypingUsers] = useState<Record<string, Record<string, number>>>({});
   const [hiddenRoomMessageIds, setHiddenRoomMessageIds] = useState<Set<string>>(() => {
     const stored = localStorage.getItem('hidden_room_message_ids');
     if (!stored) return new Set();
@@ -368,7 +371,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
     if (!client || status !== 'Connected') return;
 
     const handleMucMessage = (msg: ReceivedMessage) => {
-      if (msg.type !== 'groupchat' || !msg.body) return;
+      if (msg.type !== 'groupchat') return;
 
       // msg.from format: roomname@conference.localhost/nickname
       const fromFull = msg.from || '';
@@ -379,6 +382,29 @@ export function MucProvider({ children }: { children: ReactNode }) {
       if ((msg as any).delay) return;
 
       if (nickname === myUsername) return;
+
+      // Handle typing indicators (XEP-0085)
+      const chatState = (msg as any).chatState;
+      if (chatState) {
+        if (chatState === 'composing') {
+          setRoomTypingUsers((prev) => ({
+            ...prev,
+            [roomName]: { ...(prev[roomName] || {}), [nickname]: Date.now() },
+          }));
+        } else {
+          setRoomTypingUsers((prev) => {
+            const next = { ...prev };
+            if (next[roomName]) {
+              const roomTypers = { ...next[roomName] };
+              delete roomTypers[nickname];
+              next[roomName] = roomTypers;
+            }
+            return next;
+          });
+        }
+      }
+
+      if (!msg.body) return;
 
       // XEP-0308 Replace
       const replaceId = (msg as any).replace?.id || (msg as any).replace;
@@ -666,6 +692,16 @@ export function MucProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const sendRoomTypingIndicator = (roomName: string, isTyping: boolean) => {
+    if (!client || !myUsername || status !== 'Connected') return;
+    const roomJid = buildRoomJid(roomName);
+    client.sendMessage({
+      to: roomJid,
+      type: 'groupchat',
+      chatState: isTyping ? 'composing' : 'active',
+    } as any);
+  };
+
   const deleteRoomMessageForEveryone = async (
     _roomId: string,
     roomName: string,
@@ -739,17 +775,45 @@ export function MucProvider({ children }: { children: ReactNode }) {
     ])
   );
 
+  // Clean up expired room typing indicators (older than 6 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setRoomTypingUsers((prev) => {
+        const next: Record<string, Record<string, number>> = {};
+        let hasExpired = false;
+        for (const [roomName, typers] of Object.entries(prev)) {
+          const activeTypers: Record<string, number> = {};
+          for (const [user, timestamp] of Object.entries(typers)) {
+            if (now - timestamp < 6000) {
+              activeTypers[user] = timestamp;
+            } else {
+              hasExpired = true;
+            }
+          }
+          if (Object.keys(activeTypers).length > 0) {
+            next[roomName] = activeTypers;
+          }
+        }
+        return hasExpired ? next : prev;
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <MucContext.Provider
       value={{
         availableRooms,
         joinedRooms,
         roomMessages: filteredRoomMessages,
+        roomTypingUsers,
         createRoom,
         deleteRoom,
         joinRoom,
         leaveRoom,
         sendRoomMessage,
+        sendRoomTypingIndicator,
         deleteRoomMessageForEveryone,
         deleteRoomMessageForMe,
       }}
