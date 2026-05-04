@@ -85,7 +85,21 @@ export function MucProvider({ children }: { children: ReactNode }) {
 
   const joinedRoomsRef = useRef<Set<string>>(new Set(joinedRooms));
   const seenRoomMessageIds = useRef<Set<string>>(new Set());
+  const hasInitiallyJoinedRef = useRef(false);
+  const myUsernameRef = useRef(myUsername);
+  const myDisplayNameRef = useRef<string>('');
   const recentPresenceKeys = useRef<Map<string, number>>(new Map());
+
+  // Keep myUsernameRef current
+  useEffect(() => {
+    myUsernameRef.current = myUsername;
+  }, [myUsername]);
+
+  // Keep myDisplayNameRef current (MUC nicknames may be display names)
+  useEffect(() => {
+    const profile = allUsers.find((u) => u.username === myUsername);
+    myDisplayNameRef.current = profile?.displayName || '';
+  }, [allUsers, myUsername]);
 
   const publishSystemMessage = async (
     roomName: string,
@@ -134,49 +148,6 @@ export function MucProvider({ children }: { children: ReactNode }) {
       console.error('Failed to save system message:', error);
     }
   };
-
-  const addSystemMessage = useCallback(
-    (roomName: string, nickname: string, presenceType?: string) => {
-      if (!joinedRoomsRef.current.has(roomName)) return;
-      if (nickname === myUsername) return; // Prevent self-echo on refresh; our own joins are handled explicitly
-
-      const userProfile = allUsers.find((u) => u.username === nickname);
-      const displayName = userProfile?.displayName || nickname;
-
-      let sysMsgBody = '';
-      if (!presenceType || presenceType === 'available') {
-        sysMsgBody = `${displayName} has entered the room.`;
-      } else if (presenceType === 'unavailable') {
-        sysMsgBody = `${displayName} has left the room.`;
-      }
-
-      if (!sysMsgBody) return;
-
-      const room = availableRooms.find((r) => r.name === roomName);
-      const roomId = room ? room.id : 'sys';
-
-      const sysKey = `sys:${roomId}:${sysMsgBody}`;
-      const lastSeen = recentPresenceKeys.current.get(sysKey) || 0;
-      const now = Date.now();
-      if (now - lastSeen < 5000) return;
-      recentPresenceKeys.current.set(sysKey, now);
-
-      const sysMsg: RoomMessage = {
-        id: generateId(),
-        room_id: roomId,
-        sender: 'System',
-        body: sysMsgBody,
-        created_at: new Date(),
-        type: 'system',
-      };
-
-      setRoomMessages((prev) => ({
-        ...prev,
-        [roomName]: [...(prev[roomName] || []), sysMsg],
-      }));
-    },
-    [availableRooms, myUsername, allUsers]
-  );
 
   const persistJoinedRooms = (rooms: Set<string>) => {
     const list = Array.from(rooms);
@@ -355,15 +326,29 @@ export function MucProvider({ children }: { children: ReactNode }) {
     };
   }, [myUsername, availableRooms]);
 
-  // Rejoin stored rooms on reconnect
+  // Track connection status to detect reconnections
+  useEffect(() => {
+    if (status === 'Disconnected' || status === 'Error') {
+      // Reset flag when disconnected so next connection is treated as reconnect
+      hasInitiallyJoinedRef.current = false;
+    }
+  }, [status]);
+
+  // Rejoin stored rooms on connection (initial load or reconnect)
   useEffect(() => {
     if (!client || status !== 'Connected' || !myUsername) return;
-    if (joinedRoomsRef.current.size === 0) return;
+    if (joinedRoomsRef.current.size === 0) {
+      hasInitiallyJoinedRef.current = true;
+      return;
+    }
 
+    // Always rejoin rooms to establish XMPP presence (silent, no system messages)
     joinedRoomsRef.current.forEach((roomName) => {
       sendMucJoin(roomName, myUsername);
       loadRoomHistory(roomName);
     });
+
+    hasInitiallyJoinedRef.current = true;
   }, [client, status, myUsername, loadRoomHistory, sendMucJoin]);
 
   // Listen to XMPP events for MUC
@@ -381,7 +366,11 @@ export function MucProvider({ children }: { children: ReactNode }) {
       // Ignore delay messages (history from server) if we use Supabase for history
       if ((msg as any).delay) return;
 
-      if (nickname === myUsername) return;
+      if (
+        nickname === myUsernameRef.current ||
+        (myDisplayNameRef.current && nickname === myDisplayNameRef.current)
+      )
+        return;
 
       // Handle typing indicators (XEP-0085)
       const chatState = (msg as any).chatState;
@@ -405,6 +394,20 @@ export function MucProvider({ children }: { children: ReactNode }) {
       }
 
       if (!msg.body) return;
+
+      // If the user actually sent a message, they are no longer typing.
+      setRoomTypingUsers((prev) => {
+        if (!prev[roomName] || !prev[roomName][nickname]) return prev;
+        const next = { ...prev };
+        const roomTypers = { ...next[roomName] };
+        delete roomTypers[nickname];
+        if (Object.keys(roomTypers).length === 0) {
+          delete next[roomName];
+        } else {
+          next[roomName] = roomTypers;
+        }
+        return next;
+      });
 
       // XEP-0308 Replace
       const replaceId = (msg as any).replace?.id || (msg as any).replace;
@@ -468,48 +471,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
       if (!roomJid || !roomJid.includes(`@${MUC_DOMAIN}`)) return;
       if (!nickname) return; // ignore bare JID presences (e.g. error stanzas)
 
-      const roomName = roomJid.split('@')[0];
-      addSystemMessage(roomName, nickname, presence.type);
-    };
-
-    const handleMucJoin = (presence: any) => {
-      const fromFull = presence.from || '';
-      const parts = fromFull.split('/');
-      const roomJid = parts[0];
-      const nickname = parts[1];
-      if (!roomJid || !nickname) return;
-      const roomName = roomJid.split('@')[0];
-      addSystemMessage(roomName, nickname, 'available');
-    };
-
-    const handleMucLeave = (presence: any) => {
-      const fromFull = presence.from || '';
-      const parts = fromFull.split('/');
-      const roomJid = parts[0];
-      const nickname = parts[1];
-      if (!roomJid || !nickname) return;
-      const roomName = roomJid.split('@')[0];
-      addSystemMessage(roomName, nickname, 'unavailable');
-    };
-
-    const handleMucAvailable = (presence: any) => {
-      const fromFull = presence.from || '';
-      const parts = fromFull.split('/');
-      const roomJid = parts[0];
-      const nickname = parts[1];
-      if (!roomJid || !nickname) return;
-      const roomName = roomJid.split('@')[0];
-      addSystemMessage(roomName, nickname, 'available');
-    };
-
-    const handleMucUnavailable = (presence: any) => {
-      const fromFull = presence.from || '';
-      const parts = fromFull.split('/');
-      const roomJid = parts[0];
-      const nickname = parts[1];
-      if (!roomJid || !nickname) return;
-      const roomName = roomJid.split('@')[0];
-      addSystemMessage(roomName, nickname, 'unavailable');
+      // No-op: join/leave system messages are only persisted when user explicitly clicks Join/Leave.
     };
 
     const handleRawIncoming = (xml: any) => {
@@ -522,7 +484,13 @@ export function MucProvider({ children }: { children: ReactNode }) {
           const [roomJid, nickname] = fromFull.split('/');
           const roomName = roomJid.split('@')[0];
           const targetId = xml.getChild('apply-to', 'urn:xmpp:fasten:0')?.attrs?.id;
-          if (targetId && roomName && nickname && nickname !== myUsername) {
+          if (
+            targetId &&
+            roomName &&
+            nickname &&
+            nickname !== myUsernameRef.current &&
+            (!myDisplayNameRef.current || nickname !== myDisplayNameRef.current)
+          ) {
             setRoomMessages((prev) => {
               const msgs = prev[roomName] || [];
               return {
@@ -540,22 +508,14 @@ export function MucProvider({ children }: { children: ReactNode }) {
 
     client.on('message', handleMucMessage);
     client.on('presence', handleMucPresence);
-    client.on('muc:join', handleMucJoin);
-    client.on('muc:leave', handleMucLeave);
-    client.on('muc:available', handleMucAvailable);
-    client.on('muc:unavailable', handleMucUnavailable);
     client.on('raw:incoming', handleRawIncoming);
 
     return () => {
       client.off('message', handleMucMessage);
       client.off('presence', handleMucPresence);
-      client.off('muc:join', handleMucJoin);
-      client.off('muc:leave', handleMucLeave);
-      client.off('muc:available', handleMucAvailable);
-      client.off('muc:unavailable', handleMucUnavailable);
       client.off('raw:incoming', handleRawIncoming);
     };
-  }, [client, status, myUsername, availableRooms, addSystemMessage]);
+  }, [client, status, availableRooms]);
 
   const createRoom = async (name: string, description: string = '') => {
     if (!myUsername) return;

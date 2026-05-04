@@ -432,13 +432,22 @@ export default function RoomChat() {
                 <div className="flex -space-x-1">
                   {Object.keys(roomTypingUsers[roomName]).slice(0, 3).map((username, i) => {
                     const profile = getUserProfile(username);
+                    const avatarUrl = profile?.avatarUrl;
                     return (
                       <div
                         key={username}
-                        className="w-5 h-5 rounded-full bg-[var(--brand)] flex items-center justify-center text-[8px] text-white font-bold border-2 border-[var(--bg-primary)]"
+                        className="w-5 h-5 rounded-full bg-[var(--brand)] flex items-center justify-center text-[8px] text-white font-bold border-2 border-[var(--bg-primary)] overflow-hidden"
                         style={{ zIndex: 3 - i }}
                       >
-                        {profile?.displayName?.[0]?.toUpperCase() || username[0].toUpperCase()}
+                        {avatarUrl ? (
+                          <img
+                            src={avatarUrl}
+                            alt={profile?.displayName || username}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          profile?.displayName?.[0]?.toUpperCase() || username[0].toUpperCase()
+                        )}
                       </div>
                     );
                   })}
