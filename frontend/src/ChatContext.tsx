@@ -615,6 +615,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const sendFriendRequest = async (targetUsername: string) => {
     if (!myUsername) return;
+    if (targetUsername === myUsername) {
+      console.error('Cannot send friend request to yourself');
+      return;
+    }
 
     const { data, error } = await supabase
       .from('friendships')
