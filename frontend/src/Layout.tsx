@@ -6,7 +6,7 @@ import { useMucContext } from './MucContext';
 import { useTranslation } from './LanguageContext';
 import SettingsModal from './components/SettingsModal';
 import { supabase } from './supabase';
-import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Hash, Star, TrendingUp, Users, MessageCircle, X } from 'lucide-react';
+import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, MessageCircle, X, Minus } from 'lucide-react';
 
 export default function Layout() {
   const { user } = useAuth();
@@ -230,62 +230,110 @@ export default function Layout() {
         </div>
       </div>
 
-      {/* Favorites */}
+      {/* Favorites or Joined Rooms based on current route */}
       <div className="flex-1 overflow-y-auto px-2 py-3">
         <div className="px-3 py-2">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-              Favorites
-            </p>
-            {favorites.length > 0 && (
-              <button
-                onClick={() => setFavorites([])}
-                className="text-[10px] text-[var(--text-muted)] hover:text-[#ef4444] transition-colors"
-                title="Clear all"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          {favorites.length === 0 ? (
-            <div className="px-3 py-6 text-center">
-              <Star size={24} className="text-[var(--text-muted)] mx-auto mb-2 opacity-40" />
-              <p className="text-[13px] text-[var(--text-muted)] italic">
-                Pin your favorite chats
-              </p>
-              <p className="text-[11px] text-[var(--text-muted)] opacity-60 mt-1">
-                Click the star in any conversation
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-0.5">
-              {favorites.map((fav) => (
-                <div key={fav.id} className="group flex items-center gap-2">
-                  <NavLink
-                    to={fav.type === 'dm' ? `/dms/${fav.name}` : `/rooms/${fav.name}`}
-                    className={({ isActive }) =>
-                      `flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
-                        isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''
-                      }`
-                    }
-                  >
-                    {fav.type === 'dm' ? (
-                      <MessageSquare size={16} />
-                    ) : (
-                      <Hash size={16} />
-                    )}
-                    <span className="font-medium text-[14px] truncate">{fav.name}</span>
-                  </NavLink>
-                  <button
-                    onClick={() => removeFavorite(fav.id)}
-                    className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-all"
-                    title="Remove from favorites"
-                  >
-                    <X size={14} />
-                  </button>
+          {location.pathname.startsWith('/rooms') ? (
+            // Show joined rooms when in rooms section
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                  Your Rooms
+                </p>
+              </div>
+              {joinedRooms.length === 0 ? (
+                <div className="px-3 py-6 text-center">
+                  <Server size={24} className="text-[var(--text-muted)] mx-auto mb-2 opacity-40" />
+                  <p className="text-[13px] text-[var(--text-muted)] italic">
+                    No rooms joined yet
+                  </p>
+                  <p className="text-[11px] text-[var(--text-muted)] opacity-60 mt-1">
+                    Explore servers to join
+                  </p>
                 </div>
-              ))}
-            </div>
+              ) : (
+                <div className="flex flex-col gap-0.5">
+                  {joinedRooms.map((roomName) => (
+                    <NavLink
+                      key={roomName}
+                      to={`/rooms/${roomName}`}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
+                          isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''
+                        }`
+                      }
+                    >
+                      <Minus size={16} />
+                      <span className="font-medium text-[14px] truncate">{roomName}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            // Show favorites in DMs section
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                  Favorites
+                </p>
+                {favorites.length > 0 && (
+                  <button
+                    onClick={async () => {
+                      // Delete all favorites from Supabase
+                      for (const fav of favorites) {
+                        await supabase.from('favorites').delete().eq('id', fav.id);
+                      }
+                      setFavorites([]);
+                    }}
+                    className="text-[10px] text-[var(--text-muted)] hover:text-[#ef4444] transition-colors"
+                    title="Clear all"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {favorites.length === 0 ? (
+                <div className="px-3 py-6 text-center">
+                  <Star size={24} className="text-[var(--text-muted)] mx-auto mb-2 opacity-40" />
+                  <p className="text-[13px] text-[var(--text-muted)] italic">
+                    Pin your favorite chats
+                  </p>
+                  <p className="text-[11px] text-[var(--text-muted)] opacity-60 mt-1">
+                    Click the star in any conversation
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-0.5">
+                  {favorites.map((fav) => (
+                    <div key={fav.id} className="group flex items-center gap-2">
+                      <NavLink
+                        to={fav.type === 'dm' ? `/dms/${fav.name}` : `/rooms/${fav.name}`}
+                        className={({ isActive }) =>
+                          `flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
+                            isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''
+                          }`
+                        }
+                      >
+                        {fav.type === 'dm' ? (
+                          <MessageSquare size={16} />
+                        ) : (
+                          <Minus size={16} />
+                        )}
+                        <span className="font-medium text-[14px] truncate">{fav.name}</span>
+                      </NavLink>
+                      <button
+                        onClick={() => removeFavorite(fav.id)}
+                        className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-all"
+                        title="Remove from favorites"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
