@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from '../LanguageContext';
 import { supabase } from '../supabase';
@@ -125,6 +125,16 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
     }
   };
 
+  const refreshUserData = useCallback(async () => {
+    if (!user?.id) return;
+    // Refresh the user's data to get updated metadata
+    const { data } = await supabase.auth.getUser();
+    if (data?.user) {
+      // Trigger a refresh in AuthContext if available
+      window.dispatchEvent(new CustomEvent('user-profile-updated'));
+    }
+  }, [user?.id]);
+
   const handleChangeUsername = async () => {
     if (!newUsername.trim()) {
       setUsernameMsg('Username cannot be empty.');
@@ -137,6 +147,9 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
       // Update public users table
       await supabase.from('users').update({ full_name: newUsername.trim() }).eq('id', user?.id);
+
+      // Refresh user data to propagate changes
+      await refreshUserData();
 
       setUsernameMsg(t('profile_updated') || 'Your display name has been successfully updated.');
       setNewUsername('');

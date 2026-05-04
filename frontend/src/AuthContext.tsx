@@ -30,6 +30,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [password]);
 
+  // Listen for profile update events from SettingsModal
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      refreshUser();
+    };
+    window.addEventListener('user-profile-updated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('user-profile-updated', handleProfileUpdate);
+    };
+  }, []);
+
   useEffect(() => {
     // Safety timeout to prevent infinite loading
     const timeout = setTimeout(() => {

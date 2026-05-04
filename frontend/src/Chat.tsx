@@ -273,9 +273,9 @@ export default function Chat() {
             const showHeader = index === 0 || filteredMessages[index - 1].from !== msg.from;
             const senderProfile = getUserProfile(msg.from);
 
-            // For 'You', use the most fresh metadata from AuthContext
+            // Always show 'You' for own messages
             const senderName = isSent
-              ? user?.user_metadata?.display_name || 'You'
+              ? 'You'
               : senderProfile?.displayName || msg.from;
 
             const senderAvatar = isSent
@@ -438,7 +438,7 @@ export default function Chat() {
               ></span>
             </div>
             <span className="text-[12px] text-[var(--text-muted)] font-medium">
-              {displayName} is typing...
+              {recipientProfile?.displayName || recipient} is typing...
             </span>
           </div>
         )}

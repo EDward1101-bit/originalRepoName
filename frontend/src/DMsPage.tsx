@@ -73,7 +73,7 @@ export default function DMsPage() {
       const { data, error } = await supabase
         .from('users')
         .select('username, full_name, avatar_url')
-        .ilike('username', `%${q}%`)
+        .or(`username.ilike.%${q}%,full_name.ilike.%${q}%`)
         .limit(10);
 
       if (!error && data) {

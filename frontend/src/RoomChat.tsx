@@ -274,7 +274,7 @@ export default function RoomChat() {
                 const senderProfile = getUserProfile(msg.sender);
 
                 const senderName = isSentByMe
-                  ? user?.user_metadata?.display_name || 'You'
+                  ? 'You'
                   : senderProfile?.displayName || msg.sender;
 
                 const senderAvatar = isSentByMe
