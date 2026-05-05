@@ -17,6 +17,7 @@ export default function DMsPage() {
     allUsers,
     friendships,
     myUsername,
+    myUserId,
     messages,
     sendFriendRequest,
     acceptFriendRequest,
@@ -30,31 +31,32 @@ export default function DMsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [requestSent, setRequestSent] = useState<string | null>(null);
 
-  const relationshipsByUsername = useMemo(() => {
+  // Keyed by the friend's UUID so lookups are correct even when display names collide
+  const relationshipsByUserId = useMemo(() => {
     const map = new Map<string, Friendship>();
     friendships.forEach((friendship: Friendship) => {
-      if (friendship.requester === myUsername) {
-        map.set(friendship.receiver, friendship);
-      } else if (friendship.receiver === myUsername) {
-        map.set(friendship.requester, friendship);
+      if (friendship.requester_id === myUserId) {
+        map.set(friendship.receiver_id, friendship);
+      } else if (friendship.receiver_id === myUserId) {
+        map.set(friendship.requester_id, friendship);
       }
     });
     return map;
-  }, [friendships, myUsername]);
+  }, [friendships, myUserId]);
 
   const acceptedFriends = useMemo(
     () =>
       allUsers.filter((u: RegisteredUser) => {
-        if (u.username === myUsername) return false;
-        return relationshipsByUsername.get(u.username)?.status === 'accepted';
+        if (u.id === myUserId) return false;
+        return relationshipsByUserId.get(u.id)?.status === 'accepted';
       }),
-    [allUsers, myUsername, relationshipsByUsername]
+    [allUsers, myUserId, relationshipsByUserId]
   );
 
   const pendingReceived = useMemo(
     () =>
-      friendships.filter((f: Friendship) => f.status === 'pending' && f.receiver === myUsername),
-    [friendships, myUsername]
+      friendships.filter((f: Friendship) => f.status === 'pending' && f.receiver_id === myUserId),
+    [friendships, myUserId]
   );
 
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -73,8 +75,8 @@ export default function DMsPage() {
     const debounceId = setTimeout(async () => {
       const { data, error } = await supabase
         .from('users')
-        .select('username, full_name, avatar_url')
-        .or(`username.ilike.%${q}%,full_name.ilike.%${q}%`)
+        .select('username, avatar_url')
+        .ilike('username', `%${q}%`)
         .limit(10);
 
       if (!error && data) {
@@ -86,7 +88,7 @@ export default function DMsPage() {
             .filter((u: any) => u.username !== myUsername)
             .map((u: any) => ({
               username: u.username,
-              displayName: u.full_name || u.username,
+              displayName: u.username,
               avatarUrl: u.avatar_url,
               online: false,
               relationship: relationshipsByUsername.get(u.username) ?? null,

@@ -13,7 +13,6 @@ class UserCreate(BaseModel):
     username: str
     password: str
     email: str | None = None
-    full_name: str | None = None
 
 
 class UserSync:
@@ -35,7 +34,6 @@ class UserSync:
                 "id": auth_response.user.id,
                 "username": user.username,
                 "email": user.email,
-                "full_name": user.full_name,
                 "xmpp_created": True,
             }
 
