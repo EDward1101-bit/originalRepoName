@@ -180,11 +180,11 @@ export default function DMsPage() {
                           className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]/50 hover:bg-[var(--bg-modifier-hover)] transition-colors last:border-0"
                         >
                           <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-[15px] shadow-sm">
-                            {f.requester_username[0]?.toUpperCase()}
+                            {allUsers.find((u) => u.id === f.requester_id)?.username?.[0]?.toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <span className="text-[14px] font-bold text-[var(--text-normal)] truncate block">
-                              {f.requester_username}
+                              {allUsers.find((u) => u.id === f.requester_id)?.username ?? f.requester_id}
                             </span>
                             <span className="text-[12px] text-[var(--text-muted)]">
                               Wants to be friends

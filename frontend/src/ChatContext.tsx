@@ -37,8 +37,6 @@ export interface Friendship {
   id: string;
   requester_id: string;
   receiver_id: string;
-  requester_username: string; // display name for UI
-  receiver_username: string;  // display name for UI
   status: 'pending' | 'accepted';
 }
 
@@ -452,9 +450,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       const { data, error } = await supabase
         .from('friendships')
-        .select(
-          'id, requester_id, receiver_id, status, requester:users!requester_id(username), receiver:users!receiver_id(username)'
-        )
+        .select('id, requester_id, receiver_id, status')
         .or(`requester_id.eq.${myUserId},receiver_id.eq.${myUserId}`);
 
       if (!error && data) {
@@ -463,8 +459,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             id: f.id,
             requester_id: f.requester_id,
             receiver_id: f.receiver_id,
-            requester_username: f.requester?.username ?? '',
-            receiver_username: f.receiver?.username ?? '',
             status: f.status,
           }))
         );
@@ -498,7 +492,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('messages')
         .select(
-          'id, sender_id, receiver_id, body, created_at, sender:users!sender_id(email), receiver:users!receiver_id(email)'
+          'id, sender_id, receiver_id, body, created_at, sender_user:users!sender_id(email), receiver_user:users!receiver_id(email)'
         )
         .or(`sender_id.eq.${myUserId},receiver_id.eq.${myUserId}`)
         .order('created_at', { ascending: true });
@@ -506,8 +500,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (!error && data) {
         const loaded: ChatMessage[] = data.map((m: any) => {
           const isSent = m.sender_id === myUserId;
-          const senderXmpp = m.sender?.email?.split('@')[0] ?? '';
-          const receiverXmpp = m.receiver?.email?.split('@')[0] ?? '';
+          const senderXmpp = m.sender_user?.email?.split('@')[0] ?? '';
+          const receiverXmpp = m.receiver_user?.email?.split('@')[0] ?? '';
           return {
             id: m.id,
             from: isSent ? 'You' : senderXmpp,
@@ -695,9 +689,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         receiver_id: targetUserId,
         status: 'pending',
       })
-      .select(
-        'id, requester_id, receiver_id, status, requester:users!requester_id(username), receiver:users!receiver_id(username)'
-      )
+      .select('id, requester_id, receiver_id, status')
       .single();
 
     if (error) {
@@ -709,8 +701,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           id: data.id,
           requester_id: data.requester_id,
           receiver_id: data.receiver_id,
-          requester_username: (data.requester as any)?.username ?? '',
-          receiver_username: (data.receiver as any)?.username ?? '',
           status: data.status,
         },
       ]);
