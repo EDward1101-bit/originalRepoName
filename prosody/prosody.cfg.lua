@@ -31,7 +31,6 @@ authentication = "internal_plain"
 admins = { "admin@localhost" }
 
 VirtualHost "localhost"
-    http_host = "localhost"
     authentication = "internal_plain"
     c2s_require_encryption = false
     allow_unencrypted_plain_auth = true
