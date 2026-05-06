@@ -2,12 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings
 
-try:
-    from api import health_router, users_router
-    from api.auth import router as auth_router
-except ModuleNotFoundError:  # Allow running from repo root
-    from backend.api import health_router, users_router
-    from backend.api.auth import router as auth_router
+from api import health_router, users_router
+from api.auth import router as auth_router
 
 
 class Settings(BaseSettings):

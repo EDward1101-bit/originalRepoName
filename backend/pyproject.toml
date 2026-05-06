@@ -30,6 +30,18 @@ mypy_path = "."
 explicit_package_bases = true
 namespace_packages = true
 
+cache_dir = "/tmp/mypy_cache"
+
+exclude = [
+    "^tests/",
+    "^cleanup\\.py$",
+    "^commit_tests\\.py$",
+    "^run_simple_test\\.py$",
+    "^test_basic\\.py$",
+    "^test_runner\\.py$",
+    "^verify_setup\\.py$",
+]
+
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
