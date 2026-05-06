@@ -72,6 +72,12 @@ filterwarnings = [
 source = ["."]
 omit = [
     "tests/*",
+    "test_*.py",
+    "cleanup.py",
+    "commit_tests.py",
+    "run_simple_test.py",
+    "test_runner.py",
+    "verify_setup.py",
     "venv/*",
     "__pycache__/*",
     "*/migrations/*",
