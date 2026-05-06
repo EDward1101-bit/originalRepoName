@@ -80,7 +80,7 @@ async def check_user_exists(username: str) -> dict[str, Any]:
     try:
         response = (
             supabase.table("users")
-            .select("id, username, email, full_name")
+            .select("id, username, email")
             .eq("username", username)
             .execute()
         )

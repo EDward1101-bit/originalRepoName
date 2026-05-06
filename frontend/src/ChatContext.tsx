@@ -22,20 +22,21 @@ export interface ChatMessage {
   body: string;
   type: 'sent' | 'received';
   time: Date;
-  otherParty: string;
+  otherParty: string; // stable XMPP username (email prefix), used for URL routing
 }
 
 export interface RegisteredUser {
-  username: string;
+  id: string;           // UUID — source of truth for DB relationships
+  username: string;     // display name (changeable, non-unique)
+  xmppUsername: string; // stable XMPP login = email.split('@')[0], never changes
   online: boolean;
-  displayName?: string;
   avatarUrl?: string;
 }
 
 export interface Friendship {
   id: string;
-  requester: string;
-  receiver: string;
+  requester_id: string;
+  receiver_id: string;
   status: 'pending' | 'accepted';
 }
 
@@ -45,11 +46,12 @@ interface ChatContextType {
   jid: string;
   messages: ChatMessage[];
   allUsers: RegisteredUser[];
-  getUserProfile: (username: string) => RegisteredUser | undefined;
+  getUserProfile: (xmppUsername: string) => RegisteredUser | undefined;
   friendships: Friendship[];
-  myUsername: string;
-  sendMessage: (recipient: string, body: string) => Promise<void>;
-  sendFriendRequest: (targetUsername: string) => Promise<void>;
+  myUsername: string;  // stable XMPP username (email prefix)
+  myUserId: string;    // UUID for DB operations
+  sendMessage: (recipientXmpp: string, body: string) => Promise<void>;
+  sendFriendRequest: (targetUserId: string) => Promise<void>;
   acceptFriendRequest: (friendshipId: string) => Promise<void>;
   removeFriendship: (friendshipId: string) => Promise<void>;
   deleteMessageForEveryone: (messageId: string) => Promise<void>;
@@ -97,31 +99,52 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
+  // Stable XMPP login ID derived from the immutable Supabase Auth email.
+  // This is what Prosody knows the user as and what JIDs are built from.
   const myUsername = user?.email?.split('@')[0] || '';
+  // UUID from Supabase Auth — used as the source of truth for all DB FK relationships.
+  const myUserId = user?.id || '';
+
+  // Refs so stable callbacks (upsertMessageFromDb) can read current values
+  // without being recreated on every render.
+  const allUsersRef = useRef<RegisteredUser[]>([]);
+  const myUserIdRef = useRef(myUserId);
+
+  useEffect(() => { allUsersRef.current = allUsers; }, [allUsers]);
+  useEffect(() => { myUserIdRef.current = myUserId; }, [myUserId]);
 
   const upsertMessageFromDb = useCallback(
     (row: any) => {
       if (!row) return;
       if (!row.id || seenIds.current.has(row.id)) return;
 
-      const msgKey = makeMessageKey(row.sender, row.receiver, row.body);
+      const users = allUsersRef.current;
+      const senderUser = users.find((u) => u.id === row.sender_id);
+      const receiverUser = users.find((u) => u.id === row.receiver_id);
+      const senderXmpp = senderUser?.xmppUsername ?? '';
+      const receiverXmpp = receiverUser?.xmppUsername ?? '';
+
+      // Can't route the message without knowing who sent/received it
+      if (!senderXmpp || !receiverXmpp) return;
+
+      const isSent = row.sender_id === myUserIdRef.current;
+      const msgKey = makeMessageKey(senderXmpp, receiverXmpp, row.body);
       if (seenMessageKeys.current.has(msgKey)) return;
 
-      const isSent = row.sender === myUsername;
       const mapped: ChatMessage = {
         id: row.id,
-        from: isSent ? 'You' : row.sender,
+        from: isSent ? 'You' : senderXmpp,
         body: row.body,
         type: isSent ? 'sent' : 'received',
         time: new Date(row.created_at),
-        otherParty: isSent ? row.receiver : row.sender,
+        otherParty: isSent ? receiverXmpp : senderXmpp,
       };
 
       seenIds.current.add(mapped.id);
       seenMessageKeys.current.add(msgKey);
       setMessages((prev) => [...prev, mapped]);
     },
-    [myUsername]
+    [] // uses only refs — intentionally stable
   );
 
   useEffect(() => {
@@ -153,6 +176,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || !password) return;
 
+    // Always derive the XMPP username from the stable auth email, never from
+    // users.username which can change.
     const username = user.email?.split('@')[0] || '';
     const fullJid = buildBareJid(username);
     jidRef.current = fullJid;
@@ -265,7 +290,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const isOnline = !type || ['available', 'chat', 'dnd', 'away', 'xa'].includes(type);
 
       setAllUsers((prev) =>
-        prev.map((u) => (u.username === from ? { ...u, online: isOnline } : u))
+        prev.map((u) => (u.xmppUsername === from ? { ...u, online: isOnline } : u))
       );
     };
 
@@ -400,14 +425,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       try {
         const { data, error } = await supabase
           .from('users')
-          .select('username, full_name, avatar_url');
+          .select('id, username, email, avatar_url');
 
         if (error) throw error;
 
         setAllUsers(
           data.map((u: any) => ({
+            id: u.id,
             username: u.username,
-            displayName: u.full_name || u.username,
+            // Derive the stable XMPP login name from the stored email.
+            // This matches the Prosody account created at registration.
+            xmppUsername: u.email?.split('@')[0] || u.username,
             avatarUrl: u.avatar_url,
             online: false,
           }))
@@ -418,15 +446,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
 
     const fetchFriendships = async () => {
-      if (!myUsername) return;
+      if (!myUserId) return;
 
       const { data, error } = await supabase
         .from('friendships')
-        .select('*')
-        .or(`requester.eq.${myUsername},receiver.eq.${myUsername}`);
+        .select('id, requester_id, receiver_id, status')
+        .or(`requester_id.eq.${myUserId},receiver_id.eq.${myUserId}`);
 
       if (!error && data) {
-        setFriendships(data);
+        setFriendships(
+          data.map((f: any) => ({
+            id: f.id,
+            requester_id: f.requester_id,
+            receiver_id: f.receiver_id,
+            status: f.status,
+          }))
+        );
       }
     };
 
@@ -447,29 +482,33 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return () => {
       supabase.removeChannel(realtimeChannel);
     };
-  }, [user, myUsername]);
+  }, [user, myUserId]);
 
   // ── Fetch message history ──
   useEffect(() => {
     const fetchMessages = async () => {
-      if (!myUsername) return;
+      if (!myUserId) return;
 
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
-        .or(`sender.eq.${myUsername},receiver.eq.${myUsername}`)
+        .select(
+          'id, sender_id, receiver_id, body, created_at, sender_user:users!sender_id(email), receiver_user:users!receiver_id(email)'
+        )
+        .or(`sender_id.eq.${myUserId},receiver_id.eq.${myUserId}`)
         .order('created_at', { ascending: true });
 
       if (!error && data) {
         const loaded: ChatMessage[] = data.map((m: any) => {
-          const isSent = m.sender === myUsername;
+          const isSent = m.sender_id === myUserId;
+          const senderXmpp = m.sender_user?.email?.split('@')[0] ?? '';
+          const receiverXmpp = m.receiver_user?.email?.split('@')[0] ?? '';
           return {
             id: m.id,
-            from: isSent ? 'You' : m.sender,
+            from: isSent ? 'You' : senderXmpp,
             body: m.body,
             type: isSent ? 'sent' : 'received',
             time: new Date(m.created_at),
-            otherParty: isSent ? m.receiver : m.sender,
+            otherParty: isSent ? receiverXmpp : senderXmpp,
           } as ChatMessage;
         });
         loaded.forEach((m) => seenIds.current.add(m.id));
@@ -477,14 +516,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
     };
     fetchMessages();
-  }, [user, myUsername]);
+  }, [user, myUserId]);
 
   // ── Realtime updates for direct messages ──
   useEffect(() => {
-    if (!myUsername) return;
+    if (!myUserId) return;
 
     const channel = supabase
-      .channel(`messages_realtime:${myUsername}`)
+      .channel(`messages_realtime:${myUserId}`)
       .on(
         'postgres_changes',
         {
@@ -494,7 +533,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         },
         (payload) => {
           const row = payload.new;
-          if (row.sender === myUsername || row.receiver === myUsername) {
+          if (row.sender_id === myUserId || row.receiver_id === myUserId) {
             upsertMessageFromDb(row);
           }
         }
@@ -504,35 +543,38 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [myUsername, upsertMessageFromDb]);
+  }, [myUserId, upsertMessageFromDb]);
 
   // ── Auto-subscribe and send directed presence to friends ──
   useEffect(() => {
     if (status === 'Connected' && clientRef.current && myUsername) {
       friendships.forEach((f) => {
         if (f.status === 'accepted') {
-          const friendUsername = f.requester === myUsername ? f.receiver : f.requester;
-          const friendJid = buildBareJid(friendUsername);
+          const friendId = f.requester_id === myUserId ? f.receiver_id : f.requester_id;
+          const friendUser = allUsers.find((u) => u.id === friendId);
+          if (!friendUser) return;
 
-          // Subscribe to their presence in XMPP roster
+          const friendJid = buildBareJid(friendUser.xmppUsername);
           clientRef.current?.sendPresence({ type: 'subscribe', to: friendJid });
-          // Auto-accept their subscription just in case
           clientRef.current?.sendPresence({ type: 'subscribed', to: friendJid });
-
-          // Force a directed presence update to them immediately
-          // so they know we're online even before the roster syncs
           clientRef.current?.sendPresence({ to: friendJid });
         }
       });
     }
-  }, [friendships, status, myUsername]);
+  }, [friendships, status, myUsername, myUserId, allUsers]);
 
   // ── Actions ──
-  const sendMessage = async (recipient: string, body: string) => {
-    if (!body.trim() || !clientRef.current || !recipient) return;
+  const sendMessage = async (recipientXmpp: string, body: string) => {
+    if (!body.trim() || !clientRef.current || !recipientXmpp) return;
 
-    const recipientUsername = recipient.trim();
-    let finalRecipient = recipientUsername;
+    // Look up the recipient's UUID so we can store it in the DB
+    const recipientUser = allUsers.find((u) => u.xmppUsername === recipientXmpp);
+    if (!recipientUser) {
+      console.error('Cannot send message: recipient not found in user list');
+      return;
+    }
+
+    let finalRecipient = recipientXmpp;
     if (!finalRecipient.includes('@')) {
       finalRecipient = buildBareJid(finalRecipient);
     }
@@ -544,7 +586,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
 
     const msgId = generateId();
-    const msgKey = makeMessageKey(myUsername, recipientUsername, body);
+    const msgKey = makeMessageKey(myUsername, recipientXmpp, body);
     setMessages((prev) => [
       ...prev,
       {
@@ -553,7 +595,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         body,
         type: 'sent',
         time: new Date(),
-        otherParty: recipientUsername,
+        otherParty: recipientXmpp,
       },
     ]);
     seenIds.current.add(msgId);
@@ -561,7 +603,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const { error } = await supabase
       .from('messages')
-      .insert({ sender: myUsername, receiver: recipientUsername, body });
+      .insert({ sender_id: myUserId, receiver_id: recipientUser.id, body });
 
     if (error) console.error('Failed to persist message:', error);
   };
@@ -633,9 +675,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, body: editedBody } : m)));
   };
 
-  const sendFriendRequest = async (targetUsername: string) => {
-    if (!myUsername) return;
-    if (targetUsername === myUsername) {
+  const sendFriendRequest = async (targetUserId: string) => {
+    if (!myUserId) return;
+    if (targetUserId === myUserId) {
       console.error('Cannot send friend request to yourself');
       return;
     }
@@ -643,17 +685,25 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase
       .from('friendships')
       .insert({
-        requester: myUsername,
-        receiver: targetUsername,
+        requester_id: myUserId,
+        receiver_id: targetUserId,
         status: 'pending',
       })
-      .select()
+      .select('id, requester_id, receiver_id, status')
       .single();
 
     if (error) {
       console.error('Failed to send friend request:', error);
     } else if (data) {
-      setFriendships((prev) => [...prev, data]);
+      setFriendships((prev) => [
+        ...prev,
+        {
+          id: data.id,
+          requester_id: data.requester_id,
+          receiver_id: data.receiver_id,
+          status: data.status,
+        },
+      ]);
     }
   };
 
@@ -682,9 +732,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Look up a user profile by their stable XMPP username (the URL routing key)
   const getUserProfile = useCallback(
-    (username: string) => {
-      return allUsers.find((u) => u.username === username);
+    (xmppUsername: string) => {
+      return allUsers.find((u) => u.xmppUsername === xmppUsername);
     },
     [allUsers]
   );
@@ -721,6 +772,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         getUserProfile,
         friendships,
         myUsername,
+        myUserId,
         sendMessage,
         sendFriendRequest,
         acceptFriendRequest,

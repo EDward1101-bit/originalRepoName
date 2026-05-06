@@ -10,7 +10,7 @@ import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, Tre
 
 export default function Layout() {
   const { user } = useAuth();
-  const { status, myUsername, unreadCounts, clearUnread, friendships, allUsers, messages } = useChatContext();
+  const { status, myUsername, myUserId, unreadCounts, clearUnread, friendships, allUsers, messages } = useChatContext();
   const { joinedRooms, roomMessages } = useMucContext();
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -77,11 +77,11 @@ export default function Layout() {
   }, [friendships]);
 
   const onlineFriendsCount = useMemo(() => {
-    const acceptedFriendUsernames = friendships
+    const friendIds = friendships
       .filter((f) => f.status === 'accepted')
-      .map((f) => (f.requester === myUsername ? f.receiver : f.requester));
-    return allUsers.filter((u) => acceptedFriendUsernames.includes(u.username) && u.online).length;
-  }, [friendships, allUsers, myUsername]);
+      .map((f) => (f.requester_id === myUserId ? f.receiver_id : f.requester_id));
+    return allUsers.filter((u) => friendIds.includes(u.id) && u.online).length;
+  }, [friendships, allUsers, myUserId]);
 
   const totalMessages = useMemo(() => {
     const dmCount = messages.length;
