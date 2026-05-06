@@ -551,7 +551,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       friendships.forEach((f) => {
         if (f.status === 'accepted') {
           const friendId = f.requester_id === myUserId ? f.receiver_id : f.requester_id;
-          const friendUser = allUsers.find((u) => u.id === friendId);
+          const friendUser = allUsersRef.current.find((u) => u.id === friendId);
           if (!friendUser) return;
 
           const friendJid = buildBareJid(friendUser.xmppUsername);
@@ -561,7 +561,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
       });
     }
-  }, [friendships, status, myUsername, myUserId, allUsers]);
+  }, [friendships, status, myUsername, myUserId]);
 
   // ── Actions ──
   const sendMessage = async (recipientXmpp: string, body: string) => {
