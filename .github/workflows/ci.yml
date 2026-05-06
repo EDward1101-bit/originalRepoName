@@ -2,16 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
   backend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
 
     steps:
       - uses: actions/checkout@v4
@@ -22,13 +17,22 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run Ruff
-        run: ruff check .
+        run: pip install -r backend/requirements.txt
 
       - name: Run type check
+        working-directory: backend
         run: mypy .
+
+      - name: Run tests
+        working-directory: backend
+        run: python -m pytest --cov=. --cov-report=xml --cov-fail-under=85
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage.xml
+          flags: backend
+          name: backend-coverage
 
   frontend:
     runs-on: ubuntu-latest

@@ -1,0 +1,17 @@
+[run]
+source = backend
+omit =
+    backend/tests/*
+    backend/cleanup.py
+    backend/commit_tests.py
+    backend/run_simple_test.py
+    backend/test_basic.py
+    backend/test_runner.py
+    backend/verify_setup.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
