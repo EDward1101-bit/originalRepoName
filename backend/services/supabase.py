@@ -8,6 +8,7 @@ class SupabaseSettings(BaseSettings):
     supabase_url: str = ""
     supabase_anon_key: str = ""
     supabase_service_key: str | None = None
+    test_mode: bool = False
 
     class Config:
         env_file = ".env"
@@ -15,6 +16,12 @@ class SupabaseSettings(BaseSettings):
 
 
 settings = SupabaseSettings()
+
+# Override settings for testing
+if settings.test_mode:
+    settings.supabase_url = ""
+    settings.supabase_anon_key = ""
+    settings.supabase_service_key = None
 
 
 @lru_cache(maxsize=1)
