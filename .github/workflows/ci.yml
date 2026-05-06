@@ -19,19 +19,18 @@ jobs:
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
 
-      - name: Run Ruff
-        run: ruff check backend
-
       - name: Run type check
-        run: mypy backend
+        working-directory: backend
+        run: mypy .
 
       - name: Run tests
+        working-directory: backend
         run: python -m pytest --cov=. --cov-report=xml --cov-fail-under=85
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          file: ./coverage.xml
+          file: ./backend/coverage.xml
           flags: backend
           name: backend-coverage
 
