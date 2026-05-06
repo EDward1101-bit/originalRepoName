@@ -34,6 +34,7 @@ interface MucContextType {
   joinedRooms: string[]; // room names
   roomMessages: Record<string, RoomMessage[]>; // room name -> messages
   roomTypingUsers: Record<string, Record<string, number>>; // room name -> {username: timestamp}
+  roomActiveUsers: Record<string, string[]>; // room name -> array of nicknames
   createRoom: (name: string, description?: string) => Promise<void>;
   deleteRoom: (roomId: string, roomName: string) => Promise<void>;
   joinRoom: (roomName: string) => Promise<void>;
@@ -73,6 +74,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
   });
   const [roomMessages, setRoomMessages] = useState<Record<string, RoomMessage[]>>({});
   const [roomTypingUsers, setRoomTypingUsers] = useState<Record<string, Record<string, number>>>({});
+  const [roomActiveUsers, setRoomActiveUsers] = useState<Record<string, string[]>>({});
   const [hiddenRoomMessageIds, setHiddenRoomMessageIds] = useState<Set<string>>(() => {
     const stored = localStorage.getItem('hidden_room_message_ids');
     if (!stored) return new Set();
@@ -471,7 +473,33 @@ export function MucProvider({ children }: { children: ReactNode }) {
       if (!roomJid || !roomJid.includes(`@${MUC_DOMAIN}`)) return;
       if (!nickname) return; // ignore bare JID presences (e.g. error stanzas)
 
-      // No-op: join/leave system messages are only persisted when user explicitly clicks Join/Leave.
+      const roomName = roomJid.split('@')[0];
+      const presenceType = presence.type;
+
+      // Track active users based on presence
+      setRoomActiveUsers((prev) => {
+        const currentUsers = prev[roomName] || [];
+        const isCurrentlyActive = currentUsers.includes(nickname);
+
+        if (presenceType === 'unavailable') {
+          // User left - remove from active users
+          if (isCurrentlyActive) {
+            return {
+              ...prev,
+              [roomName]: currentUsers.filter((u) => u !== nickname),
+            };
+          }
+        } else {
+          // User joined or is available - add to active users
+          if (!isCurrentlyActive && nickname !== myUsernameRef.current) {
+            return {
+              ...prev,
+              [roomName]: [...currentUsers, nickname],
+            };
+          }
+        }
+        return prev;
+      });
     };
 
     const handleRawIncoming = (xml: any) => {
@@ -605,6 +633,13 @@ export function MucProvider({ children }: { children: ReactNode }) {
     const nextRooms = new Set(joinedRoomsRef.current);
     nextRooms.delete(roomName);
     persistJoinedRooms(nextRooms);
+
+    // Clear active users for this room
+    setRoomActiveUsers((prev) => {
+      const next = { ...prev };
+      delete next[roomName];
+      return next;
+    });
 
     publishSystemMessage(roomName, myUsername, 'unavailable');
   };
@@ -768,6 +803,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
         joinedRooms,
         roomMessages: filteredRoomMessages,
         roomTypingUsers,
+        roomActiveUsers,
         createRoom,
         deleteRoom,
         joinRoom,
