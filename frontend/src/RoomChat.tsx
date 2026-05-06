@@ -7,7 +7,7 @@ import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
-import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Pencil } from 'lucide-react';
+import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users } from 'lucide-react';
 
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
@@ -19,6 +19,7 @@ export default function RoomChat() {
     leaveRoom,
     roomMessages,
     roomTypingUsers,
+    roomActiveUsers,
     sendRoomMessage,
     sendRoomTypingIndicator,
     deleteRoomMessageForEveryone,
@@ -207,6 +208,8 @@ export default function RoomChat() {
     );
   }
 
+  const activeUsers = roomName ? roomActiveUsers[roomName] || [] : [];
+
   return (
     <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-normal)]">
       {/* Header */}
@@ -282,9 +285,10 @@ export default function RoomChat() {
 
       {/* Main Content Area */}
       {isJoined ? (
-        <div className="flex-1 flex flex-col min-h-0" onClick={() => setActiveMenu(null)}>
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
+        <div className="flex-1 flex min-h-0" onClick={() => setActiveMenu(null)}>
+          {/* Messages Area */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
             {messages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] opacity-80">
                 <div className="w-24 h-24 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-6 shadow-inner border border-[var(--border)]">
@@ -302,7 +306,7 @@ export default function RoomChat() {
 
                 const senderName = isSentByMe
                   ? 'You'
-                  : senderProfile?.displayName || msg.sender;
+                  : senderProfile?.username || msg.sender;
 
                 const senderAvatar = isSentByMe
                   ? user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar')
@@ -442,11 +446,11 @@ export default function RoomChat() {
                         {avatarUrl ? (
                           <img
                             src={avatarUrl}
-                            alt={profile?.displayName || username}
+                            alt={profile?.username || username}
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          profile?.displayName?.[0]?.toUpperCase() || username[0].toUpperCase()
+                          profile?.username?.[0]?.toUpperCase() || username[0].toUpperCase()
                         )}
                       </div>
                     );
@@ -459,7 +463,7 @@ export default function RoomChat() {
                 </div>
                 <span className="text-[12px] text-[var(--text-muted)] font-medium">
                   {Object.keys(roomTypingUsers[roomName]).length === 1
-                    ? `${getUserProfile(Object.keys(roomTypingUsers[roomName])[0])?.displayName || Object.keys(roomTypingUsers[roomName])[0]} is typing...`
+                    ? `${getUserProfile(Object.keys(roomTypingUsers[roomName])[0])?.username || Object.keys(roomTypingUsers[roomName])[0]} is typing...`
                     : `${Object.keys(roomTypingUsers[roomName]).length} people are typing...`}
                 </span>
               </div>
@@ -473,7 +477,9 @@ export default function RoomChat() {
             {showEmojiPicker && (
               <div className="absolute bottom-[80px] right-6 z-50 shadow-2xl rounded-2xl overflow-hidden border border-[var(--border)]">
                 <EmojiPicker
-                  onEmojiClick={(emojiData) => setInput((prev) => prev + emojiData.emoji)}
+                  onEmojiClick={(emojiData: unknown) =>
+                    setInput((prev) => prev + (emojiData as { emoji?: string })?.emoji)
+                  }
                   theme={'light' as any}
                   lazyLoadEmojis={true}
                 />
@@ -567,6 +573,68 @@ export default function RoomChat() {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+
+          </div>
+
+          {/* Active Users Sidebar */}
+          <div className="w-60 bg-[var(--bg-secondary)] border-l border-[var(--border)] flex flex-col flex-shrink-0">
+            <div className="h-14 flex items-center px-4 border-b border-[var(--border)]">
+              <div className="flex items-center gap-2">
+                <Users size={18} className="text-[var(--text-muted)]" />
+                <span className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                  Active Now
+                </span>
+                <span className="ml-1 bg-[var(--brand)] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                  {activeUsers.length}
+                </span>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
+              {activeUsers.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-[13px] text-[var(--text-muted)] italic">No active users</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {activeUsers.map((nickname) => {
+                    const profile = getUserProfile(nickname);
+                    const displayName = profile?.username || nickname;
+                    const avatarUrl = profile?.avatarUrl;
+                    const isOnline = profile?.online;
+
+                    return (
+                      <div
+                        key={nickname}
+                        className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--bg-modifier-hover)] transition-colors"
+                      >
+                        <div className="relative">
+                          <div className="w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                            {avatarUrl ? (
+                              <img
+                                src={avatarUrl}
+                                alt={displayName}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              displayName?.[0]?.toUpperCase() || '?'
+                            )}
+                          </div>
+                          <div
+                            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] ${
+                              isOnline ? 'bg-[#10b981]' : 'bg-[#ef4444]'
+                            }`}
+                          />
+                        </div>
+                        <span className="text-[14px] font-medium text-[var(--text-normal)] truncate">
+                          {displayName}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
