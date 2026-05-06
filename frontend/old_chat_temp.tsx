@@ -362,7 +362,17 @@ export default function Chat() {
     console.log('Sending to:', finalRecipient);
     clientRef.current.sendMessage(msg);
 
-    const msgId = crypto.randomUUID();
+    const generateId = () => {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return crypto.randomUUID();
+      }
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    };
+    const msgId = generateId();
     const now = new Date();
     setMessages((prev) => [
       ...prev,
