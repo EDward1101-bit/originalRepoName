@@ -16,7 +16,7 @@ export default function DMsPage() {
   const {
     allUsers,
     friendships,
-    myUsername,
+    myUserId,
     messages,
     sendFriendRequest,
     acceptFriendRequest,
@@ -30,31 +30,32 @@ export default function DMsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [requestSent, setRequestSent] = useState<string | null>(null);
 
-  const relationshipsByUsername = useMemo(() => {
+  // Keyed by the friend's UUID so lookups are correct even when display names collide
+  const relationshipsByUserId = useMemo(() => {
     const map = new Map<string, Friendship>();
     friendships.forEach((friendship: Friendship) => {
-      if (friendship.requester === myUsername) {
-        map.set(friendship.receiver, friendship);
-      } else if (friendship.receiver === myUsername) {
-        map.set(friendship.requester, friendship);
+      if (friendship.requester_id === myUserId) {
+        map.set(friendship.receiver_id, friendship);
+      } else if (friendship.receiver_id === myUserId) {
+        map.set(friendship.requester_id, friendship);
       }
     });
     return map;
-  }, [friendships, myUsername]);
+  }, [friendships, myUserId]);
 
   const acceptedFriends = useMemo(
     () =>
       allUsers.filter((u: RegisteredUser) => {
-        if (u.username === myUsername) return false;
-        return relationshipsByUsername.get(u.username)?.status === 'accepted';
+        if (u.id === myUserId) return false;
+        return relationshipsByUserId.get(u.id)?.status === 'accepted';
       }),
-    [allUsers, myUsername, relationshipsByUsername]
+    [allUsers, myUserId, relationshipsByUserId]
   );
 
   const pendingReceived = useMemo(
     () =>
-      friendships.filter((f: Friendship) => f.status === 'pending' && f.receiver === myUsername),
-    [friendships, myUsername]
+      friendships.filter((f: Friendship) => f.status === 'pending' && f.receiver_id === myUserId),
+    [friendships, myUserId]
   );
 
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -73,23 +74,24 @@ export default function DMsPage() {
     const debounceId = setTimeout(async () => {
       const { data, error } = await supabase
         .from('users')
-        .select('username, full_name, avatar_url')
-        .or(`username.ilike.%${q}%,full_name.ilike.%${q}%`)
+        .select('id, username, email, avatar_url')
+        .ilike('username', `%${q}%`)
         .limit(10);
 
       if (!error && data) {
-        // Remove duplicates by username in case the DB has any redundant records
-        const uniqueUsers = Array.from(new Map(data.map((u: any) => [u.username, u])).values());
+        // Deduplicate by user ID (the true unique key)
+        const uniqueUsers = Array.from(new Map(data.map((u: any) => [u.id, u])).values());
 
         setSearchResults(
           uniqueUsers
-            .filter((u: any) => u.username !== myUsername)
+            .filter((u: any) => u.id !== myUserId)
             .map((u: any) => ({
+              id: u.id,
               username: u.username,
-              displayName: u.full_name || u.username,
+              xmppUsername: u.email?.split('@')[0] || u.username,
               avatarUrl: u.avatar_url,
               online: false,
-              relationship: relationshipsByUsername.get(u.username) ?? null,
+              relationship: relationshipsByUserId.get(u.id) ?? null,
             }))
         );
       }
@@ -97,11 +99,11 @@ export default function DMsPage() {
     }, 300);
 
     return () => clearTimeout(debounceId);
-  }, [searchQuery, myUsername, relationshipsByUsername]);
+  }, [searchQuery, myUserId, relationshipsByUserId]);
 
-  // Get last message for each friend (for conversation list preview)
-  const getLastMessage = (username: string) => {
-    const userMessages = messages.filter((m: ChatMessage) => m.otherParty === username);
+  // Get last message for a friend using their stable XMPP username (the otherParty key)
+  const getLastMessage = (xmppUsername: string) => {
+    const userMessages = messages.filter((m: ChatMessage) => m.otherParty === xmppUsername);
     if (userMessages.length === 0) return null;
     return userMessages[userMessages.length - 1];
   };
@@ -109,8 +111,8 @@ export default function DMsPage() {
   // Sort friends by most recent message
   const sortedFriends = useMemo(() => {
     return [...acceptedFriends].sort((a, b) => {
-      const lastA = getLastMessage(a.username);
-      const lastB = getLastMessage(b.username);
+      const lastA = getLastMessage(a.xmppUsername);
+      const lastB = getLastMessage(b.xmppUsername);
       if (!lastA && !lastB) return 0;
       if (!lastA) return 1;
       if (!lastB) return -1;
@@ -119,9 +121,9 @@ export default function DMsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [acceptedFriends, messages]);
 
-  const handleSendRequest = async (username: string) => {
-    await sendFriendRequest(username);
-    setRequestSent(username);
+  const handleSendRequest = async (userId: string) => {
+    await sendFriendRequest(userId);
+    setRequestSent(userId);
     setTimeout(() => setRequestSent(null), 2000);
   };
 
@@ -178,11 +180,11 @@ export default function DMsPage() {
                           className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]/50 hover:bg-[var(--bg-modifier-hover)] transition-colors last:border-0"
                         >
                           <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-[15px] shadow-sm">
-                            {f.requester[0].toUpperCase()}
+                            {allUsers.find((u) => u.id === f.requester_id)?.username?.[0]?.toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <span className="text-[14px] font-bold text-[var(--text-normal)] truncate block">
-                              {f.requester}
+                              {allUsers.find((u) => u.id === f.requester_id)?.username ?? f.requester_id}
                             </span>
                             <span className="text-[12px] text-[var(--text-muted)]">
                               Wants to be friends
@@ -252,13 +254,13 @@ export default function DMsPage() {
         ) : (
           <div className="flex flex-col">
             {sortedFriends.map((u: RegisteredUser) => {
-              const lastMsg = getLastMessage(u.username);
-              const rel = relationshipsByUsername.get(u.username) ?? null;
+              const lastMsg = getLastMessage(u.xmppUsername);
+              const rel = relationshipsByUserId.get(u.id) ?? null;
 
               return (
                 <div
-                  key={u.username}
-                  onClick={() => navigate(`/dms/${u.username}`)}
+                  key={u.id}
+                  onClick={() => navigate(`/dms/${u.xmppUsername}`)}
                   className="flex items-center gap-4 px-6 py-4 hover:bg-[var(--bg-modifier-hover)] cursor-pointer transition-colors border-b border-[var(--border)]/30"
                 >
                   <div className="relative flex-shrink-0 w-12 h-12">
@@ -291,8 +293,8 @@ export default function DMsPage() {
                         </span>
                       )}
                     </div>
-                    <p className={`text-[14px] truncate ${typingUsers[u.username] ? 'text-[var(--brand)] font-medium italic' : 'text-[var(--text-muted)]'}`}>
-                      {typingUsers[u.username] ? (
+                    <p className={`text-[14px] truncate ${typingUsers[u.xmppUsername] ? 'text-[var(--brand)] font-medium italic' : 'text-[var(--text-muted)]'}`}>
+                      {typingUsers[u.xmppUsername] ? (
                         <span className="flex items-center gap-1">
                           <Pencil size={12} className="animate-pulse" />
                           typing...
@@ -309,7 +311,7 @@ export default function DMsPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/dms/${u.username}`);
+                        navigate(`/dms/${u.xmppUsername}`);
                       }}
                       className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand)]/10 transition-colors"
                     >
@@ -404,7 +406,7 @@ export default function DMsPage() {
                 <div className="flex flex-col gap-2">
                   {searchResults.map((u: any) => (
                     <div
-                      key={u.username}
+                      key={u.id}
                       className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg-tertiary)]/50 border border-[var(--border)]/50 hover:bg-[var(--bg-modifier-hover)] transition-colors relative"
                     >
                       <div className="flex items-center gap-3">
@@ -436,17 +438,17 @@ export default function DMsPage() {
                       <div>
                         {!u.relationship ? (
                           <button
-                            onClick={() => handleSendRequest(u.username)}
+                            onClick={() => handleSendRequest(u.id)}
                             className={`px-5 py-2.5 text-sm font-bold rounded-xl transition-all shadow-sm ${
-                              requestSent === u.username
+                              requestSent === u.id
                                 ? 'bg-[#10b981] text-white'
                                 : 'bg-[var(--brand)] text-white hover:bg-[var(--brand-hover)]'
                             }`}
                           >
-                            {requestSent === u.username ? 'Sent!' : 'Add Friend'}
+                            {requestSent === u.id ? 'Sent!' : 'Add Friend'}
                           </button>
                         ) : u.relationship.status === 'pending' ? (
-                          u.relationship.receiver === myUsername ? (
+                          u.relationship.receiver_id === myUserId ? (
                             <button
                               onClick={() => acceptFriendRequest(u.relationship!.id)}
                               className="px-5 py-2.5 bg-[#10b981] text-white text-sm font-bold rounded-xl hover:bg-[#059669] transition-colors shadow-sm"

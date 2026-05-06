@@ -146,7 +146,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
       await updateProfile({ display_name: newUsername.trim() });
 
       // Update public users table
-      await supabase.from('users').update({ full_name: newUsername.trim() }).eq('id', user?.id);
+      await supabase.from('users').update({ username: newUsername.trim() }).eq('id', user?.id);
 
       // Refresh user data to propagate changes
       await refreshUserData();
