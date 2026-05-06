@@ -1,4 +1,6 @@
 import asyncio
+import sys
+from pathlib import Path
 from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock
 
@@ -6,6 +8,10 @@ import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
+
+backend_root = Path(__file__).resolve().parents[1]
+if str(backend_root) not in sys.path:
+    sys.path.insert(0, str(backend_root))
 
 from main import app
 
@@ -74,7 +80,6 @@ def sample_user_data():
         "username": "testuser",
         "email": "test@example.com",
         "password": "securepassword123",
-        "display_name": "Test User",
     }
 
 

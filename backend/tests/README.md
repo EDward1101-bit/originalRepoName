@@ -22,6 +22,11 @@ tests/
 pytest
 ```
 
+On Windows (any terminal), prefer:
+```bash
+python -m pytest
+```
+
 ### Run with Coverage
 ```bash
 pytest --cov=. --cov-report=html

@@ -11,9 +11,8 @@ def test_environment_isolation():
     """Test that environment isolation works."""
     # This test should pass regardless of environment variables
     import os
-    original_supabase_url = os.environ.get('SUPABASE_URL', 'not-found')
-    assert original_supabase_url is not None  # Your .env should have this
-    print(f"Found SUPABASE_URL: {original_supabase_url}")
+    original_supabase_url = os.environ.get("SUPABASE_URL")
+    assert original_supabase_url is None or isinstance(original_supabase_url, str)
 
 
 if __name__ == "__main__":

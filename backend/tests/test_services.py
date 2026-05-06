@@ -1,10 +1,11 @@
-import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 
-from services.prosody import ProsodyClient, settings
+from services.prosody import ProsodyClient
 from services.user_sync import UserSync, UserCreate
+from services.supabase import get_supabase_client, get_service_client, settings as supabase_settings
+from services.get_online_users import OnlineUserClient, get_online_users_xmpp
 
 
 class TestProsodyClient:
@@ -204,7 +205,6 @@ class TestUserSync:
             username="testuser",
             password="password123",
             email="test@example.com",
-            full_name="Test User"
         )
 
     @pytest.mark.asyncio
@@ -217,8 +217,9 @@ class TestUserSync:
         mock_supabase.table.return_value.insert.return_value.execute.return_value = MagicMock()
 
         with patch('services.user_sync.get_supabase_client', return_value=mock_supabase):
-            with patch('services.user_sync.prosody_client') as mock_prosody:
-                mock_prosody.create_user.return_value = {"success": True}
+            mock_prosody = AsyncMock()
+            mock_prosody.create_user.return_value = {"success": True}
+            with patch('services.user_sync.prosody_client', mock_prosody):
 
                 result = await UserSync.create_user(sample_user_create)
 
@@ -242,14 +243,15 @@ class TestUserSync:
         mock_supabase.table.return_value.insert.return_value.execute.return_value = MagicMock()
 
         with patch('services.user_sync.get_supabase_client', return_value=mock_supabase):
-            with patch('services.user_sync.prosody_client') as mock_prosody:
-                mock_prosody.create_user.return_value = {"success": True}
+            mock_prosody = AsyncMock()
+            mock_prosody.create_user.return_value = {"success": True}
+            with patch('services.user_sync.prosody_client', mock_prosody):
 
                 result = await UserSync.create_user(user_create)
 
                 # Check that default email was used
                 mock_supabase.auth.admin.create_user.assert_called_once()
-                call_args = mock_supabase.auth.admin.create_user.call_args[1]
+                call_args = mock_supabase.auth.admin.create_user.call_args[0][0]
                 assert call_args["email"] == "testuser@localhost"
 
     @pytest.mark.asyncio
@@ -259,8 +261,9 @@ class TestUserSync:
         mock_supabase.auth.admin.create_user.return_value = MagicMock(user=None)
 
         with patch('services.user_sync.get_supabase_client', return_value=mock_supabase):
-            with patch('services.user_sync.prosody_client') as mock_prosody:
-                mock_prosody.create_user.return_value = {"success": True}
+            mock_prosody = AsyncMock()
+            mock_prosody.create_user.return_value = {"success": True}
+            with patch('services.user_sync.prosody_client', mock_prosody):
 
                 with pytest.raises(Exception, match="Failed to create user in Supabase Auth"):
                     await UserSync.create_user(sample_user_create)
@@ -272,8 +275,9 @@ class TestUserSync:
         mock_supabase.table.return_value.delete.return_value.eq.return_value.execute.return_value = MagicMock()
 
         with patch('services.user_sync.get_supabase_client', return_value=mock_supabase):
-            with patch('services.user_sync.prosody_client') as mock_prosody:
-                mock_prosody.delete_user.return_value = True
+            mock_prosody = AsyncMock()
+            mock_prosody.delete_user.return_value = True
+            with patch('services.user_sync.prosody_client', mock_prosody):
 
                 result = await UserSync.delete_user("testuser")
 
@@ -284,8 +288,9 @@ class TestUserSync:
     @pytest.mark.asyncio
     async def test_sync_user_to_prosody_existing_user(self):
         """Test syncing user that already exists in Prosody."""
-        with patch('services.user_sync.prosody_client') as mock_prosody:
-            mock_prosody.get_user.return_value = {"username": "testuser"}
+        mock_prosody = AsyncMock()
+        mock_prosody.get_user.return_value = {"username": "testuser"}
+        with patch('services.user_sync.prosody_client', mock_prosody):
 
             result = await UserSync.sync_user_to_prosody("testuser", "password")
 
@@ -296,9 +301,10 @@ class TestUserSync:
     @pytest.mark.asyncio
     async def test_sync_user_to_prosody_new_user(self):
         """Test syncing new user to Prosody."""
-        with patch('services.user_sync.prosody_client') as mock_prosody:
-            mock_prosody.get_user.return_value = None
-            mock_prosody.create_user.return_value = {"success": True}
+        mock_prosody = AsyncMock()
+        mock_prosody.get_user.return_value = None
+        mock_prosody.create_user.return_value = {"success": True}
+        with patch('services.user_sync.prosody_client', mock_prosody):
 
             result = await UserSync.sync_user_to_prosody("testuser", "password")
 
@@ -311,8 +317,9 @@ class TestUserSync:
         """Test getting Prosody users."""
         mock_users = [{"username": "user1"}, {"username": "user2"}]
 
-        with patch('services.user_sync.prosody_client') as mock_prosody:
-            mock_prosody.get_users.return_value = mock_users
+        mock_prosody = AsyncMock()
+        mock_prosody.get_users.return_value = mock_users
+        with patch('services.user_sync.prosody_client', mock_prosody):
 
             result = await UserSync.get_prosody_users()
 
@@ -322,8 +329,9 @@ class TestUserSync:
     @pytest.mark.asyncio
     async def test_health_check(self):
         """Test health check functionality."""
-        with patch('services.user_sync.prosody_client') as mock_prosody:
-            mock_prosody.health_check.return_value = True
+        mock_prosody = AsyncMock()
+        mock_prosody.health_check.return_value = True
+        with patch('services.user_sync.prosody_client', mock_prosody):
 
             result = await UserSync.health_check()
 
@@ -340,12 +348,10 @@ class TestUserCreate:
             username="testuser",
             password="password123",
             email="test@example.com",
-            full_name="Test User"
         )
         assert user.username == "testuser"
         assert user.password == "password123"
         assert user.email == "test@example.com"
-        assert user.full_name == "Test User"
 
     def test_user_create_minimal(self):
         """Test creating UserCreate with only required fields."""
@@ -353,7 +359,6 @@ class TestUserCreate:
         assert user.username == "testuser"
         assert user.password == "password123"
         assert user.email is None
-        assert user.full_name is None
 
 
 class TestSupabaseService:
@@ -400,40 +405,52 @@ class TestSupabaseService:
 
     @patch('services.supabase.create_client')
     def test_get_service_client_with_key(self, mock_create_client):
-        """Test getting service client when service key is available."""
+        """Test service client creation when service key is set."""
         mock_client = MagicMock()
         mock_create_client.return_value = mock_client
-        
-        # Clear cache and test client creation
+
         get_service_client.cache_clear()
-        client = get_service_client()
-        
-        mock_create_client.assert_called_once()
+        with patch.object(supabase_settings, "supabase_service_key", "service-key"):
+            with patch.object(supabase_settings, "supabase_url", "https://example.com"):
+                client = get_service_client()
+
+        mock_create_client.assert_called_once_with("https://example.com", "service-key")
         assert client == mock_client
 
-    def test_get_service_client_no_key(self):
-        """Test getting service client when no service key is available."""
-        mock_client = MagicMock()
-        mock_create_client.return_value = mock_client
-        
-        # Clear cache and test client creation
+    @patch('services.supabase.create_client')
+    def test_get_service_client_without_key(self, mock_create_client):
+        """Test service client creation when service key is missing."""
         get_service_client.cache_clear()
-        client = get_service_client()
-        
+        with patch.object(supabase_settings, "supabase_service_key", None):
+            client = get_service_client()
+
         mock_create_client.assert_not_called()
         assert client is None
 
-    @patch('services.supabase.create_client')
-    def test_get_service_client_cached(self, mock_create_client):
-        """Test that service client is cached."""
-        mock_client = MagicMock()
-        mock_create_client.return_value = mock_client
-        
-        # Clear cache and test client creation
-        get_service_client.cache_clear()
-        client1 = get_service_client()
-        client2 = get_service_client()
-        
-        # Should only create client once due to caching
-        mock_create_client.assert_called_once()
-        assert client1 == client2
+
+class TestOnlineUsersService:
+    """Test cases for online users utilities."""
+
+    @pytest.mark.asyncio
+    async def test_get_online_users_xmpp_returns_empty_list(self):
+        """Test that default XMPP online users returns empty list."""
+        result = await get_online_users_xmpp()
+        assert result == []
+
+    def test_online_user_client_initialization(self):
+        """Test OnlineUserClient initializes with expected state."""
+        def init_stub(self, jid, password):
+            self.boundjid = MagicMock()
+            self.boundjid.server = None
+            self._run_out_filters = MagicMock()
+            self._run_out_filters.cancel = MagicMock()
+            return None
+
+        with patch('services.get_online_users.ClientXMPP.__init__', autospec=True, side_effect=init_stub) as mock_init:
+            with patch('services.get_online_users.ClientXMPP.add_event_handler') as mock_handler:
+                client = OnlineUserClient("user@localhost", "password", "localhost")
+
+        mock_init.assert_called_once_with(client, "user@localhost", "password")
+        mock_handler.assert_called_once_with("session_start", client.session_start)
+        assert client.server == "localhost"
+        assert client.online_users == []

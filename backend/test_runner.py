@@ -10,9 +10,10 @@ from pathlib import Path
 def run_command(cmd, cwd=None):
     """Run a command and return the result."""
     try:
+        use_shell = isinstance(cmd, str)
         result = subprocess.run(
             cmd, 
-            shell=True, 
+            shell=use_shell,
             cwd=cwd, 
             capture_output=True, 
             text=True

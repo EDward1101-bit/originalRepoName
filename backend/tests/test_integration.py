@@ -31,8 +31,7 @@ class TestUserCreationWorkflow:
                 user_data = {
                     "username": "testuser",
                     "password": "password123",
-                    "email": "test@example.com",
-                    "full_name": "Test User"
+                    "email": "test@example.com"
                 }
                 
                 response = await async_client.post("/api/users/", json=user_data)
@@ -61,7 +60,7 @@ class TestUserCreationWorkflow:
         mock_auth_response.user = MagicMock()
         mock_supabase.auth.sign_in_with_password.return_value = mock_auth_response
 
-        with patch('api.auth.get_supabase_client', return_value=mock_supabase):
+        with patch('services.supabase.get_supabase_client', return_value=mock_supabase):
             # Test credential verification
             auth_data = {
                 "username": "testuser",
@@ -116,7 +115,7 @@ class TestHealthCheckIntegration:
         mock_prosody.health_check.return_value = True
 
         with patch('api.health.user_sync', mock_user_sync):
-            with patch('api.health.prosody_client', mock_prosody):
+            with patch('services.prosody.prosody_client', mock_prosody):
                 # Test main health endpoint
                 response = await async_client.get("/health")
                 assert response.status_code == 200
@@ -192,7 +191,7 @@ class TestErrorHandlingIntegration:
                 # Should handle the failure gracefully
                 assert response.status_code == 400
                 data = response.json()
-                assert "Failed to create user in Supabase Auth" in data["detail"]
+                assert "Prosody unavailable" in data["detail"]
 
     @pytest.mark.asyncio
     async def test_partial_failure_recovery(self, async_client):

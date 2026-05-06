@@ -15,7 +15,7 @@ class TestHealthEndpoints:
     @patch('api.health.user_sync')
     def test_health_check_healthy(self, mock_user_sync, test_client):
         """Test health check when services are healthy."""
-        mock_user_sync.health_check.return_value = {"prosody": True}
+        mock_user_sync.health_check = AsyncMock(return_value={"prosody": True})
         
         response = test_client.get("/health")
         
@@ -27,7 +27,7 @@ class TestHealthEndpoints:
     @patch('api.health.user_sync')
     def test_health_check_degraded(self, mock_user_sync, test_client):
         """Test health check when Prosody is down."""
-        mock_user_sync.health_check.return_value = {"prosody": False}
+        mock_user_sync.health_check = AsyncMock(return_value={"prosody": False})
         
         response = test_client.get("/health")
         
@@ -45,10 +45,10 @@ class TestHealthEndpoints:
         assert data["message"] == "XMPP Chat API"
         assert data["status"] == "running"
 
-    @patch('api.health.prosody_client')
+    @patch('services.prosody.prosody_client')
     def test_prosody_health_healthy(self, mock_prosody_client, test_client):
         """Test Prosody-specific health check when healthy."""
-        mock_prosody_client.health_check.return_value = True
+        mock_prosody_client.health_check = AsyncMock(return_value=True)
         
         response = test_client.get("/health/prosody")
         
@@ -57,10 +57,10 @@ class TestHealthEndpoints:
         assert data["prosody"] is True
         assert data["status"] == "healthy"
 
-    @patch('api.health.prosody_client')
+    @patch('services.prosody.prosody_client')
     def test_prosody_health_unhealthy(self, mock_prosody_client, test_client):
         """Test Prosody-specific health check when unhealthy."""
-        mock_prosody_client.health_check.return_value = False
+        mock_prosody_client.health_check = AsyncMock(return_value=False)
         
         response = test_client.get("/health/prosody")
         
@@ -76,10 +76,10 @@ class TestUserEndpoints:
     @patch('api.users.user_sync')
     def test_create_user_success(self, mock_user_sync, test_client, sample_user_data):
         """Test successful user creation."""
-        mock_user_sync.create_user.return_value = {
+        mock_user_sync.create_user = AsyncMock(return_value={
             "success": True,
             "username": "testuser"
-        }
+        })
         
         response = test_client.post("/api/users/", json=sample_user_data)
         
@@ -91,7 +91,7 @@ class TestUserEndpoints:
     @patch('api.users.user_sync')
     def test_create_user_failure(self, mock_user_sync, test_client, sample_user_data):
         """Test user creation failure."""
-        mock_user_sync.create_user.side_effect = Exception("User already exists")
+        mock_user_sync.create_user = AsyncMock(side_effect=Exception("User already exists"))
         
         response = test_client.post("/api/users/", json=sample_user_data)
         
@@ -106,7 +106,7 @@ class TestUserEndpoints:
             {"username": "user1", "active": True},
             {"username": "user2", "active": True}
         ]
-        mock_user_sync.get_prosody_users.return_value = mock_users
+        mock_user_sync.get_prosody_users = AsyncMock(return_value=mock_users)
         
         response = test_client.get("/api/users/")
         
@@ -118,7 +118,7 @@ class TestUserEndpoints:
     @patch('api.users.user_sync')
     def test_list_users_failure(self, mock_user_sync, test_client):
         """Test user listing failure."""
-        mock_user_sync.get_prosody_users.side_effect = Exception("Database error")
+        mock_user_sync.get_prosody_users = AsyncMock(side_effect=Exception("Database error"))
         
         response = test_client.get("/api/users/")
         
@@ -130,7 +130,7 @@ class TestUserEndpoints:
     def test_get_user_success(self, mock_prosody_client, test_client):
         """Test successful user retrieval."""
         mock_user = {"username": "testuser", "active": True}
-        mock_prosody_client.get_user.return_value = mock_user
+        mock_prosody_client.get_user = AsyncMock(return_value=mock_user)
         
         response = test_client.get("/api/users/testuser")
         
@@ -142,7 +142,7 @@ class TestUserEndpoints:
     @patch('api.users.prosody_client')
     def test_get_user_not_found(self, mock_prosody_client, test_client):
         """Test get user when user doesn't exist."""
-        mock_prosody_client.get_user.return_value = None
+        mock_prosody_client.get_user = AsyncMock(return_value=None)
         
         response = test_client.get("/api/users/nonexistent")
         
@@ -153,7 +153,7 @@ class TestUserEndpoints:
     @patch('api.users.user_sync')
     def test_delete_user_success(self, mock_user_sync, test_client):
         """Test successful user deletion."""
-        mock_user_sync.delete_user.return_value = True
+        mock_user_sync.delete_user = AsyncMock(return_value=True)
         
         response = test_client.delete("/api/users/testuser")
         
@@ -165,7 +165,7 @@ class TestUserEndpoints:
     @patch('api.users.user_sync')
     def test_delete_user_not_found(self, mock_user_sync, test_client):
         """Test delete user when user doesn't exist."""
-        mock_user_sync.delete_user.return_value = False
+        mock_user_sync.delete_user = AsyncMock(return_value=False)
         
         response = test_client.delete("/api/users/nonexistent")
         
@@ -188,7 +188,7 @@ class TestAuthEndpoints:
         mock_auth_response.user = MagicMock()
         mock_supabase.auth.sign_in_with_password.return_value = mock_auth_response
         
-        with patch('api.auth.get_supabase_client', return_value=mock_supabase):
+        with patch('services.supabase.get_supabase_client', return_value=mock_supabase):
             request_data = {"username": "testuser", "password": "password123"}
             response = test_client.post("/api/auth/verify", json=request_data)
             
@@ -204,7 +204,7 @@ class TestAuthEndpoints:
         mock_user_response.data = []
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_user_response
         
-        with patch('api.auth.get_supabase_client', return_value=mock_supabase):
+        with patch('services.supabase.get_supabase_client', return_value=mock_supabase):
             request_data = {"username": "nonexistent", "password": "password123"}
             response = test_client.post("/api/auth/verify", json=request_data)
             
@@ -224,7 +224,7 @@ class TestAuthEndpoints:
         mock_auth_response.user = None  # Failed auth
         mock_supabase.auth.sign_in_with_password.return_value = mock_auth_response
         
-        with patch('api.auth.get_supabase_client', return_value=mock_supabase):
+        with patch('services.supabase.get_supabase_client', return_value=mock_supabase):
             request_data = {"username": "testuser", "password": "wrongpassword"}
             response = test_client.post("/api/auth/verify", json=request_data)
             
@@ -238,7 +238,7 @@ class TestAuthEndpoints:
         mock_supabase = MagicMock()
         mock_supabase.table.side_effect = Exception("Database error")
         
-        with patch('api.auth.get_supabase_client', return_value=mock_supabase):
+        with patch('services.supabase.get_supabase_client', return_value=mock_supabase):
             request_data = {"username": "testuser", "password": "password123"}
             response = test_client.post("/api/auth/verify", json=request_data)
             
@@ -252,7 +252,7 @@ class TestAuthEndpoints:
         """Test successful user sync to Prosody."""
         mock_user_sync.sync_user_to_prosody.return_value = True
         
-        with patch('api.auth.user_sync', mock_user_sync):
+        with patch('services.user_sync.user_sync', mock_user_sync):
             request_data = {"username": "testuser", "password": "password123"}
             response = await async_client.post("/api/auth/sync-user", json=request_data)
             
@@ -266,7 +266,7 @@ class TestAuthEndpoints:
         """Test user sync failure."""
         mock_user_sync.sync_user_to_prosody.side_effect = Exception("Sync failed")
         
-        with patch('api.auth.user_sync', mock_user_sync):
+        with patch('services.user_sync.user_sync', mock_user_sync):
             request_data = {"username": "testuser", "password": "password123"}
             response = await async_client.post("/api/auth/sync-user", json=request_data)
             
@@ -281,7 +281,7 @@ class TestAuthEndpoints:
         mock_response.data = [{"id": "user123", "username": "testuser", "email": "test@example.com"}]
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
         
-        with patch('api.auth.get_supabase_client', return_value=mock_supabase):
+        with patch('services.supabase.get_supabase_client', return_value=mock_supabase):
             response = test_client.get("/api/auth/users/testuser")
             
             assert response.status_code == 200
@@ -296,7 +296,7 @@ class TestAuthEndpoints:
         mock_response.data = []
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_response
         
-        with patch('api.auth.get_supabase_client', return_value=mock_supabase):
+        with patch('services.supabase.get_supabase_client', return_value=mock_supabase):
             response = test_client.get("/api/auth/users/nonexistent")
             
             assert response.status_code == 200
@@ -309,7 +309,7 @@ class TestAuthEndpoints:
         mock_supabase = MagicMock()
         mock_supabase.table.side_effect = Exception("Database error")
         
-        with patch('api.auth.get_supabase_client', return_value=mock_supabase):
+        with patch('services.supabase.get_supabase_client', return_value=mock_supabase):
             response = test_client.get("/api/auth/users/testuser")
             
             assert response.status_code == 500
