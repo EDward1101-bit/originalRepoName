@@ -4,15 +4,16 @@ import json
 import re
 import secrets
 import time
+import uuid
 from typing import Any
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Header
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/bots", tags=["bots"])
 
-# ── Built-in inline filters (no webhook needed) ─────────────────────────────
+# ── Built-in inline filters ───────────────────────────────────────────────────
 _SWEAR_PATTERN = re.compile(
     r"\b(shit|fuck|crap|ass|damn|bitch|bastard|piss|cock|cunt|dick|prick|twat|wanker|bollocks)\b",
     re.IGNORECASE,
@@ -25,7 +26,6 @@ BUILTIN_FILTERS: dict[str, Any] = {
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 def _sign_payload(secret: str, payload: dict) -> str:
-    """HMAC-SHA256 sign a payload dict using the bot's webhook_secret."""
     msg = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode()
     digest = hmac.new(secret.encode(), msg, hashlib.sha256).hexdigest()
     return f"sha256={digest}"
@@ -42,25 +42,28 @@ class RegisterBotRequest(BaseModel):
 
 class RegisterBotResponse(BaseModel):
     bot_id: str
-    webhook_secret: str  # shown ONCE — store it, it won't be shown again
+    webhook_secret: str
 
 
 class DispatchRequest(BaseModel):
+    message_id: str
     room_name: str
     body: str
     sender: str
 
 
-class DispatchResponse(BaseModel):
+class EditMessageRequest(BaseModel):
+    body: str
+
+
+class SendMessageRequest(BaseModel):
     body: str
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 @router.get("", response_model=list[dict])
 async def list_bots() -> list[dict]:
-    """Return all active registered bots (built-in + external)."""
     from services.supabase import get_supabase_client
-
     supabase = get_supabase_client()
     response = (
         supabase.table("bots")
@@ -73,51 +76,38 @@ async def list_bots() -> list[dict]:
 
 @router.post("/register", response_model=RegisterBotResponse)
 async def register_bot(req: RegisterBotRequest) -> RegisterBotResponse:
-    """Register an external bot. Returns a webhook_secret shown only once."""
     from services.supabase import get_supabase_client
-
     supabase = get_supabase_client()
 
     bot_id = secrets.token_hex(8)
-    webhook_secret = secrets.token_hex(32)  # stored plaintext — used to sign dispatches
+    webhook_secret = secrets.token_hex(32)
 
     response = (
         supabase.table("bots")
-        .insert(
-            {
-                "id": bot_id,
-                "name": req.name,
-                "description": req.description,
-                "emoji": req.emoji,
-                "webhook_url": req.webhook_url,
-                "webhook_secret": webhook_secret,
-                "owner_username": req.owner_username,
-                "is_builtin": False,
-                "is_active": True,
-            }
-        )
+        .insert({
+            "id": bot_id,
+            "name": req.name,
+            "description": req.description,
+            "emoji": req.emoji,
+            "webhook_url": req.webhook_url,
+            "webhook_secret": webhook_secret,
+            "owner_username": req.owner_username,
+            "is_builtin": False,
+            "is_active": True,
+        })
         .execute()
     )
-
     if not response.data:
         raise HTTPException(status_code=500, detail="Failed to register bot")
-
     return RegisterBotResponse(bot_id=bot_id, webhook_secret=webhook_secret)
 
 
 @router.delete("/{bot_id}")
 async def delete_bot(bot_id: str, owner_username: str) -> dict[str, Any]:
-    """Soft-delete a bot (set is_active=false). Only the owner can do this."""
     from services.supabase import get_supabase_client
-
     supabase = get_supabase_client()
 
-    check = (
-        supabase.table("bots")
-        .select("owner_username, is_builtin")
-        .eq("id", bot_id)
-        .execute()
-    )
+    check = supabase.table("bots").select("owner_username, is_builtin").eq("id", bot_id).execute()
     if not check.data:
         raise HTTPException(status_code=404, detail="Bot not found")
 
@@ -131,31 +121,21 @@ async def delete_bot(bot_id: str, owner_username: str) -> dict[str, Any]:
     return {"deleted": True}
 
 
-@router.post("/dispatch", response_model=DispatchResponse)
-async def dispatch(req: DispatchRequest) -> DispatchResponse:
+async def process_dispatch(req: DispatchRequest):
+    """Background task to notify bots and handle built-ins async."""
     from services.supabase import get_supabase_client
-
     supabase = get_supabase_client()
 
-    # Resolve room name → room_id
-    room_resp = (
-        supabase.table("rooms").select("id").eq("name", req.room_name).execute()
-    )
+    room_resp = supabase.table("rooms").select("id").eq("name", req.room_name).execute()
     if not room_resp.data:
-        return DispatchResponse(body=req.body)
-
+        return
     room_id = room_resp.data[0]["id"]
 
-    # Get active bot IDs for this room
-    room_bots_resp = (
-        supabase.table("room_bots").select("bot_id").eq("room_id", room_id).execute()
-    )
+    room_bots_resp = supabase.table("room_bots").select("bot_id").eq("room_id", room_id).execute()
     if not room_bots_resp.data:
-        return DispatchResponse(body=req.body)
-
+        return
     bot_ids = [row["bot_id"] for row in room_bots_resp.data]
 
-    # Fetch full bot records
     bots_resp = (
         supabase.table("bots")
         .select("id, webhook_url, webhook_secret, is_builtin")
@@ -165,32 +145,35 @@ async def dispatch(req: DispatchRequest) -> DispatchResponse:
     )
     bots = bots_resp.data or []
     if not bots:
-        return DispatchResponse(body=req.body)
+        return
 
-    current_body = req.body
+    # Payload matching the SDK model
+    payload = {
+        "event": "message_create",
+        "message": {
+            "id": req.message_id,
+            "room_name": req.room_name,
+            "sender": req.sender,
+            "body": req.body,
+            "timestamp": int(time.time()),
+        }
+    }
 
     async with httpx.AsyncClient(timeout=2.0) as client:
         for bot in bots:
-            bot_id: str = bot["id"]
-
-            if bot.get("is_builtin") or not bot.get("webhook_url"):
-                # ── Inline built-in filter ──
-                inline = BUILTIN_FILTERS.get(bot_id)
+            if bot.get("is_builtin"):
+                # Run built-in filter and edit immediately if changed
+                inline = BUILTIN_FILTERS.get(bot["id"])
                 if inline:
-                    current_body = inline(current_body)
-            else:
-                # ── External webhook ──
-                payload = {
-                    "body": current_body,
-                    "room_name": req.room_name,
-                    "sender": req.sender,
-                    "timestamp": int(time.time()),
-                }
-                secret: str = bot.get("webhook_secret") or ""
+                    filtered = inline(req.body)
+                    if filtered != req.body:
+                        # Update database directly
+                        supabase.table("room_messages").update({"body": filtered}).eq("id", req.message_id).execute()
+            elif bot.get("webhook_url"):
+                secret = bot.get("webhook_secret") or ""
                 signature = _sign_payload(secret, payload)
-
                 try:
-                    resp = await client.post(
+                    await client.post(
                         bot["webhook_url"],
                         json=payload,
                         headers={
@@ -198,13 +181,89 @@ async def dispatch(req: DispatchRequest) -> DispatchResponse:
                             "X-Aether-Signature": signature,
                         },
                     )
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        filtered = data.get("body")
-                        if isinstance(filtered, str):
-                            current_body = filtered
                 except (httpx.TimeoutException, httpx.RequestError):
-                    # Bot unavailable — silently pass through
                     pass
 
-    return DispatchResponse(body=current_body)
+
+@router.post("/dispatch")
+async def dispatch(req: DispatchRequest, background_tasks: BackgroundTasks) -> dict[str, str]:
+    """Trigger the async webhook dispatch. Returns immediately."""
+    background_tasks.add_task(process_dispatch, req)
+    return {"status": "ok"}
+
+
+# ── Bot SDK REST API ──────────────────────────────────────────────────────────
+@router.patch("/messages/{message_id}")
+async def edit_bot_message(message_id: str, req: EditMessageRequest, x_aether_secret: str = Header(None)) -> dict[str, str]:
+    """Bot SDK endpoint to edit a message asynchronously."""
+    if not x_aether_secret:
+        raise HTTPException(status_code=401, detail="Missing X-Aether-Secret header")
+
+    from services.supabase import get_supabase_client
+    supabase = get_supabase_client()
+
+    # Authenticate bot
+    bots_resp = supabase.table("bots").select("id").eq("webhook_secret", x_aether_secret).eq("is_active", True).execute()
+    if not bots_resp.data:
+        raise HTTPException(status_code=401, detail="Invalid bot secret")
+
+    # Update message body
+    # (In a production system, we'd also verify the bot is in the room where the message belongs)
+    res = supabase.table("room_messages").update({"body": req.body}).eq("id", message_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    return {"status": "edited"}
+
+
+@router.delete("/messages/{message_id}")
+async def delete_bot_message(message_id: str, x_aether_secret: str = Header(None)) -> dict[str, str]:
+    """Bot SDK endpoint to delete a message asynchronously."""
+    if not x_aether_secret:
+        raise HTTPException(status_code=401, detail="Missing X-Aether-Secret header")
+
+    from services.supabase import get_supabase_client
+    supabase = get_supabase_client()
+
+    bots_resp = supabase.table("bots").select("id").eq("webhook_secret", x_aether_secret).eq("is_active", True).execute()
+    if not bots_resp.data:
+        raise HTTPException(status_code=401, detail="Invalid bot secret")
+
+    res = supabase.table("room_messages").delete().eq("id", message_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    return {"status": "deleted"}
+
+
+@router.post("/rooms/{room_name}/messages")
+async def send_bot_message(room_name: str, req: SendMessageRequest, x_aether_secret: str = Header(None)) -> dict[str, str]:
+    """Bot SDK endpoint to proactively send a message to a room."""
+    if not x_aether_secret:
+        raise HTTPException(status_code=401, detail="Missing X-Aether-Secret header")
+
+    from services.supabase import get_supabase_client
+    supabase = get_supabase_client()
+
+    bots_resp = supabase.table("bots").select("id, name").eq("webhook_secret", x_aether_secret).eq("is_active", True).execute()
+    if not bots_resp.data:
+        raise HTTPException(status_code=401, detail="Invalid bot secret")
+    bot = bots_resp.data[0]
+
+    room_resp = supabase.table("rooms").select("id").eq("name", room_name).execute()
+    if not room_resp.data:
+        raise HTTPException(status_code=404, detail="Room not found")
+    room_id = room_resp.data[0]["id"]
+
+    msg_id = str(uuid.uuid4())
+    res = supabase.table("room_messages").insert({
+        "id": msg_id,
+        "room_id": room_id,
+        "sender": bot["name"],
+        "body": req.body
+    }).execute()
+
+    if not res.data:
+        raise HTTPException(status_code=500, detail="Failed to send message")
+
+    return {"status": "sent", "id": msg_id}

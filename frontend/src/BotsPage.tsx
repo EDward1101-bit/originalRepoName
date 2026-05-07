@@ -15,6 +15,7 @@ import {
   Trash2,
   ExternalLink,
   Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 
 type Panel = 'manage' | 'register';
@@ -28,6 +29,7 @@ export default function BotsPage() {
   const [panel, setPanel] = useState<Panel>('manage');
   const [loadingRoomId, setLoadingRoomId] = useState<string | null>(null);
   const [deletingBotId, setDeletingBotId] = useState<string | null>(null);
+  const [botToDelete, setBotToDelete] = useState<BotDefinition | null>(null);
 
   // Registration form
   const [form, setForm] = useState({ name: '', description: '', emoji: '🤖', webhookUrl: '' });
@@ -81,14 +83,15 @@ export default function BotsPage() {
     }
   };
 
-  const handleDeleteBot = async (botId: string) => {
-    if (!confirm('Delete this bot? It will be removed from all rooms.')) return;
-    setDeletingBotId(botId);
+  const confirmDeleteBot = async () => {
+    if (!botToDelete) return;
+    setDeletingBotId(botToDelete.id);
     try {
-      await deleteBot(botId);
-      if (selectedBot?.id === botId) setSelectedBot(null);
+      await deleteBot(botToDelete.id);
+      if (selectedBot?.id === botToDelete.id) setSelectedBot(null);
     } finally {
       setDeletingBotId(null);
+      setBotToDelete(null);
     }
   };
 
@@ -190,7 +193,7 @@ export default function BotsPage() {
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {isOwner && !bot.isBuiltin && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteBot(bot.id); }}
+                          onClick={(e) => { e.stopPropagation(); setBotToDelete(bot); }}
                           disabled={deletingBotId === bot.id}
                           className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-all opacity-0 group-hover:opacity-100"
                           title="Delete bot"
@@ -302,9 +305,18 @@ export default function BotsPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
-                        Webhook URL *
-                      </label>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">
+                          Webhook URL *
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setForm((f) => ({ ...f, webhookUrl: 'http://172.17.0.1:4001/webhook' }))}
+                          className="text-[10px] font-bold text-[var(--brand)] hover:opacity-80 uppercase tracking-wide bg-[var(--brand)]/10 px-2 py-1 rounded transition-colors"
+                        >
+                          Localhost
+                        </button>
+                      </div>
                       <input
                         className={inputCls}
                         placeholder="https://my-bot.example.com/webhook"
@@ -432,6 +444,40 @@ export default function BotsPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Bot Modal */}
+      {botToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-[#ef4444]/10 flex items-center justify-center text-[#ef4444] mb-4">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className="text-xl font-bold mb-2 tracking-tight">Delete Bot?</h3>
+              <p className="text-[14px] text-[var(--text-muted)] leading-relaxed">
+                Are you sure you want to delete <strong className="text-[var(--text-normal)]">{botToDelete.name}</strong>? This action cannot be undone and it will be removed from all rooms.
+              </p>
+            </div>
+            <div className="p-4 bg-[var(--bg-secondary)] border-t border-[var(--border)] flex gap-3 justify-end">
+              <button
+                onClick={() => setBotToDelete(null)}
+                disabled={deletingBotId !== null}
+                className="px-4 py-2 rounded-xl text-[14px] font-medium text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteBot}
+                disabled={deletingBotId !== null}
+                className="px-5 py-2 rounded-xl text-[14px] font-medium bg-[#ef4444] text-white hover:bg-[#ef4444]/90 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+              >
+                {deletingBotId !== null && <Loader2 size={16} className="animate-spin" />}
+                Delete Bot
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

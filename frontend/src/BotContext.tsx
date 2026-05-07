@@ -46,7 +46,7 @@ interface BotContextType {
   isBotInRoom: (roomName: string, botId: string) => boolean;
   inviteBot: (roomId: string, roomName: string, botId: string) => Promise<void>;
   removeBot: (roomId: string, roomName: string, botId: string) => Promise<void>;
-  applyFilters: (roomName: string, body: string) => Promise<string>;
+  triggerDispatch: (messageId: string, roomName: string, body: string) => void;
   registerBot: (params: {
     name: string;
     description: string;
@@ -183,25 +183,19 @@ export function BotProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  // ── Core: async filter dispatch ───────────────────────────────────────────
-  const applyFilters = useCallback(
-    async (roomName: string, body: string): Promise<string> => {
+  // ── Core: async dispatch ─────────────────────────────────────────────────
+  const triggerDispatch = useCallback(
+    (messageId: string, roomName: string, body: string) => {
       const activeBots = getBotsForRoom(roomName);
-      if (activeBots.length === 0) return body;
+      if (activeBots.length === 0) return;
 
-      try {
-        const res = await fetch(`${API_URL}/api/bots/dispatch`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ room_name: roomName, body, sender: myUsername }),
-        });
-        if (!res.ok) return body;
-        const data = await res.json();
-        return typeof data.body === 'string' ? data.body : body;
-      } catch {
-        // Backend unreachable — send unfiltered (graceful degradation)
-        return body;
-      }
+      fetch(`${API_URL}/api/bots/dispatch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_id: messageId, room_name: roomName, body, sender: myUsername }),
+      }).catch(() => {
+        // Silently ignore if backend is down, message was already sent
+      });
     },
     [getBotsForRoom, myUsername]
   );
@@ -260,7 +254,7 @@ export function BotProvider({ children }: { children: ReactNode }) {
         isBotInRoom,
         inviteBot,
         removeBot,
-        applyFilters,
+        triggerDispatch,
         registerBot,
         deleteBot,
         refreshBots: fetchAllBots,

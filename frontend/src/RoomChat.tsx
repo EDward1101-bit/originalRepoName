@@ -30,7 +30,7 @@ export default function RoomChat() {
   } = useMucContext();
   const { user } = useAuth();
   const { myUsername, status, getUserProfile } = useChatContext();
-  const { getBotsForRoom } = useBotContext();
+  const { getBotsForRoom, allBots } = useBotContext();
   const isConnected = status === 'Connected';
 
   const [input, setInput] = useState('');
@@ -375,8 +375,16 @@ export default function RoomChat() {
                     <div className="flex flex-col min-w-0 w-full">
                       {showHeader && (
                         <div className="flex items-baseline gap-2 mb-1">
-                          <span className="font-bold text-[15px] text-[var(--text-normal)]">
+                          <span className="font-bold text-[15px] text-[var(--text-normal)] flex items-center gap-2">
                             {senderName}
+                            {allBots.some(b => b.name === msg.sender) && (
+                              <span className="bg-[var(--brand)] text-white text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm">
+                                <span className="text-[10px]">
+                                  {allBots.find(b => b.name === msg.sender)?.emoji || '🤖'}
+                                </span>
+                                BOT
+                              </span>
+                            )}
                           </span>
                           <span className="text-[12px] text-[var(--text-muted)] font-medium">
                             {formatMessageTimestamp(msg.created_at)}
