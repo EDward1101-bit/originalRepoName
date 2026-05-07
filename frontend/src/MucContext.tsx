@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useChatContext } from './ChatContext';
+import { useBotContext } from './BotContext';
 import { MUC_DOMAIN, buildRoomJid } from './config';
 import { supabase } from './supabase';
 import type { ReceivedMessage } from 'stanza/protocol';
@@ -68,6 +69,7 @@ const generateId = () => {
 
 export function MucProvider({ children }: { children: ReactNode }) {
   const { client, myUsername, status, allUsers } = useChatContext();
+  const { applyFilters } = useBotContext();
 
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
   const [joinedRooms, setJoinedRooms] = useState<string[]>(() => {
@@ -690,11 +692,14 @@ export function MucProvider({ children }: { children: ReactNode }) {
     const room = availableRooms.find((r) => r.name === roomName);
     if (!room) return;
 
+    // Apply bot filters before sending (client-side, before XMPP + Supabase)
+    const filteredBody = applyFilters(roomName, body);
+
     // Send via XMPP
     const msgId = generateId();
     client.sendMessage({
       to: roomJid,
-      body,
+      body: filteredBody,
       type: 'groupchat',
       id: msgId,
     });
@@ -704,7 +709,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
       id: msgId,
       room_id: room.id,
       sender: myUsername,
-      body,
+      body: filteredBody,
     });
 
     if (error) {
@@ -715,7 +720,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
         id: msgId,
         room_id: room.id,
         sender: myUsername,
-        body,
+        body: filteredBody,
         created_at: new Date(),
         type: 'chat',
       };

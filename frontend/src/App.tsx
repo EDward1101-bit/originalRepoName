@@ -6,8 +6,10 @@ import Layout from './Layout';
 import { useAuth } from './AuthContext';
 import { ChatProvider } from './ChatContext';
 import { MucProvider } from './MucContext';
+import { BotProvider } from './BotContext';
 import RoomsPage from './RoomsPage';
 import RoomChat from './RoomChat';
+import BotsPage from './BotsPage';
 
 console.log('[App] Starting...');
 
@@ -15,17 +17,20 @@ function AuthenticatedRoutes() {
   console.log('[App] Rendering AuthenticatedRoutes');
   return (
     <ChatProvider>
-      <MucProvider>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/dms" element={<DMsPage />} />
-            <Route path="/dms/:username" element={<Chat />} />
-            <Route path="/rooms" element={<RoomsPage />} />
-            <Route path="/rooms/:roomName" element={<RoomChat />} />
-            <Route path="*" element={<Navigate to="/dms" replace />} />
-          </Route>
-        </Routes>
-      </MucProvider>
+      <BotProvider>
+        <MucProvider>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/dms" element={<DMsPage />} />
+              <Route path="/dms/:username" element={<Chat />} />
+              <Route path="/rooms" element={<RoomsPage />} />
+              <Route path="/rooms/:roomName" element={<RoomChat />} />
+              <Route path="/bots" element={<BotsPage />} />
+              <Route path="*" element={<Navigate to="/dms" replace />} />
+            </Route>
+          </Routes>
+        </MucProvider>
+      </BotProvider>
     </ChatProvider>
   );
 }

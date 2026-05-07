@@ -7,7 +7,7 @@ import { useTranslation } from './LanguageContext';
 import SettingsModal from './components/SettingsModal';
 import PushNotificationBar from './components/PushNotificationBar';
 import { supabase } from './supabase';
-import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, MessageCircle, X, Minus } from 'lucide-react';
+import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, MessageCircle, X, Minus, Bot } from 'lucide-react';
 
 export default function Layout() {
   const { user } = useAuth();
@@ -170,6 +170,23 @@ export default function Layout() {
             {roomUnread > 99 ? '99+' : roomUnread}
           </div>
         )}
+      </div>
+
+      <div className="w-6 h-[2px] bg-[var(--bg-modifier-active)] rounded-full my-1 opacity-50" />
+
+      <div className="relative group">
+        <NavLink
+          to="/bots"
+          className={({ isActive }) =>
+            `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm ${
+              isActive
+                ? '!rounded-[14px] bg-[var(--brand)] text-white'
+                : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
+            }`
+          }
+        >
+          <Bot size={22} />
+        </NavLink>
       </div>
 
       {/* Add new server button */}
