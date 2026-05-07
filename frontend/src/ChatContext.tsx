@@ -61,6 +61,7 @@ interface ChatContextType {
   sendTypingIndicator: (recipient: string, isTyping: boolean) => void;
   unreadCounts: Record<string, number>;
   clearUnread: (chatId: string) => void;
+  setCurrentChat: (chatId: string | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -103,6 +104,22 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const clientRef = useRef<Agent | null>(null);
   const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const currentChatRef = useRef<string | null>(null);
+  const [_currentChat, _setCurrentChat] = useState<string | null>(null);
+
+  const setCurrentChat = useCallback((chatId: string | null) => {
+    currentChatRef.current = chatId;
+    _setCurrentChat(chatId);
+    // Immediately clear unread for the chat being opened
+    if (chatId) {
+      setUnreadCounts((prev) => {
+        if (!prev[chatId]) return prev;
+        const next = { ...prev };
+        delete next[chatId];
+        return next;
+      });
+    }
+  }, []);
 
   // Stable XMPP login ID derived from the immutable Supabase Auth email.
   // This is what Prosody knows the user as and what JIDs are built from.
@@ -303,9 +320,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const fromFull = msg.from || '';
       const from = fromFull.split('@')[0] || 'Unknown';
       const myUser = jidRef.current.split('@')[0];
-      const nickname = fromFull.includes('/') ? fromFull.split('/')[1] : '';
-      const isGroupchat = msg.type === 'groupchat';
-      const isMyOwnGroupchat = isGroupchat && nickname === myUser;
 
       // Handle typing indicators (XEP-0085)
       if ((msg as any).chatState && from !== myUser) {
@@ -333,8 +347,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
       const msgId = (msg as any).id || `${from}:${msg.body}`;
 
-      // Increment unread count for the sender or room if it's not from us
-      if (from !== myUser && !isMyOwnGroupchat && !seenIds.current.has(msgId)) {
+      // Increment unread count only for DMs from others, and only if
+      // the user is not currently viewing that conversation.
+      const isDm = msg.type === 'chat';
+      if (isDm && from !== myUser && !seenIds.current.has(msgId) && currentChatRef.current !== from) {
         setUnreadCounts((prev) => ({
           ...prev,
           [from]: (prev[from] || 0) + 1,
@@ -378,16 +394,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const msgId = (idMatch?.[1] ?? idFallback?.[1]) || `${from}:${body}`;
 
         const myUser = jidRef.current.split('@')[0];
-        const isGroupchat = msgXml.includes('type="groupchat"');
-        const isMyOwnGroupchat = isGroupchat && nickname === myUser;
 
-        // Note: we don't want to duplicate unread count increments with handleMessage.
-        if (from !== myUser && !isMyOwnGroupchat && !seenIds.current.has(msgId)) {
-          setUnreadCounts((prev) => ({
-            ...prev,
-            [from]: (prev[from] || 0) + 1,
-          }));
-        }
+        // Note: unread counting is handled exclusively in handleMessage to avoid
+        // double-counting (handleRawIncoming is a fallback for message delivery only).
 
         if (msgXml.includes('type="chat"')) {
           addMessage(from, body, msgId);
@@ -766,6 +775,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+
   return (
     <ChatContext.Provider
       value={{
@@ -789,6 +799,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         sendTypingIndicator,
         unreadCounts,
         clearUnread,
+        setCurrentChat,
       }}
     >
       {children}

@@ -5,13 +5,14 @@ import { useChatContext } from './ChatContext';
 import { useMucContext } from './MucContext';
 import { useTranslation } from './LanguageContext';
 import SettingsModal from './components/SettingsModal';
+import PushNotificationBar from './components/PushNotificationBar';
 import { supabase } from './supabase';
 import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, MessageCircle, X, Minus } from 'lucide-react';
 
 export default function Layout() {
   const { user } = useAuth();
   const { status, myUsername, myUserId, unreadCounts, clearUnread, friendships, allUsers, messages } = useChatContext();
-  const { joinedRooms, roomMessages } = useMucContext();
+  const { joinedRooms, roomMessages, roomUnreadCounts, clearRoomUnread } = useMucContext();
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -91,13 +92,10 @@ export default function Layout() {
 
   const isConnected = status === 'Connected';
 
-  const roomUnread = Object.keys(unreadCounts).reduce((acc, key) => {
-    if (joinedRooms.includes(key)) {
-      return acc + unreadCounts[key];
-    }
-    return acc;
-  }, 0);
+  // Room unread: read directly from MucContext (tracked per-room, skipped when in that room)
+  const roomUnread = Object.values(roomUnreadCounts).reduce((acc, n) => acc + n, 0);
 
+  // DM unread: only keys that are NOT joined room names
   const dmUnread = Object.keys(unreadCounts).reduce((acc, key) => {
     if (!joinedRooms.includes(key)) {
       return acc + unreadCounts[key];
@@ -110,12 +108,15 @@ export default function Layout() {
     // E.g., location.pathname is "/dms/username" or "/rooms/roomname"
     const parts = location.pathname.split('/').filter(Boolean);
     if (parts.length >= 2) {
-      const chatId = parts[1]; // The 'username' or 'roomname'
-      if (unreadCounts[chatId] > 0) {
+      const section = parts[0]; // 'dms' or 'rooms'
+      const chatId = parts[1];  // username or roomname
+      if (section === 'rooms') {
+        clearRoomUnread(chatId);
+      } else if (section === 'dms') {
         clearUnread(chatId);
       }
     }
-  }, [location.pathname, unreadCounts, clearUnread]);
+  }, [location.pathname, clearUnread, clearRoomUnread]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -253,21 +254,30 @@ export default function Layout() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-0.5">
-                  {joinedRooms.map((roomName) => (
-                    <NavLink
-                      key={roomName}
-                      to={`/rooms/${roomName}`}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
-                          isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''
-                        }`
-                      }
-                    >
-                      <Minus size={16} />
-                      <span className="font-medium text-[14px] truncate">{roomName}</span>
-                    </NavLink>
-                  ))}
+                  {joinedRooms.map((roomName) => {
+                    const roomUnread = roomUnreadCounts[roomName] || 0;
+                    return (
+                      <NavLink
+                        key={roomName}
+                        to={`/rooms/${roomName}`}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
+                            isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''
+                          }`
+                        }
+                      >
+                        <Minus size={16} />
+                        <span className={`font-medium text-[14px] truncate flex-1 ${roomUnread > 0 ? 'text-[var(--text-normal)] font-semibold' : ''}`}>{roomName}</span>
+                        {roomUnread > 0 && (
+                          <span className="min-w-[18px] h-[18px] bg-[var(--brand)] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 flex-shrink-0">
+                            {roomUnread > 99 ? '99+' : roomUnread}
+                          </span>
+                        )}
+                      </NavLink>
+                    );
+                  })}
                 </div>
+
               )}
             </>
           ) : (
@@ -440,6 +450,9 @@ export default function Layout() {
             Aether
           </span>
         </div>
+
+        {/* Push Notification Bar */}
+        <PushNotificationBar />
 
         {/* Content */}
         <main className="flex-1 overflow-hidden relative">

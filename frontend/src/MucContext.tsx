@@ -35,6 +35,7 @@ interface MucContextType {
   roomMessages: Record<string, RoomMessage[]>; // room name -> messages
   roomTypingUsers: Record<string, Record<string, number>>; // room name -> {username: timestamp}
   roomActiveUsers: Record<string, string[]>; // room name -> array of nicknames
+  roomUnreadCounts: Record<string, number>; // room name -> unread count
   createRoom: (name: string, description?: string) => Promise<void>;
   deleteRoom: (roomId: string, roomName: string) => Promise<void>;
   joinRoom: (roomName: string) => Promise<void>;
@@ -47,6 +48,8 @@ interface MucContextType {
     messageId: string
   ) => Promise<void>;
   deleteRoomMessageForMe: (roomName: string, messageId: string) => void;
+  clearRoomUnread: (roomName: string) => void;
+  setCurrentRoom: (roomName: string | null) => void;
 }
 
 const MucContext = createContext<MucContextType | undefined>(undefined);
@@ -89,6 +92,29 @@ export function MucProvider({ children }: { children: ReactNode }) {
       return new Set();
     }
   });
+  const [roomUnreadCounts, setRoomUnreadCounts] = useState<Record<string, number>>({});
+  const currentRoomRef = useRef<string | null>(null);
+
+  const clearRoomUnread = useCallback((roomName: string) => {
+    setRoomUnreadCounts((prev) => {
+      if (!prev[roomName]) return prev;
+      const next = { ...prev };
+      delete next[roomName];
+      return next;
+    });
+  }, []);
+
+  const setCurrentRoom = useCallback((roomName: string | null) => {
+    currentRoomRef.current = roomName;
+    if (roomName) {
+      setRoomUnreadCounts((prev) => {
+        if (!prev[roomName]) return prev;
+        const next = { ...prev };
+        delete next[roomName];
+        return next;
+      });
+    }
+  }, []);
 
   const joinedRoomsRef = useRef<Set<string>>(new Set(joinedRooms));
   const seenRoomMessageIds = useRef<Set<string>>(new Set());
@@ -463,6 +489,14 @@ export function MucProvider({ children }: { children: ReactNode }) {
         type: 'chat',
       };
 
+      // Increment room unread only if the user is not currently viewing this room
+      if (currentRoomRef.current !== roomName) {
+        setRoomUnreadCounts((prev) => ({
+          ...prev,
+          [roomName]: (prev[roomName] || 0) + 1,
+        }));
+      }
+
       setRoomMessages((prev) => ({
         ...prev,
         [roomName]: [...(prev[roomName] || []), newMsg],
@@ -809,6 +843,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
         roomMessages: filteredRoomMessages,
         roomTypingUsers,
         roomActiveUsers,
+        roomUnreadCounts,
         createRoom,
         deleteRoom,
         joinRoom,
@@ -817,6 +852,8 @@ export function MucProvider({ children }: { children: ReactNode }) {
         sendRoomTypingIndicator,
         deleteRoomMessageForEveryone,
         deleteRoomMessageForMe,
+        clearRoomUnread,
+        setCurrentRoom,
       }}
     >
       {children}
