@@ -692,8 +692,8 @@ export function MucProvider({ children }: { children: ReactNode }) {
     const room = availableRooms.find((r) => r.name === roomName);
     if (!room) return;
 
-    // Apply bot filters before sending (client-side, before XMPP + Supabase)
-    const filteredBody = applyFilters(roomName, body);
+    // Apply bot filters before sending (routed through backend dispatch)
+    const filteredBody = await applyFilters(roomName, body);
 
     // Send via XMPP
     const msgId = generateId();

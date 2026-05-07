@@ -1,0 +1,13 @@
+{
+  "name": "andrei-filter-bot",
+  "version": "1.0.0",
+  "description": "Custom Aether bot that replaces every word with 'andrei'",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  }
+}

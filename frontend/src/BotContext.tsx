@@ -8,7 +8,20 @@ import {
 } from 'react';
 import { supabase } from './supabase';
 import { useChatContext } from './ChatContext';
-import { ALL_BOTS, getBotById, type BotDefinition } from './bots/botRegistry';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+export interface BotDefinition {
+  id: string;
+  name: string;
+  description: string;
+  emoji: string;
+  tags?: string[];
+  isBuiltin: boolean;
+  webhookUrl?: string | null;
+  ownerUsername?: string | null;
+}
 
 // roomName -> botId[]
 type RoomBotsMap = Record<string, string[]>;
@@ -21,22 +34,60 @@ interface RoomBotRow {
   rooms: { name: string } | null;
 }
 
+export interface RegisteredBot {
+  bot_id: string;
+  webhook_secret: string;
+}
+
 interface BotContextType {
-  roomBots: RoomBotsMap;
   allBots: BotDefinition[];
+  roomBots: RoomBotsMap;
   getBotsForRoom: (roomName: string) => BotDefinition[];
   isBotInRoom: (roomName: string, botId: string) => boolean;
   inviteBot: (roomId: string, roomName: string, botId: string) => Promise<void>;
   removeBot: (roomId: string, roomName: string, botId: string) => Promise<void>;
-  applyFilters: (roomName: string, body: string) => string;
+  applyFilters: (roomName: string, body: string) => Promise<string>;
+  registerBot: (params: {
+    name: string;
+    description: string;
+    emoji: string;
+    webhookUrl: string;
+  }) => Promise<RegisteredBot>;
+  deleteBot: (botId: string) => Promise<void>;
+  refreshBots: () => Promise<void>;
 }
 
 const BotContext = createContext<BotContextType | undefined>(undefined);
 
+// ── Provider ─────────────────────────────────────────────────────────────────
 export function BotProvider({ children }: { children: ReactNode }) {
   const { myUsername } = useChatContext();
+  const [allBots, setAllBots] = useState<BotDefinition[]>([]);
   const [roomBots, setRoomBots] = useState<RoomBotsMap>({});
 
+  // Fetch the bots catalogue from the backend (which reads the bots table)
+  const fetchAllBots = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/bots`);
+      if (!res.ok) return;
+      const data: any[] = await res.json();
+      setAllBots(
+        data.map((b) => ({
+          id: b.id,
+          name: b.name,
+          description: b.description,
+          emoji: b.emoji,
+          isBuiltin: b.is_builtin,
+          webhookUrl: b.webhook_url,
+          ownerUsername: b.owner_username,
+        }))
+      );
+    } catch {
+      // Backend unreachable — silently ignore, bots page will show empty
+    }
+  }, []);
+
+  // Fetch which bots are in which rooms (from room_bots table)
   const fetchRoomBots = useCallback(async () => {
     const { data, error } = await supabase
       .from('room_bots')
@@ -53,45 +104,48 @@ export function BotProvider({ children }: { children: ReactNode }) {
       const roomName = row.rooms?.name;
       if (!roomName) continue;
       if (!map[roomName]) map[roomName] = [];
-      if (!map[roomName].includes(row.bot_id)) {
-        map[roomName].push(row.bot_id);
-      }
+      if (!map[roomName].includes(row.bot_id)) map[roomName].push(row.bot_id);
     }
     setRoomBots(map);
   }, []);
 
+  // Fetch bot catalogue on mount — no auth required
+  useEffect(() => {
+    fetchAllBots();
+  }, [fetchAllBots]);
+
+  // Fetch room<->bot associations — needs the user to be identified
   useEffect(() => {
     if (!myUsername) return;
     fetchRoomBots();
   }, [myUsername, fetchRoomBots]);
 
-  // Subscribe to realtime changes on room_bots
+  // Realtime subscription on room_bots
   useEffect(() => {
     if (!myUsername) return;
     const channel = supabase
-      .channel('room_bots_realtime')
+      .channel('room_bots_realtime_v2')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'room_bots' }, () => {
         fetchRoomBots();
       })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [myUsername, fetchRoomBots]);
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
   const getBotsForRoom = useCallback(
     (roomName: string): BotDefinition[] => {
       const botIds = roomBots[roomName] || [];
-      return botIds.map((id) => getBotById(id)).filter(Boolean) as BotDefinition[];
+      return botIds
+        .map((id) => allBots.find((b) => b.id === id))
+        .filter(Boolean) as BotDefinition[];
     },
-    [roomBots]
+    [roomBots, allBots]
   );
 
   const isBotInRoom = useCallback(
-    (roomName: string, botId: string): boolean => {
-      return (roomBots[roomName] || []).includes(botId);
-    },
+    (roomName: string, botId: string): boolean =>
+      (roomBots[roomName] || []).includes(botId),
     [roomBots]
   );
 
@@ -103,10 +157,7 @@ export function BotProvider({ children }: { children: ReactNode }) {
         bot_id: botId,
         invited_by: myUsername,
       });
-      if (error) {
-        console.error('[BotContext] Failed to invite bot:', error);
-        throw error;
-      }
+      if (error) throw error;
       setRoomBots((prev) => {
         const existing = prev[roomName] || [];
         if (existing.includes(botId)) return prev;
@@ -123,10 +174,7 @@ export function BotProvider({ children }: { children: ReactNode }) {
         .delete()
         .eq('room_id', roomId)
         .eq('bot_id', botId);
-      if (error) {
-        console.error('[BotContext] Failed to remove bot:', error);
-        throw error;
-      }
+      if (error) throw error;
       setRoomBots((prev) => ({
         ...prev,
         [roomName]: (prev[roomName] || []).filter((id) => id !== botId),
@@ -135,20 +183,88 @@ export function BotProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  // ── Core: async filter dispatch ───────────────────────────────────────────
   const applyFilters = useCallback(
-    (roomName: string, body: string): string => {
-      const bots = getBotsForRoom(roomName);
-      return bots.reduce((text, bot) => {
-        if (bot.filter) return bot.filter(text);
-        return text;
-      }, body);
+    async (roomName: string, body: string): Promise<string> => {
+      const activeBots = getBotsForRoom(roomName);
+      if (activeBots.length === 0) return body;
+
+      try {
+        const res = await fetch(`${API_URL}/api/bots/dispatch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ room_name: roomName, body, sender: myUsername }),
+        });
+        if (!res.ok) return body;
+        const data = await res.json();
+        return typeof data.body === 'string' ? data.body : body;
+      } catch {
+        // Backend unreachable — send unfiltered (graceful degradation)
+        return body;
+      }
     },
-    [getBotsForRoom]
+    [getBotsForRoom, myUsername]
+  );
+
+  // ── Bot registration / deletion ───────────────────────────────────────────
+  const registerBot = useCallback(
+    async (params: {
+      name: string;
+      description: string;
+      emoji: string;
+      webhookUrl: string;
+    }): Promise<RegisteredBot> => {
+      const res = await fetch(`${API_URL}/api/bots/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: params.name,
+          description: params.description,
+          emoji: params.emoji,
+          webhook_url: params.webhookUrl,
+          owner_username: myUsername,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to register bot');
+      }
+      const data = await res.json();
+      await fetchAllBots();
+      return { bot_id: data.bot_id, webhook_secret: data.webhook_secret };
+    },
+    [myUsername, fetchAllBots]
+  );
+
+  const deleteBot = useCallback(
+    async (botId: string) => {
+      const res = await fetch(
+        `${API_URL}/api/bots/${botId}?owner_username=${encodeURIComponent(myUsername || '')}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to delete bot');
+      }
+      await fetchAllBots();
+    },
+    [myUsername, fetchAllBots]
   );
 
   return (
     <BotContext.Provider
-      value={{ roomBots, allBots: ALL_BOTS, getBotsForRoom, isBotInRoom, inviteBot, removeBot, applyFilters }}
+      value={{
+        allBots,
+        roomBots,
+        getBotsForRoom,
+        isBotInRoom,
+        inviteBot,
+        removeBot,
+        applyFilters,
+        registerBot,
+        deleteBot,
+        refreshBots: fetchAllBots,
+      }}
     >
       {children}
     </BotContext.Provider>
