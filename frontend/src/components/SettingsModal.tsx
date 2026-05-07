@@ -113,6 +113,15 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
     }
 
     setIsChangingPassword(true);
+
+    // Ensure the session is fresh before calling updateUser
+    const { error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError) {
+      setPasswordMsg(`Error: Auth session missing! Please sign out and back in.`);
+      setIsChangingPassword(false);
+      return;
+    }
+
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setIsChangingPassword(false);
 
@@ -143,6 +152,17 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
     setIsChangingUsername(true);
     try {
+      // Ensure the session is fresh before calling updateUser
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !refreshed?.session) {
+        // Session truly gone — update only the public table and local state
+        await supabase.from('users').update({ username: newUsername.trim() }).eq('id', user?.id);
+        await refreshUserData();
+        setUsernameMsg(t('profile_updated') || 'Your display name has been successfully updated.');
+        setNewUsername('');
+        return;
+      }
+
       await updateProfile({ display_name: newUsername.trim() });
 
       // Update public users table
