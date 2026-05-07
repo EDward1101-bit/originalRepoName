@@ -86,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: {
           username: username || email.split('@')[0],
           display_name: username || email.split('@')[0],
+          email: email
         },
       },
     });
