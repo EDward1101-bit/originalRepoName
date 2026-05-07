@@ -6,7 +6,7 @@ import { supabase } from './supabase';
 import { Lock, UserPlus, Hand } from 'lucide-react';
 
 export default function Auth() {
-  const { signIn, signUp, signOut, user } = useAuth();
+  const { signIn, signUp, signOut, user, savePassword } = useAuth();
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -60,17 +60,28 @@ export default function Auth() {
         if (!username) {
           throw new Error('Username is required for sign up.');
         }
-        await signUp(email, password, username);
-        setMessage('Account created! Check email to confirm, then login.');
-        const synced = await syncUserToProsody(username, password);
-        if (synced) {
-          setMessage('Account created and synced!');
+        const authData = await signUp(email, password, username);
+        if (authData?.user?.id) {
+          // Self-heal: Ensure public.users has the email populated
+          await supabase.from('users').update({ email }).eq('id', authData.user.id);
         }
-      } else {
-        await signIn(email, password);
+        setMessage('Account created! Check email to confirm, then login.');
         const localpart = email.split('@')[0];
         const synced = await syncUserToProsody(localpart, password);
         if (synced) {
+          savePassword(password);
+          setMessage('Account created and synced!');
+        }
+      } else {
+        const authData = await signIn(email, password);
+        if (authData?.user?.id) {
+          // Self-heal: Ensure public.users has the email populated
+          await supabase.from('users').update({ email }).eq('id', authData.user.id);
+        }
+        const localpart = email.split('@')[0];
+        const synced = await syncUserToProsody(localpart, password);
+        if (synced) {
+          savePassword(password);
           setMessage('Logged in successfully!');
         } else {
           setMessage('Logged in but sync failed.');
@@ -85,16 +96,14 @@ export default function Auth() {
 
   if (user) {
     return (
-      <div className="h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center p-6">
-        <div className="w-full max-w-sm bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-8 shadow-lg">
-          <h2 className="text-xl font-bold mb-2 text-[var(--text-normal)]">Logged in as {user.email}</h2>
-          <p className="text-sm text-[var(--text-muted)] mb-6">You are authenticated with Aether.</p>
-          <button
-            onClick={signOut}
-            className="w-full bg-[#ef4444] text-white font-bold py-3 rounded-xl hover:bg-[#dc2626] transition-colors"
-          >
-            Log Out
-          </button>
+      <div className="h-screen w-full bg-transparent flex items-center justify-center p-6 transition-all duration-500">
+        <div className="flex flex-col items-center justify-center gap-4 animate-pulse">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--brand)] text-white flex items-center justify-center shadow-lg">
+            <div className="w-5 h-5 rounded-full border-2 border-white/80 border-t-transparent animate-spin" />
+          </div>
+          <p className="text-[14px] font-medium text-[var(--text-muted)] tracking-wide">
+            Connecting to Aether...
+          </p>
         </div>
       </div>
     );

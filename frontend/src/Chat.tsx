@@ -56,7 +56,7 @@ export default function Chat() {
 
   const recipient = username || '';
   const recipientProfile = getUserProfile(recipient);
-  const displayName = recipientProfile?.displayName || recipient;
+  const displayName = recipientProfile?.username || recipient;
   const avatarUrl = recipientProfile?.avatarUrl;
   const isOnline = recipientProfile?.online ?? false;
 
@@ -276,7 +276,7 @@ export default function Chat() {
             // Always show 'You' for own messages
             const senderName = isSent
               ? 'You'
-              : senderProfile?.displayName || msg.from;
+              : senderProfile?.username || msg.from;
 
             const senderAvatar = isSent
               ? user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar')
@@ -438,7 +438,7 @@ export default function Chat() {
               ></span>
             </div>
             <span className="text-[12px] text-[var(--text-muted)] font-medium">
-              {recipientProfile?.displayName || recipient} is typing...
+              {recipientProfile?.username || recipient} is typing...
             </span>
           </div>
         )}
