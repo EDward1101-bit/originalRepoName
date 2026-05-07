@@ -24,6 +24,8 @@ export default function RoomChat() {
     sendRoomTypingIndicator,
     deleteRoomMessageForEveryone,
     deleteRoomMessageForMe,
+    clearRoomUnread,
+    setCurrentRoom,
   } = useMucContext();
   const { user } = useAuth();
   const { myUsername, status, getUserProfile } = useChatContext();
@@ -42,6 +44,16 @@ export default function RoomChat() {
 
   const room = availableRooms.find((r) => r.name === roomName);
   const isJoined = roomName ? joinedRooms.includes(roomName) : false;
+
+  // Register this room as active — suppresses unread increments while viewing
+  useEffect(() => {
+    if (!roomName) return;
+    setCurrentRoom(roomName);
+    clearRoomUnread(roomName);
+    return () => {
+      setCurrentRoom(null);
+    };
+  }, [roomName, setCurrentRoom, clearRoomUnread]);
 
   // Favorites from Supabase
   const [favoriteId, setFavoriteId] = useState<string | null>(null);

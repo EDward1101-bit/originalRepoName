@@ -22,6 +22,8 @@ export default function Chat() {
     editMessage,
     typingUsers,
     sendTypingIndicator,
+    clearUnread,
+    setCurrentChat,
   } = useChatContext();
   const [input, setInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -59,6 +61,16 @@ export default function Chat() {
   const displayName = recipientProfile?.username || recipient;
   const avatarUrl = recipientProfile?.avatarUrl;
   const isOnline = recipientProfile?.online ?? false;
+
+  // Register this chat as the active view — suppresses notifications while open
+  useEffect(() => {
+    if (!recipient) return;
+    setCurrentChat(recipient);
+    clearUnread(recipient);
+    return () => {
+      setCurrentChat(null);
+    };
+  }, [recipient, setCurrentChat, clearUnread]);
 
   // Favorites from Supabase
   const [favoriteId, setFavoriteId] = useState<string | null>(null);

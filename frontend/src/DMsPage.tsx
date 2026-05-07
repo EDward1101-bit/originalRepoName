@@ -22,6 +22,7 @@ export default function DMsPage() {
     acceptFriendRequest,
     removeFriendship,
     typingUsers,
+    unreadCounts,
   } = useChatContext();
   const navigate = useNavigate();
 
@@ -256,12 +257,18 @@ export default function DMsPage() {
             {sortedFriends.map((u: RegisteredUser) => {
               const lastMsg = getLastMessage(u.xmppUsername);
               const rel = relationshipsByUserId.get(u.id) ?? null;
+              const unreadCount = unreadCounts[u.xmppUsername] || 0;
+              const hasUnread = unreadCount > 0;
 
               return (
                 <div
                   key={u.id}
                   onClick={() => navigate(`/dms/${u.xmppUsername}`)}
-                  className="flex items-center gap-4 px-6 py-4 hover:bg-[var(--bg-modifier-hover)] cursor-pointer transition-colors border-b border-[var(--border)]/30"
+                  className={`flex items-center gap-4 px-6 py-4 cursor-pointer transition-all border-b border-[var(--border)]/30 ${
+                    hasUnread
+                      ? 'bg-[var(--brand)]/[0.06] hover:bg-[var(--brand)]/[0.10]'
+                      : 'hover:bg-[var(--bg-modifier-hover)]'
+                  }`}
                 >
                   <div className="relative flex-shrink-0 w-12 h-12">
                     <div className="w-full h-full rounded-full overflow-hidden shadow-sm">
@@ -284,7 +291,7 @@ export default function DMsPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-[16px] text-[var(--text-normal)]">
+                      <span className={`font-bold text-[16px] ${hasUnread ? 'text-[var(--text-normal)]' : 'text-[var(--text-normal)]'}`}>
                         {u.username}
                       </span>
                       {lastMsg && (
@@ -293,7 +300,13 @@ export default function DMsPage() {
                         </span>
                       )}
                     </div>
-                    <p className={`text-[14px] truncate ${typingUsers[u.xmppUsername] ? 'text-[var(--brand)] font-medium italic' : 'text-[var(--text-muted)]'}`}>
+                    <p className={`text-[14px] truncate ${
+                      typingUsers[u.xmppUsername]
+                        ? 'text-[var(--brand)] font-medium italic'
+                        : hasUnread
+                          ? 'text-[var(--text-normal)] font-semibold'
+                          : 'text-[var(--text-muted)]'
+                    }`}>
                       {typingUsers[u.xmppUsername] ? (
                         <span className="flex items-center gap-1">
                           <Pencil size={12} className="animate-pulse" />
@@ -307,7 +320,12 @@ export default function DMsPage() {
                     </p>
                   </div>
 
-                  <div className="flex gap-2 flex-shrink-0">
+                  <div className="flex gap-2 flex-shrink-0 items-center">
+                    {hasUnread && (
+                      <div className="min-w-[22px] h-[22px] bg-[var(--brand)] text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 shadow-sm">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </div>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
