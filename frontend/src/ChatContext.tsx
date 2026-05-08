@@ -389,11 +389,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
         const fromFull = fromMatch[1];
         const from = fromFull.split('@')[0];
-        const nickname = fromFull.includes('/') ? fromFull.split('/')[1] : '';
         const body = bodyMatch[1];
         const msgId = (idMatch?.[1] ?? idFallback?.[1]) || `${from}:${body}`;
-
-        const myUser = jidRef.current.split('@')[0];
 
         // Note: unread counting is handled exclusively in handleMessage to avoid
         // double-counting (handleRawIncoming is a fallback for message delivery only).
@@ -443,16 +440,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
         if (error) throw error;
 
-        setAllUsers(
-          data.map((u: any) => ({
-            id: u.id,
-            username: u.username,
-            // Derive the stable XMPP login name from the stored email.
-            // This matches the Prosody account created at registration.
-            xmppUsername: u.email?.split('@')[0] || u.username,
-            avatarUrl: u.avatar_url,
-            online: false,
-          }))
+        setAllUsers((prev) =>
+          data.map((u: any) => {
+            const xmppUsername = u.email?.split('@')[0] || u.username;
+            const existing = prev.find((p) => p.id === u.id || p.xmppUsername === xmppUsername);
+            return {
+              id: u.id,
+              username: u.username,
+              // Derive the stable XMPP login name from the stored email.
+              // This matches the Prosody account created at registration.
+              xmppUsername,
+              avatarUrl: u.avatar_url,
+              online: existing?.online ?? false,
+            };
+          })
         );
       } catch (err) {
         console.error('Failed to fetch users:', err);

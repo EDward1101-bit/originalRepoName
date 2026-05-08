@@ -38,8 +38,18 @@ export default function RoomChat() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const shouldStickToBottomRef = useRef(true);
+  const initialScrollDoneRef = useRef(false);
+
+  const scrollToBottom = (mode: ScrollBehavior = 'auto') => {
+    if (!messagesContainerRef.current) return;
+    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    messagesEndRef.current?.scrollIntoView({ behavior: mode, block: 'end' });
+  };
 
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -105,8 +115,26 @@ export default function RoomChat() {
   );
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, roomTypingUsers, roomName]);
+    // Reset sticky + initial scroll when switching rooms.
+    initialScrollDoneRef.current = false;
+    shouldStickToBottomRef.current = true;
+    requestAnimationFrame(() => requestAnimationFrame(() => scrollToBottom('auto')));
+  }, [roomName]);
+
+  useEffect(() => {
+    // On first load of a room, always jump to bottom.
+    if (!initialScrollDoneRef.current) {
+      scrollToBottom('auto');
+      initialScrollDoneRef.current = true;
+      return;
+    }
+
+    // Only auto-scroll on new messages if user is near bottom.
+    if (shouldStickToBottomRef.current) {
+      scrollToBottom('auto');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length]);
 
   const handleJoin = async () => {
     if (roomName) {
@@ -302,7 +330,16 @@ export default function RoomChat() {
         <div className="flex-1 flex min-h-0" onClick={() => setActiveMenu(null)}>
           {/* Messages Area */}
           <div className="flex-1 flex flex-col min-w-0">
-            <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5"
+              onScroll={() => {
+                const el = messagesContainerRef.current;
+                if (!el) return;
+                const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+                shouldStickToBottomRef.current = distanceFromBottom < 120;
+              }}
+            >
             {messages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] opacity-80">
                 <div className="w-24 h-24 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-6 shadow-inner border border-[var(--border)]">

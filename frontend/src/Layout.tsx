@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useChatContext } from './ChatContext';
 import { useMucContext } from './MucContext';
@@ -7,16 +7,17 @@ import { useTranslation } from './LanguageContext';
 import SettingsModal from './components/SettingsModal';
 import PushNotificationBar from './components/PushNotificationBar';
 import { supabase } from './supabase';
-import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, MessageCircle, X, Minus, Bot } from 'lucide-react';
+import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, X, Minus, Bot, ArrowLeft } from 'lucide-react';
 
 export default function Layout() {
   const { user } = useAuth();
-  const { status, myUsername, myUserId, unreadCounts, clearUnread, friendships, allUsers, messages } = useChatContext();
-  const { joinedRooms, roomMessages, roomUnreadCounts, clearRoomUnread } = useMucContext();
+  const { status, myUsername, myUserId, unreadCounts, clearUnread, friendships, allUsers } = useChatContext();
+  const { joinedRooms, roomUnreadCounts, clearRoomUnread } = useMucContext();
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Favorites state from Supabase
   const [favorites, setFavorites] = useState<{ id: string; type: 'dm' | 'room'; name: string }[]>([]);
@@ -68,7 +69,7 @@ export default function Layout() {
   const removeFavorite = async (id: string) => {
     const { error } = await supabase.from('favorites').delete().eq('id', id);
     if (!error) {
-      setFavorites(favorites.filter((f) => f.id !== id));
+      setFavorites((prev) => prev.filter((f) => f.id !== id));
     }
   };
 
@@ -84,13 +85,26 @@ export default function Layout() {
     return allUsers.filter((u) => friendIds.includes(u.id) && u.online).length;
   }, [friendships, allUsers, myUserId]);
 
-  const totalMessages = useMemo(() => {
-    const dmCount = messages.length;
-    const roomCount = Object.values(roomMessages).reduce((acc, msgs) => acc + msgs.length, 0);
-    return dmCount + roomCount;
-  }, [messages, roomMessages]);
-
   const isConnected = status === 'Connected';
+
+  const breadcrumbs = useMemo(() => {
+    const parts = location.pathname.split('/').filter(Boolean);
+    const section = parts[0] || '';
+    const leaf = parts[1] || '';
+
+    if (section === 'dms') {
+      return leaf ? ['Direct Messages', leaf] : ['Direct Messages'];
+    }
+    if (section === 'rooms') {
+      return leaf ? ['Rooms', `#${leaf}`] : ['Rooms'];
+    }
+    if (section === 'bots') {
+      return ['Bots'];
+    }
+    return ['Aether'];
+  }, [location.pathname]);
+
+  const canGoBack = breadcrumbs.length > 1;
 
   // Room unread: read directly from MucContext (tracked per-room, skipped when in that room)
   const roomUnread = Object.values(roomUnreadCounts).reduce((acc, n) => acc + n, 0);
@@ -129,7 +143,7 @@ export default function Layout() {
   }, [settingsOpen]);
 
   const ServersColumn = () => (
-    <div className="w-[72px] bg-[var(--bg-secondary)] h-screen flex flex-col items-center py-4 gap-3 flex-shrink-0 border-r border-[var(--border)]">
+    <div className="w-[72px] bg-[var(--bg-secondary)] h-full flex flex-col items-center py-4 gap-3 flex-shrink-0 border-r border-[var(--border)]">
       <div className="relative group">
         <NavLink
           to="/dms"
@@ -197,55 +211,10 @@ export default function Layout() {
   );
 
   const ChannelsColumn = () => (
-    <div className="w-64 bg-[var(--bg-primary)] h-screen flex flex-col flex-shrink-0 border-r border-[var(--border)] overflow-hidden">
+    <div className="w-64 bg-[var(--bg-primary)] h-full flex flex-col flex-shrink-0 border-r border-[var(--border)] overflow-hidden">
       {/* Header Area */}
       <div className="h-14 flex-shrink-0 border-b border-[var(--border)] flex items-center px-4">
         <h2 className="font-bold text-[16px] tracking-tight text-[var(--text-normal)]">Aether</h2>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="px-4 py-4 border-b border-[var(--border)]">
-        <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">
-          Your Stats
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
-              <Users size={16} />
-            </div>
-            <div>
-              <p className="text-[18px] font-bold text-[var(--text-normal)] leading-none">{acceptedFriendsCount}</p>
-              <p className="text-[11px] text-[var(--text-muted)]">Friends</p>
-            </div>
-          </div>
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
-              <TrendingUp size={16} />
-            </div>
-            <div>
-              <p className="text-[18px] font-bold text-[var(--text-normal)] leading-none">{onlineFriendsCount}</p>
-              <p className="text-[11px] text-[var(--text-muted)]">Online</p>
-            </div>
-          </div>
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#f59e0b]/10 flex items-center justify-center text-[#f59e0b]">
-              <Server size={16} />
-            </div>
-            <div>
-              <p className="text-[18px] font-bold text-[var(--text-normal)] leading-none">{joinedRooms.length}</p>
-              <p className="text-[11px] text-[var(--text-muted)]">Rooms</p>
-            </div>
-          </div>
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#ec4899]/10 flex items-center justify-center text-[#ec4899]">
-              <MessageCircle size={16} />
-            </div>
-            <div>
-              <p className="text-[18px] font-bold text-[var(--text-normal)] leading-none">{totalMessages}</p>
-              <p className="text-[11px] text-[var(--text-muted)]">Messages</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Favorites or Joined Rooms based on current route */}
@@ -308,9 +277,9 @@ export default function Layout() {
                   <button
                     onClick={async () => {
                       // Delete all favorites from Supabase
-                      for (const fav of favorites) {
-                        await supabase.from('favorites').delete().eq('id', fav.id);
-                      }
+                      await Promise.all(
+                        favorites.map((fav) => supabase.from('favorites').delete().eq('id', fav.id))
+                      );
                       setFavorites([]);
                     }}
                     className="text-[10px] text-[var(--text-muted)] hover:text-[#ef4444] transition-colors"
@@ -362,6 +331,42 @@ export default function Layout() {
               )}
             </>
           )}
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="px-4 py-4 border-t border-[var(--border)]">
+        <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">
+          Your Stats
+        </p>
+        <div className="flex flex-col gap-2">
+          <div className="bg-[var(--bg-secondary)] rounded-xl p-3 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+              <Users size={16} />
+            </div>
+            <div>
+              <p className="text-[18px] font-bold text-[var(--text-normal)] leading-none">{acceptedFriendsCount}</p>
+              <p className="text-[11px] text-[var(--text-muted)]">Friends</p>
+            </div>
+          </div>
+          <div className="bg-[var(--bg-secondary)] rounded-xl p-3 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+              <TrendingUp size={16} />
+            </div>
+            <div>
+              <p className="text-[18px] font-bold text-[var(--text-normal)] leading-none">{onlineFriendsCount}</p>
+              <p className="text-[11px] text-[var(--text-muted)]">Friends Online</p>
+            </div>
+          </div>
+          <div className="bg-[var(--bg-secondary)] rounded-xl p-3 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-[#f59e0b]/10 flex items-center justify-center text-[#f59e0b]">
+              <Server size={16} />
+            </div>
+            <div>
+              <p className="text-[18px] font-bold text-[var(--text-normal)] leading-none">{joinedRooms.length}</p>
+              <p className="text-[11px] text-[var(--text-muted)]">Joined Rooms</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -419,62 +424,94 @@ export default function Layout() {
   );
 
   return (
-    <div className="bg-[var(--bg-primary)] text-[var(--text-normal)] font-body h-screen flex overflow-hidden antialiased">
+    <div className="h-screen w-full bg-[var(--bg-secondary)] text-[var(--text-normal)] font-body p-3 antialiased">
+      <div className="h-full w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-3xl shadow-xl overflow-hidden flex">
 
-      {settingsOpen && (
-        <SettingsModal onClose={() => setSettingsOpen(false)} myUsername={myUsername} />
-      )}
+        {settingsOpen && (
+          <SettingsModal onClose={() => setSettingsOpen(false)} myUsername={myUsername} />
+        )}
 
-      {/* ── Mobile overlay ── */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+        {/* ── Mobile overlay ── */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-      {/* ── Desktop Server Column ── */}
-      <div className="hidden lg:flex relative z-10">
-        <ServersColumn />
-      </div>
-
-      {/* ── Sidebar (Mobile + Channels Column) ── */}
-      <aside
-        className={`
-          fixed top-0 left-0 z-50 h-full flex
-          transition-transform duration-400 cubic-bezier(0.4, 0, 0.2, 1)
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:relative lg:translate-x-0 lg:z-10
-        `}
-      >
-        <div className="flex lg:hidden h-full">
+        {/* ── Desktop Server Column ── */}
+        <div className="hidden lg:flex relative z-10">
           <ServersColumn />
         </div>
-        <ChannelsColumn />
-      </aside>
 
-      {/* ── Main area ── */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen bg-[var(--bg-primary)] relative overflow-hidden">
-        {/* Top bar — mobile only */}
-        <div className="lg:hidden flex-none h-14 border-b border-[var(--border)] flex items-center px-4 gap-3 bg-[var(--bg-secondary)]">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors"
-          >
-            <Menu size={22} />
-          </button>
-          <span className="text-[18px] font-bold text-[var(--text-normal)] tracking-tight">
-            Aether
-          </span>
+        {/* ── Sidebar (Mobile + Channels Column) ── */}
+        <aside
+          className={`
+            fixed top-0 left-0 z-50 h-full flex
+            transition-transform duration-400 cubic-bezier(0.4, 0, 0.2, 1)
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            lg:relative lg:translate-x-0 lg:z-10
+          `}
+        >
+          <div className="flex lg:hidden h-full">
+            <ServersColumn />
+          </div>
+          <ChannelsColumn />
+        </aside>
+
+        {/* ── Main area ── */}
+        <div className="flex-1 flex flex-col min-w-0 h-full bg-[var(--bg-primary)] relative overflow-hidden">
+          {/* Top bar — mobile only */}
+          <div className="lg:hidden flex-none h-14 border-b border-[var(--border)] flex items-center px-4 gap-3 bg-[var(--bg-secondary)]">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors"
+            >
+              <Menu size={22} />
+            </button>
+            <span className="text-[18px] font-bold text-[var(--text-normal)] tracking-tight">
+              Aether
+            </span>
+          </div>
+
+          {/* Push Notification Bar */}
+          <PushNotificationBar />
+
+          {/* Breadcrumbs (desktop) */}
+          <div className="hidden lg:flex flex-none items-center justify-between px-6 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
+            <div className="flex items-center gap-2 min-w-0">
+              {canGoBack && (
+                <button
+                  onClick={() => navigate(-1)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors flex-shrink-0"
+                  aria-label="Go back"
+                  title="Back"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+              )}
+              <div className="text-[12px] font-medium text-[var(--text-muted)] truncate">
+                {breadcrumbs.join(' / ')}
+              </div>
+            </div>
+            <div
+              className={`ml-4 inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                isConnected
+                  ? 'bg-[var(--brand)]/10 text-[var(--brand)] border-[var(--brand)]/20'
+                  : 'bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20'
+              }`}
+              title={status}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[var(--brand)]' : 'bg-[#ef4444]'}`} />
+              {isConnected ? 'Connected' : 'Disconnected'}
+            </div>
+          </div>
+
+          {/* Content */}
+          <main className="flex-1 overflow-hidden relative">
+            <Outlet />
+          </main>
         </div>
-
-        {/* Push Notification Bar */}
-        <PushNotificationBar />
-
-        {/* Content */}
-        <main className="flex-1 overflow-hidden relative">
-          <Outlet />
-        </main>
       </div>
     </div>
   );
