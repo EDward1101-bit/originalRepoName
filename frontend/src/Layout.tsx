@@ -136,7 +136,7 @@ export default function Layout() {
 
   return (
     <div className="h-screen w-full bg-[var(--bg-secondary)] text-[var(--text-normal)] font-body p-3 antialiased">
-      <div className="h-full w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-3xl shadow-xl overflow-hidden flex">
+      <div className="h-full w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg shadow-xl overflow-hidden flex">
 
         {settingsOpen && (
           <SettingsModal onClose={() => setSettingsOpen(false)} myUsername={myUsername} />
@@ -198,7 +198,7 @@ export default function Layout() {
           <div className="lg:hidden flex-none h-14 border-b border-[var(--border)] flex items-center px-4 gap-3 bg-[var(--bg-secondary)]">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors"
+              className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors"
             >
               <Menu size={22} />
             </button>
@@ -216,7 +216,7 @@ export default function Layout() {
               {canGoBack && (
                 <button
                   onClick={() => navigate(-1)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors flex-shrink-0"
+                  className="w-8 h-8 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors flex-shrink-0"
                   aria-label="Go back"
                   title="Back"
                 >
@@ -315,7 +315,7 @@ function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread:
       </div>
 
       {/* Add new server button */}
-      <button className="w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--brand)] hover:text-white mt-auto mb-2 border border-dashed border-[var(--brand)]/50 hover:bg-[var(--brand)] hover:border-transparent">
+      <button className="w-12 h-12 rounded-lg transition-all duration-300 flex items-center justify-center text-[var(--brand)] hover:text-white mt-auto mb-2 border border-dashed border-[var(--brand)]/50 hover:bg-[var(--brand)] hover:border-transparent">
         <Plus size={24} />
       </button>
     </div>
@@ -411,7 +411,7 @@ function ChannelsColumn({
                               size={12} 
                               className="text-[#10b981] opacity-80 hover:opacity-100 transition-opacity cursor-help" 
                             />
-                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] text-[10px] font-bold rounded-lg opacity-0 group-hover/owner:opacity-100 transition-all pointer-events-none z-[100] shadow-2xl whitespace-nowrap translate-x-1 group-hover/owner:translate-x-0">
+                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] text-[10px] font-bold rounded-md opacity-0 group-hover/owner:opacity-100 transition-all pointer-events-none z-[100] shadow-2xl whitespace-nowrap translate-x-1 group-hover/owner:translate-x-0">
                               You created this room
                               <div className="absolute left-full top-1/2 -translate-y-1/2 border-[4px] border-transparent border-l-[var(--bg-tertiary)]" />
                             </div>
@@ -492,7 +492,7 @@ function ChannelsColumn({
                         <NavLink
                           to={`/dms/${fav.name}`}
                           className={({ isActive }) =>
-                            `flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
+                            `flex-1 flex items-center gap-3 px-3 py-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
                               isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''
                             }`
                           }
@@ -523,7 +523,7 @@ function ChannelsColumn({
           Your Stats
         </p>
         <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-lg border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
+          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-md border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-md bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
                 <Users size={12} />
@@ -533,7 +533,7 @@ function ChannelsColumn({
             <span className="text-[12px] font-bold text-[var(--text-normal)]">{acceptedFriendsCount}</span>
           </div>
 
-          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-lg border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
+          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-md border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-md bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
                 <TrendingUp size={12} />
@@ -543,7 +543,7 @@ function ChannelsColumn({
             <span className="text-[12px] font-bold text-[var(--text-normal)]">{onlineFriendsCount}</span>
           </div>
 
-          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-lg border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
+          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-md border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-md bg-[#f59e0b]/10 flex items-center justify-center text-[#f59e0b]">
                 <Server size={12} />
@@ -557,7 +557,7 @@ function ChannelsColumn({
 
       {/* User Area */}
       <div className="p-3 bg-[var(--bg-secondary)] border-t border-[var(--border)] flex flex-col gap-2">
-        <div className="flex items-center gap-3 p-2 bg-[var(--bg-primary)] rounded-lg border border-[var(--border)]">
+        <div className="flex items-center gap-3 p-2 bg-[var(--bg-primary)] rounded-md border border-[var(--border)]">
           <div className="w-10 h-10 rounded-full flex-shrink-0 relative">
             <div className="w-full h-full rounded-full shadow-inner overflow-hidden">
               {user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar') ? (

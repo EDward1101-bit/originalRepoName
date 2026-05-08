@@ -234,7 +234,7 @@ export default function RoomChat() {
   if (!room) {
     return (
       <div className="flex h-full items-center justify-center bg-[var(--bg-primary)]">
-        <div className="text-center p-8 bg-[var(--bg-secondary)] rounded-2xl max-w-md border border-[var(--border)] shadow-xl">
+        <div className="text-center p-8 bg-[var(--bg-secondary)] rounded-md max-w-md border border-[var(--border)] shadow-xl">
           <div className="text-6xl text-[#ef4444] mb-4">⚠️</div>
           <h2 className="text-2xl font-bold mb-2 text-[var(--text-normal)] tracking-tight">
             Room Not Found
@@ -244,7 +244,7 @@ export default function RoomChat() {
           </p>
           <button
             onClick={() => navigate('/rooms')}
-            className="bg-[var(--brand)] text-white px-6 py-2.5 rounded-xl font-medium transition-all hover:bg-[var(--brand-hover)] shadow-sm"
+            className="bg-[var(--brand)] text-white px-6 py-2.5 rounded-md font-medium transition-all hover:bg-[var(--brand-hover)] shadow-sm"
           >
             Back to Servers
           </button>
@@ -260,16 +260,16 @@ export default function RoomChat() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/rooms')}
-            className="lg:hidden w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] text-[var(--text-muted)] transition-colors"
+            className="lg:hidden w-10 h-10 rounded-md flex items-center justify-center hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] text-[var(--text-muted)] transition-colors"
           >
             <ArrowLeft size={24} />
           </button>
 
           <div 
-            className="flex items-center gap-3 cursor-pointer hover:bg-[var(--bg-modifier-hover)] px-2 py-1 rounded-lg transition-colors group"
+            className="flex items-center gap-3 cursor-pointer hover:bg-[var(--bg-modifier-hover)] px-2 py-1 rounded-md transition-colors group"
             onClick={() => setShowRoomInfo(true)}
           >
-            <div className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--brand)] shadow-inner group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-md bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--brand)] shadow-inner group-hover:scale-105 transition-transform">
               <Hash size={24} />
             </div>
             <div>
@@ -283,7 +283,7 @@ export default function RoomChat() {
           {isJoined && (
             <button
               onClick={() => setShowActiveUsers(!showActiveUsers)}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+              className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors ${
                 showActiveUsers 
                   ? 'bg-[var(--brand)]/10 text-[var(--brand)]' 
                   : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
@@ -297,7 +297,7 @@ export default function RoomChat() {
           {isJoined ? (
             <button
               onClick={handleLeave}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[#ef4444]/10 hover:text-[#ef4444] transition-colors"
+              className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[#ef4444]/10 hover:text-[#ef4444] transition-colors"
               title="Leave Room"
             >
               <LogOut size={24} />
@@ -306,7 +306,7 @@ export default function RoomChat() {
             <button
               onClick={handleJoin}
               disabled={!isConnected}
-              className="text-sm bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white font-bold px-4 py-2 rounded-xl transition-all shadow-sm disabled:opacity-50"
+              className="text-sm bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white font-bold px-4 py-2 rounded-md transition-all shadow-sm disabled:opacity-50"
             >
               {isConnected ? 'Join Room' : status}
             </button>
@@ -315,13 +315,13 @@ export default function RoomChat() {
 
 
           <button
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
+            className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
             title="Start Voice Call"
           >
             <Phone size={24} />
           </button>
           <button
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
+            className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
             title="Start Video Call"
           >
             <Video size={24} />
@@ -451,13 +451,13 @@ export default function RoomChat() {
                             e.stopPropagation();
                             setActiveMenu(activeMenu === msg.id ? null : msg.id);
                           }}
-                          className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] shadow-sm"
+                          className="w-8 h-8 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] shadow-sm"
                         >
                           <MoreHorizontal size={18} />
                         </button>
 
                         {activeMenu === msg.id && (
-                          <div className="absolute right-0 top-9 z-50 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl shadow-2xl py-2 min-w-[200px] overflow-hidden">
+                          <div className="absolute right-0 top-9 z-50 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-md shadow-2xl py-2 min-w-[200px] overflow-hidden">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -538,7 +538,7 @@ export default function RoomChat() {
           {/* Input Area */}
           <div className="px-6 pb-6 pt-2 relative">
             {showEmojiPicker && (
-              <div className="absolute bottom-[80px] right-6 z-50 shadow-2xl rounded-2xl overflow-hidden border border-[var(--border)]">
+              <div className="absolute bottom-[80px] right-6 z-50 shadow-2xl rounded-md overflow-hidden border border-[var(--border)]">
                 <EmojiPicker
                   onEmojiClick={(emojiData: unknown) =>
                     setInput((prev) => prev + (emojiData as { emoji?: string })?.emoji)
@@ -551,11 +551,11 @@ export default function RoomChat() {
 
             {/* Staged Files Preview */}
             {stagedFiles.length > 0 && (
-              <div className="mb-3 flex flex-wrap gap-3 p-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl">
+              <div className="mb-3 flex flex-wrap gap-3 p-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-md">
                 {stagedFiles.map((file, index) => (
                   <div
                     key={`${file.name}-${index}`}
-                    className="relative group/staged w-20 h-20 rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center justify-center"
+                    className="relative group/staged w-20 h-20 rounded-md overflow-hidden border border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center justify-center"
                   >
                     {file.type.startsWith('image/') ? (
                       <img
@@ -582,7 +582,7 @@ export default function RoomChat() {
               </div>
             )}
 
-            <div className="flex items-center gap-3 bg-[var(--bg-secondary)] border border-[var(--border)]/50 rounded-2xl p-2 shadow-sm focus-within:border-[var(--brand)]/50 focus-within:ring-1 focus-within:ring-[var(--brand)]/20 transition-all">
+            <div className="flex items-center gap-3 bg-[var(--bg-secondary)] border border-[var(--border)]/50 rounded-md p-2 shadow-sm focus-within:border-[var(--brand)]/50 focus-within:ring-1 focus-within:ring-[var(--brand)]/20 transition-all">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -594,7 +594,7 @@ export default function RoomChat() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className={`w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--brand)] hover:text-white transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-10 h-10 rounded-md bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--brand)] hover:text-white transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isUploading ? <Loader2 size={22} className="animate-spin" /> : <Plus size={22} />}
               </button>
@@ -616,13 +616,13 @@ export default function RoomChat() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)] transition-colors"
+                  className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)] transition-colors"
                 >
                   <Image size={24} />
                 </button>
                 <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${showEmojiPicker ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)]'}`}
+                  className={`w-10 h-10 rounded-md flex items-center justify-center transition-colors ${showEmojiPicker ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)]'}`}
                 >
                   <Smile size={24} />
                 </button>
@@ -630,7 +630,7 @@ export default function RoomChat() {
                   <button
                     onClick={() => handleSend()}
                     disabled={isUploading}
-                    className="w-10 h-10 rounded-xl bg-[var(--brand)] text-white flex items-center justify-center hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
+                    className="w-10 h-10 rounded-md bg-[var(--brand)] text-white flex items-center justify-center hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
                   >
                     <Send size={22} />
                   </button>
@@ -680,7 +680,7 @@ export default function RoomChat() {
                       return (
                         <div
                           key={nickname}
-                          className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--bg-modifier-hover)] transition-colors"
+                          className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[var(--bg-modifier-hover)] transition-colors"
                         >
                           <div className="relative">
                             <div className="w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
@@ -727,7 +727,7 @@ export default function RoomChat() {
                       {activeBots.map((bot) => (
                         <div
                           key={bot.id}
-                          className={`flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--bg-modifier-hover)] transition-colors ${
+                          className={`flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[var(--bg-modifier-hover)] transition-colors ${
                             !bot.isOnline ? 'opacity-50' : ''
                           }`}
                         >
@@ -773,7 +773,7 @@ export default function RoomChat() {
           <button
             onClick={handleJoin}
             disabled={!isConnected}
-            className="px-8 py-3.5 font-bold text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)] rounded-xl transition-all shadow-md disabled:opacity-50 text-[16px]"
+            className="px-8 py-3.5 font-bold text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)] rounded-md transition-all shadow-md disabled:opacity-50 text-[16px]"
           >
             {isConnected ? `Join #${room.name}` : status}
           </button>
@@ -786,12 +786,12 @@ export default function RoomChat() {
           onClick={() => setShowRoomInfo(false)}
         >
           <div 
-            className="w-full max-w-md bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] shadow-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md bg-[var(--bg-primary)] rounded-md border border-[var(--border)] shadow-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6 border-b border-[var(--border)] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--brand)]">
+                <div className="w-10 h-10 rounded-md bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--brand)]">
                   <Hash size={20} />
                 </div>
                 <div>
@@ -801,7 +801,7 @@ export default function RoomChat() {
               </div>
               <button 
                 onClick={() => setShowRoomInfo(false)}
-                className="w-8 h-8 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-md hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center transition-colors"
               >
                 <X size={18} />
               </button>
@@ -816,14 +816,14 @@ export default function RoomChat() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-xl border border-[var(--border)]/50">
+                <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-md border border-[var(--border)]/50">
                   <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
                     <Users size={14} />
                     <span className="text-[10px] font-bold uppercase tracking-wider">Members</span>
                   </div>
                   <p className="text-lg font-bold text-[var(--text-normal)]">{activeUsers.length}</p>
                 </div>
-                <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-xl border border-[var(--border)]/50">
+                <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-md border border-[var(--border)]/50">
                   <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
                     <Star size={14} />
                     <span className="text-[10px] font-bold uppercase tracking-wider">Created</span>
@@ -843,7 +843,7 @@ export default function RoomChat() {
             <div className="p-4 bg-[var(--bg-secondary)]/30 border-t border-[var(--border)] flex justify-end">
               <button
                 onClick={() => setShowRoomInfo(false)}
-                className="px-5 py-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--text-normal)] font-bold text-[13px] rounded-lg border border-[var(--border)] transition-all"
+                className="px-5 py-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--text-normal)] font-bold text-[13px] rounded-md border border-[var(--border)] transition-all"
               >
                 Close
               </button>

@@ -84,12 +84,12 @@ export default function RoomsPage() {
               {availableRooms.map((room) => (
                 <div
                   key={room.id}
-                  className="bg-[var(--bg-secondary)] rounded-2xl overflow-hidden border border-[var(--border)] hover:border-[var(--brand)]/50 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col h-[200px]"
+                  className="bg-[var(--bg-secondary)] rounded-md overflow-hidden border border-[var(--border)] hover:border-[var(--brand)]/50 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col h-[200px]"
                   onClick={() => navigate(`/rooms/${room.name}`)}
                 >
                   <div className="h-16 bg-gradient-to-r from-[var(--bg-tertiary)] to-[var(--bg-modifier-hover)] relative flex-shrink-0">
                     <div className="absolute inset-0 bg-gradient-to-br from-[var(--brand)]/10 to-transparent" />
-                    <div className="absolute -bottom-5 left-4 w-10 h-10 rounded-xl bg-[var(--bg-primary)] p-0.5 shadow-lg group-hover:scale-110 transition-transform">
+                    <div className="absolute -bottom-5 left-4 w-10 h-10 rounded-md bg-[var(--bg-primary)] p-0.5 shadow-lg group-hover:scale-110 transition-transform">
                       <div className="w-full h-full rounded-[9px] bg-[var(--brand)] flex items-center justify-center text-white font-bold text-base">
                         #
                       </div>
@@ -98,7 +98,7 @@ export default function RoomsPage() {
                   <div className="p-4 pt-6 flex-1 flex flex-col min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-bold text-[15px] text-[var(--text-normal)] truncate group-hover:text-[var(--brand)] transition-colors inline-block px-2 py-0.5 rounded-lg bg-[var(--bg-primary)]/40 border border-[var(--border)]/30">
+                        <h3 className="font-bold text-[15px] text-[var(--text-normal)] truncate group-hover:text-[var(--brand)] transition-colors inline-block px-2 py-0.5 rounded-md bg-[var(--bg-primary)]/40 border border-[var(--border)]/30">
                           {room.name}
                         </h3>
                         <p className="text-[10px] text-[var(--text-muted)] font-medium mt-1">
@@ -110,7 +110,7 @@ export default function RoomsPage() {
                         <button
                           onClick={(e) => handleDeleteRoom(e, room.id, room.name)}
                           disabled={deletingId === room.id}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:bg-[#ef4444] hover:text-white transition-all flex-shrink-0 opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[#ef4444] hover:text-white transition-all flex-shrink-0 opacity-0 group-hover:opacity-100 disabled:opacity-50"
                         >
                           {deletingId === room.id ? (
                             <Loader2 size={14} className="animate-spin" />
@@ -158,7 +158,7 @@ export default function RoomsPage() {
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
                 placeholder="e.g. gamers-haven"
-                className="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] text-[15px] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/50 transition-all shadow-sm"
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-md px-4 py-3 text-[var(--text-normal)] text-[15px] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/50 transition-all shadow-sm"
                 required
                 pattern="^[a-zA-Z0-9_]+$"
                 title="Only letters, numbers, and underscores are allowed"
@@ -172,14 +172,14 @@ export default function RoomsPage() {
                 value={newRoomDesc}
                 onChange={(e) => setNewRoomDesc(e.target.value)}
                 placeholder="What is this server about?"
-                className="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] text-[15px] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/50 transition-all resize-none h-32 shadow-sm"
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-md px-4 py-3 text-[var(--text-normal)] text-[15px] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/50 transition-all resize-none h-32 shadow-sm"
               />
             </div>
 
             <button
               type="submit"
               disabled={isCreating || !newRoomName.trim()}
-              className="mt-4 w-full bg-[var(--brand)] text-white py-3.5 rounded-xl font-bold text-[15px] hover:bg-[var(--brand-hover)] hover:shadow-lg hover:shadow-[var(--brand)]/20 active:scale-95 disabled:opacity-50 transition-all"
+              className="mt-4 w-full bg-[var(--brand)] text-white py-3.5 rounded-md font-bold text-[15px] hover:bg-[var(--brand-hover)] hover:shadow-lg hover:shadow-[var(--brand)]/20 active:scale-95 disabled:opacity-50 transition-all"
             >
               {isCreating ? <Loader2 className="animate-spin mx-auto" size={20} /> : t('create') || 'Create Server'}
             </button>
