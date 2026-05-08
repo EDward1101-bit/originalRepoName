@@ -179,6 +179,16 @@ export default function BotsPage() {
                             Official
                           </span>
                         )}
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
+                          bot.isOnline
+                            ? 'bg-[#22c55e]/15 text-[#22c55e]'
+                            : 'bg-[var(--text-muted)]/10 text-[var(--text-muted)]'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            bot.isOnline ? 'bg-[#22c55e] shadow-[0_0_4px_#22c55e]' : 'bg-[var(--text-muted)]'
+                          }`} />
+                          {bot.isOnline ? 'Online' : 'Offline'}
+                        </span>
                       </div>
                       <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
                         {bot.description}
@@ -358,9 +368,19 @@ export default function BotsPage() {
                       <h3 className="font-bold text-[18px]">{selectedBot.name}</h3>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--brand)]/15 text-[var(--brand)] uppercase tracking-wide">BOT</span>
                     </div>
-                    <p className="text-[12px] text-[var(--text-muted)] mt-0.5">
-                      {selectedBot.isBuiltin ? 'Official · Always available' : `By ${selectedBot.ownerUsername ?? 'unknown'}`}
-                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${
+                        selectedBot.isOnline ? 'text-[#22c55e]' : 'text-[var(--text-muted)]'
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${
+                          selectedBot.isOnline ? 'bg-[#22c55e] shadow-[0_0_6px_#22c55e]' : 'bg-[var(--text-muted)]'
+                        }`} />
+                        {selectedBot.isOnline ? 'Online' : 'Offline'}
+                      </span>
+                      <span className="text-[11px] text-[var(--text-muted)]">
+                        · {selectedBot.isBuiltin ? 'Official · Always available' : `By ${selectedBot.ownerUsername ?? 'unknown'}`}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
