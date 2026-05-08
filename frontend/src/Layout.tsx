@@ -7,12 +7,12 @@ import { useTranslation } from './LanguageContext';
 import SettingsModal from './components/SettingsModal';
 import PushNotificationBar from './components/PushNotificationBar';
 import { supabase } from './supabase';
-import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, X, Minus, Bot, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, X, Minus, Bot, ArrowLeft, Compass, Hash, ShieldCheck } from 'lucide-react';
 
 export default function Layout() {
   const { user } = useAuth();
   const { status, myUsername, myUserId, unreadCounts, clearUnread, friendships, allUsers } = useChatContext();
-  const { joinedRooms, roomUnreadCounts, clearRoomUnread } = useMucContext();
+  const { availableRooms, joinedRooms, roomUnreadCounts, clearRoomUnread } = useMucContext();
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -96,7 +96,9 @@ export default function Layout() {
       return leaf ? ['Direct Messages', leaf] : ['Direct Messages'];
     }
     if (section === 'rooms') {
-      return leaf ? ['Rooms', `#${leaf}`] : ['Rooms'];
+      if (!leaf) return ['Rooms'];
+      if (leaf === 'explore') return ['Rooms', 'Explore'];
+      return ['Rooms', `#${leaf}`];
     }
     if (section === 'bots') {
       return ['Bots'];
@@ -132,17 +134,126 @@ export default function Layout() {
     }
   }, [location.pathname, clearUnread, clearRoomUnread]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && settingsOpen) {
-        setSettingsOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [settingsOpen]);
+  return (
+    <div className="h-screen w-full bg-[var(--bg-secondary)] text-[var(--text-normal)] font-body p-3 antialiased">
+      <div className="h-full w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-3xl shadow-xl overflow-hidden flex">
 
-  const ServersColumn = () => (
+        {settingsOpen && (
+          <SettingsModal onClose={() => setSettingsOpen(false)} myUsername={myUsername} />
+        )}
+
+        {/* ── Mobile overlay ── */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* ── Desktop Server Column ── */}
+        <div className="hidden lg:flex relative z-10">
+          <ServersColumn 
+            dmUnread={dmUnread} 
+            roomUnread={roomUnread} 
+          />
+        </div>
+
+        {/* ── Sidebar (Mobile + Channels Column) ── */}
+        <aside
+          className={`
+            fixed top-0 left-0 z-50 h-full flex
+            transition-transform duration-400 cubic-bezier(0.4, 0, 0.2, 1)
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            lg:relative lg:translate-x-0 lg:z-10
+          `}
+        >
+          <div className="flex lg:hidden h-full">
+            <ServersColumn 
+              dmUnread={dmUnread} 
+              roomUnread={roomUnread} 
+            />
+          </div>
+          <ChannelsColumn 
+            location={location}
+            joinedRooms={joinedRooms}
+            roomUnreadCounts={roomUnreadCounts}
+            availableRooms={availableRooms}
+            myUsername={myUsername}
+            user={user}
+            favorites={favorites}
+            removeFavorite={removeFavorite}
+            setFavorites={setFavorites}
+            acceptedFriendsCount={acceptedFriendsCount}
+            onlineFriendsCount={onlineFriendsCount}
+            status={status}
+            isConnected={isConnected}
+            t={t}
+            setSettingsOpen={setSettingsOpen}
+          />
+        </aside>
+
+        {/* ── Main area ── */}
+        <div className="flex-1 flex flex-col min-w-0 h-full bg-[var(--bg-primary)] relative overflow-hidden">
+          {/* Top bar — mobile only */}
+          <div className="lg:hidden flex-none h-14 border-b border-[var(--border)] flex items-center px-4 gap-3 bg-[var(--bg-secondary)]">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors"
+            >
+              <Menu size={22} />
+            </button>
+            <span className="text-[18px] font-bold text-[var(--text-normal)] tracking-tight">
+              Aether
+            </span>
+          </div>
+
+          {/* Push Notification Bar */}
+          <PushNotificationBar />
+
+          {/* Breadcrumbs (desktop) */}
+          <div className="hidden lg:flex flex-none items-center justify-between px-6 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
+            <div className="flex items-center gap-2 min-w-0">
+              {canGoBack && (
+                <button
+                  onClick={() => navigate(-1)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors flex-shrink-0"
+                  aria-label="Go back"
+                  title="Back"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+              )}
+              <div className="text-[12px] font-medium text-[var(--text-muted)] truncate">
+                {breadcrumbs.join(' / ')}
+              </div>
+            </div>
+            <div
+              className={`ml-4 inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                isConnected
+                  ? 'bg-[var(--brand)]/10 text-[var(--brand)] border-[var(--brand)]/20'
+                  : 'bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20'
+              }`}
+              title={status}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[var(--brand)]' : 'bg-[#ef4444]'}`} />
+              {isConnected ? 'Connected' : 'Disconnected'}
+            </div>
+          </div>
+
+          {/* Content */}
+          <main className="flex-1 overflow-hidden relative">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Sub-components moved outside to avoid hook reconciliation issues ──
+
+function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread: number }) {
+  return (
     <div className="w-[72px] bg-[var(--bg-secondary)] h-full flex flex-col items-center py-4 gap-3 flex-shrink-0 border-r border-[var(--border)]">
       <div className="relative group">
         <NavLink
@@ -209,8 +320,42 @@ export default function Layout() {
       </button>
     </div>
   );
+}
 
-  const ChannelsColumn = () => (
+function ChannelsColumn({ 
+  location, 
+  joinedRooms, 
+  roomUnreadCounts, 
+  availableRooms, 
+  myUsername, 
+  user,
+  favorites, 
+  removeFavorite, 
+  setFavorites,
+  acceptedFriendsCount,
+  onlineFriendsCount,
+  status,
+  isConnected,
+  t,
+  setSettingsOpen
+}: { 
+  location: any, 
+  joinedRooms: string[], 
+  roomUnreadCounts: Record<string, number>, 
+  availableRooms: any[], 
+  myUsername: string, 
+  user: any,
+  favorites: any[], 
+  removeFavorite: (id: string) => Promise<void>,
+  setFavorites: React.Dispatch<React.SetStateAction<any[]>>,
+  acceptedFriendsCount: number,
+  onlineFriendsCount: number,
+  status: string,
+  isConnected: boolean,
+  t: (key: string) => string,
+  setSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>
+}) {
+  return (
     <div className="w-64 bg-[var(--bg-primary)] h-full flex flex-col flex-shrink-0 border-r border-[var(--border)] overflow-hidden">
       {/* Header Area */}
       <div className="h-14 flex-shrink-0 border-b border-[var(--border)] flex items-center px-4">
@@ -223,39 +368,57 @@ export default function Layout() {
           {location.pathname.startsWith('/rooms') ? (
             // Show joined rooms when in rooms section
             <>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                  Your Rooms
+              {/* ── Rooms You Are In ── */}
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                  Rooms You Are In
                 </p>
               </div>
               {joinedRooms.length === 0 ? (
-                <div className="px-3 py-6 text-center">
-                  <Server size={24} className="text-[var(--text-muted)] mx-auto mb-2 opacity-40" />
-                  <p className="text-[13px] text-[var(--text-muted)] italic">
-                    No rooms joined yet
-                  </p>
-                  <p className="text-[11px] text-[var(--text-muted)] opacity-60 mt-1">
-                    Explore servers to join
-                  </p>
+                <div className="py-3 text-center">
+                  <p className="text-[12px] text-[var(--text-muted)] italic">No rooms joined yet</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0.5 mb-1.5">
                   {joinedRooms.map((roomName) => {
                     const roomUnread = roomUnreadCounts[roomName] || 0;
+                    const roomObj = availableRooms.find((r) => r.name === roomName);
+                    const isOwner = roomObj?.created_by === myUsername;
+
                     return (
                       <NavLink
                         key={roomName}
                         to={`/rooms/${roomName}`}
                         className={({ isActive }) =>
-                          `flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
-                            isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''
+                          `flex items-center gap-2 px-2 py-1 rounded-md transition-all group ${
+                            isActive
+                              ? 'bg-[var(--brand)]/15 text-[var(--brand)]'
+                              : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
                           }`
                         }
                       >
-                        <Minus size={16} />
-                        <span className={`font-medium text-[14px] truncate flex-1 ${roomUnread > 0 ? 'text-[var(--text-normal)] font-semibold' : ''}`}>{roomName}</span>
+                        <div className="w-4 h-4 rounded flex items-center justify-center bg-[var(--bg-secondary)] flex-shrink-0">
+                          <Hash size={10} />
+                        </div>
+                        <span className={`text-[12px] truncate flex-1 px-1.5 py-0.5 rounded bg-[var(--bg-secondary)]/50 ${
+                          roomUnread > 0 ? 'font-bold text-[var(--text-normal)]' : 'font-medium'
+                        }`}>
+                          {roomName}
+                        </span>
+                        {isOwner && (
+                          <div className="relative group/owner ml-auto mr-1 flex items-center justify-center">
+                            <ShieldCheck 
+                              size={12} 
+                              className="text-[#10b981] opacity-80 hover:opacity-100 transition-opacity cursor-help" 
+                            />
+                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] text-[10px] font-bold rounded-lg opacity-0 group-hover/owner:opacity-100 transition-all pointer-events-none z-[100] shadow-2xl whitespace-nowrap translate-x-1 group-hover/owner:translate-x-0">
+                              You created this room
+                              <div className="absolute left-full top-1/2 -translate-y-1/2 border-[4px] border-transparent border-l-[var(--bg-tertiary)]" />
+                            </div>
+                          </div>
+                        )}
                         {roomUnread > 0 && (
-                          <span className="min-w-[18px] h-[18px] bg-[var(--brand)] text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 flex-shrink-0">
+                          <span className="min-w-[16px] h-4 bg-[var(--brand)] text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 flex-shrink-0">
                             {roomUnread > 99 ? '99+' : roomUnread}
                           </span>
                         )}
@@ -263,8 +426,26 @@ export default function Layout() {
                     );
                   })}
                 </div>
-
               )}
+
+              {/* ── Explore Rooms ── */}
+              <div className="mb-4">
+                <NavLink
+                  to="/rooms/explore"
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 px-2 py-1 rounded-md transition-all ${
+                      isActive
+                        ? 'bg-[var(--brand)]/15 text-[var(--brand)]'
+                        : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
+                    }`
+                  }
+                >
+                  <div className="w-4 h-4 rounded flex items-center justify-center bg-[var(--bg-secondary)] flex-shrink-0">
+                    <Compass size={10} />
+                  </div>
+                  <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded bg-[var(--bg-secondary)]">Explore Rooms</span>
+                </NavLink>
+              </div>
             </>
           ) : (
             // Show favorites in DMs section
@@ -289,83 +470,87 @@ export default function Layout() {
                   </button>
                 )}
               </div>
-              {favorites.length === 0 ? (
-                <div className="px-3 py-6 text-center">
-                  <Star size={24} className="text-[var(--text-muted)] mx-auto mb-2 opacity-40" />
-                  <p className="text-[13px] text-[var(--text-muted)] italic">
-                    Pin your favorite chats
-                  </p>
-                  <p className="text-[11px] text-[var(--text-muted)] opacity-60 mt-1">
-                    Click the star in any conversation
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-0.5">
-                  {favorites.map((fav) => (
-                    <div key={fav.id} className="group flex items-center gap-2">
-                      <NavLink
-                        to={fav.type === 'dm' ? `/dms/${fav.name}` : `/rooms/${fav.name}`}
-                        className={({ isActive }) =>
-                          `flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
-                            isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''
-                          }`
-                        }
-                      >
-                        {fav.type === 'dm' ? (
-                          <MessageSquare size={16} />
-                        ) : (
-                          <Minus size={16} />
-                        )}
-                        <span className="font-medium text-[14px] truncate">{fav.name}</span>
-                      </NavLink>
-                      <button
-                        onClick={() => removeFavorite(fav.id)}
-                        className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-all"
-                        title="Remove from favorites"
-                      >
-                        <X size={14} />
-                      </button>
+              {(() => {
+                const dmFavorites = favorites.filter((f) => f.type === 'dm');
+                if (dmFavorites.length === 0) {
+                  return (
+                    <div className="px-3 py-6 text-center">
+                      <Star size={24} className="text-[var(--text-muted)] mx-auto mb-2 opacity-40" />
+                      <p className="text-[13px] text-[var(--text-muted)] italic">
+                        Pin your favorite chats
+                      </p>
+                      <p className="text-[11px] text-[var(--text-muted)] opacity-60 mt-1">
+                        Click the star in any conversation
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                }
+                return (
+                  <div className="flex flex-col gap-0.5">
+                    {dmFavorites.map((fav) => (
+                      <div key={fav.id} className="group flex items-center gap-2">
+                        <NavLink
+                          to={`/dms/${fav.name}`}
+                          className={({ isActive }) =>
+                            `flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
+                              isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''
+                            }`
+                          }
+                        >
+                          <MessageSquare size={16} />
+                          <span className="font-medium text-[14px] truncate">{fav.name}</span>
+                        </NavLink>
+                        <button
+                          onClick={() => removeFavorite(fav.id)}
+                          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-all"
+                          title="Remove from favorites"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </>
           )}
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="px-4 py-4 border-t border-[var(--border)]">
-        <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">
+      <div className="px-4 py-2 border-t border-[var(--border)]">
+        <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
           Your Stats
         </p>
-        <div className="flex flex-col gap-2">
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
-              <Users size={16} />
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-lg border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+                <Users size={12} />
+              </div>
+              <span className="text-[11px] font-semibold text-[var(--text-muted)]">Friends</span>
             </div>
-            <div>
-              <p className="text-[18px] font-bold text-[var(--text-normal)] leading-none">{acceptedFriendsCount}</p>
-              <p className="text-[11px] text-[var(--text-muted)]">Friends</p>
-            </div>
+            <span className="text-[12px] font-bold text-[var(--text-normal)]">{acceptedFriendsCount}</span>
           </div>
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
-              <TrendingUp size={16} />
+
+          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-lg border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+                <TrendingUp size={12} />
+              </div>
+              <span className="text-[11px] font-semibold text-[var(--text-muted)]">Online Friends</span>
             </div>
-            <div>
-              <p className="text-[18px] font-bold text-[var(--text-normal)] leading-none">{onlineFriendsCount}</p>
-              <p className="text-[11px] text-[var(--text-muted)]">Friends Online</p>
-            </div>
+            <span className="text-[12px] font-bold text-[var(--text-normal)]">{onlineFriendsCount}</span>
           </div>
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-3 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#f59e0b]/10 flex items-center justify-center text-[#f59e0b]">
-              <Server size={16} />
+
+          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-lg border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md bg-[#f59e0b]/10 flex items-center justify-center text-[#f59e0b]">
+                <Server size={12} />
+              </div>
+              <span className="text-[11px] font-semibold text-[var(--text-muted)]">Rooms Joined</span>
             </div>
-            <div>
-              <p className="text-[18px] font-bold text-[var(--text-normal)] leading-none">{joinedRooms.length}</p>
-              <p className="text-[11px] text-[var(--text-muted)]">Joined Rooms</p>
-            </div>
+            <span className="text-[12px] font-bold text-[var(--text-normal)]">{joinedRooms.length}</span>
           </div>
         </div>
       </div>
@@ -418,99 +603,6 @@ export default function Layout() {
           >
             <Settings size={16} />
           </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="h-screen w-full bg-[var(--bg-secondary)] text-[var(--text-normal)] font-body p-3 antialiased">
-      <div className="h-full w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-3xl shadow-xl overflow-hidden flex">
-
-        {settingsOpen && (
-          <SettingsModal onClose={() => setSettingsOpen(false)} myUsername={myUsername} />
-        )}
-
-        {/* ── Mobile overlay ── */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* ── Desktop Server Column ── */}
-        <div className="hidden lg:flex relative z-10">
-          <ServersColumn />
-        </div>
-
-        {/* ── Sidebar (Mobile + Channels Column) ── */}
-        <aside
-          className={`
-            fixed top-0 left-0 z-50 h-full flex
-            transition-transform duration-400 cubic-bezier(0.4, 0, 0.2, 1)
-            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-            lg:relative lg:translate-x-0 lg:z-10
-          `}
-        >
-          <div className="flex lg:hidden h-full">
-            <ServersColumn />
-          </div>
-          <ChannelsColumn />
-        </aside>
-
-        {/* ── Main area ── */}
-        <div className="flex-1 flex flex-col min-w-0 h-full bg-[var(--bg-primary)] relative overflow-hidden">
-          {/* Top bar — mobile only */}
-          <div className="lg:hidden flex-none h-14 border-b border-[var(--border)] flex items-center px-4 gap-3 bg-[var(--bg-secondary)]">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors"
-            >
-              <Menu size={22} />
-            </button>
-            <span className="text-[18px] font-bold text-[var(--text-normal)] tracking-tight">
-              Aether
-            </span>
-          </div>
-
-          {/* Push Notification Bar */}
-          <PushNotificationBar />
-
-          {/* Breadcrumbs (desktop) */}
-          <div className="hidden lg:flex flex-none items-center justify-between px-6 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
-            <div className="flex items-center gap-2 min-w-0">
-              {canGoBack && (
-                <button
-                  onClick={() => navigate(-1)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors flex-shrink-0"
-                  aria-label="Go back"
-                  title="Back"
-                >
-                  <ArrowLeft size={18} />
-                </button>
-              )}
-              <div className="text-[12px] font-medium text-[var(--text-muted)] truncate">
-                {breadcrumbs.join(' / ')}
-              </div>
-            </div>
-            <div
-              className={`ml-4 inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
-                isConnected
-                  ? 'bg-[var(--brand)]/10 text-[var(--brand)] border-[var(--brand)]/20'
-                  : 'bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20'
-              }`}
-              title={status}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[var(--brand)]' : 'bg-[#ef4444]'}`} />
-              {isConnected ? 'Connected' : 'Disconnected'}
-            </div>
-          </div>
-
-          {/* Content */}
-          <main className="flex-1 overflow-hidden relative">
-            <Outlet />
-          </main>
         </div>
       </div>
     </div>

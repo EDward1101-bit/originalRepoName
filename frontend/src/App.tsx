@@ -9,6 +9,7 @@ import { MucProvider } from './MucContext';
 import { BotProvider } from './BotContext';
 import RoomsPage from './RoomsPage';
 import RoomChat from './RoomChat';
+import RoomsRedirect from './RoomsRedirect';
 import BotsPage from './BotsPage';
 
 console.log('[App] Starting...');
@@ -23,7 +24,8 @@ function AuthenticatedRoutes() {
             <Route element={<Layout />}>
               <Route path="/dms" element={<DMsPage />} />
               <Route path="/dms/:username" element={<Chat />} />
-              <Route path="/rooms" element={<RoomsPage />} />
+              <Route path="/rooms" element={<RoomsRedirect />} />
+              <Route path="/rooms/explore" element={<RoomsPage />} />
               <Route path="/rooms/:roomName" element={<RoomChat />} />
               <Route path="/bots" element={<BotsPage />} />
               <Route path="*" element={<Navigate to="/dms" replace />} />

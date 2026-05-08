@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMucContext } from './MucContext';
 import { useChatContext } from './ChatContext';
@@ -42,6 +42,44 @@ export default function RoomChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [showActiveUsers, setShowActiveUsers] = useState(false);
+  const [showRoomInfo, setShowRoomInfo] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const isResizingRef = useRef(false);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizingRef.current) return;
+    // Calculate width from the right side of the screen
+    const newWidth = window.innerWidth - e.clientX;
+    if (newWidth >= 180 && newWidth <= 500) {
+      setSidebarWidth(newWidth);
+    }
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    isResizingRef.current = false;
+    document.body.style.cursor = 'default';
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', stopResizing);
+  }, [handleMouseMove]);
+
+  const startResizing = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingRef.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', stopResizing);
+  }, [handleMouseMove, stopResizing]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', stopResizing);
+    };
+  }, [handleMouseMove, stopResizing]);
+
+
   const shouldStickToBottomRef = useRef(true);
   const initialScrollDoneRef = useRef(false);
 
@@ -67,48 +105,6 @@ export default function RoomChat() {
     };
   }, [roomName, setCurrentRoom, clearRoomUnread]);
 
-  // Favorites from Supabase
-  const [favoriteId, setFavoriteId] = useState<string | null>(null);
-
-  // Check if this room is favorited
-  useEffect(() => {
-    if (!user || !roomName) return;
-    const checkFavorite = async () => {
-      const { data } = await supabase
-        .from('favorites')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('type', 'room')
-        .eq('name', roomName)
-        .single();
-      if (data) {
-        setFavoriteId(data.id);
-      } else {
-        setFavoriteId(null);
-      }
-    };
-    checkFavorite();
-  }, [user, roomName]);
-
-  const toggleFavorite = async () => {
-    if (!user || !roomName) return;
-    if (favoriteId) {
-      // Remove from favorites
-      await supabase.from('favorites').delete().eq('id', favoriteId);
-      setFavoriteId(null);
-    } else {
-      // Add to favorites
-      const { data } = await supabase
-        .from('favorites')
-        .insert({ user_id: user.id, type: 'room', name: roomName })
-        .select('id')
-        .single();
-      if (data) {
-        setFavoriteId(data.id);
-      }
-    }
-  };
-  const isFavorite = !!favoriteId;
   const messages = useMemo(
     () => (roomName ? roomMessages[roomName] || [] : []),
     [roomName, roomMessages]
@@ -226,6 +222,13 @@ export default function RoomChat() {
     return text.startsWith('http') && text.includes('supabase') && text.includes('chat-media');
   };
 
+  const activeUsers = useMemo(() => {
+    if (!roomName || !isJoined) return [];
+    const others = roomActiveUsers[roomName] || [];
+    // Include current user at the top
+    return [myUsername, ...others.filter((u) => u !== myUsername)];
+  }, [roomName, isJoined, roomActiveUsers, myUsername]);
+
   if (!roomName) return null;
 
   if (!room) {
@@ -250,8 +253,6 @@ export default function RoomChat() {
     );
   }
 
-  const activeUsers = roomName ? roomActiveUsers[roomName] || [] : [];
-
   return (
     <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-normal)]">
       {/* Header */}
@@ -264,22 +265,35 @@ export default function RoomChat() {
             <ArrowLeft size={24} />
           </button>
 
-          <div className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--brand)] shadow-inner">
-            <Hash size={24} />
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:bg-[var(--bg-modifier-hover)] px-2 py-1 rounded-lg transition-colors group"
+            onClick={() => setShowRoomInfo(true)}
+          >
+            <div className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--brand)] shadow-inner group-hover:scale-105 transition-transform">
+              <Hash size={24} />
+            </div>
+            <div>
+              <h2 className="font-bold text-[16px] tracking-tight">{room.name}</h2>
+              <p className="text-[11px] text-[var(--text-muted)] font-medium">Click for info</p>
+            </div>
           </div>
-          <h2 className="font-bold text-[16px] tracking-tight ml-1">{room.name}</h2>
-
-          {room.description && (
-            <>
-              <div className="w-[2px] h-6 bg-[var(--bg-modifier-active)] mx-3 rounded-full opacity-50" />
-              <p className="text-[13px] font-medium text-[var(--text-muted)] truncate max-w-md">
-                {room.description}
-              </p>
-            </>
-          )}
         </div>
 
         <div className="flex items-center gap-2">
+          {isJoined && (
+            <button
+              onClick={() => setShowActiveUsers(!showActiveUsers)}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                showActiveUsers 
+                  ? 'bg-[var(--brand)]/10 text-[var(--brand)]' 
+                  : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
+              }`}
+              title="Toggle Member List"
+            >
+              <Users size={22} />
+            </button>
+          )}
+
           {isJoined ? (
             <button
               onClick={handleLeave}
@@ -298,17 +312,7 @@ export default function RoomChat() {
             </button>
           )}
 
-          <button
-            onClick={toggleFavorite}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-              isFavorite
-                ? 'bg-[#f59e0b]/10 text-[#f59e0b]'
-                : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
-            }`}
-            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            <Star size={20} fill={favoriteId ? '#f59e0b' : 'none'} />
-          </button>
+
 
           <button
             className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
@@ -634,66 +638,77 @@ export default function RoomChat() {
               </div>
             </div>
           </div>
+        </div>
 
-          </div>
 
           {/* Active Users Sidebar */}
-          <div className="w-60 bg-[var(--bg-secondary)] border-l border-[var(--border)] flex flex-col flex-shrink-0">
-            <div className="h-14 flex items-center px-4 border-b border-[var(--border)]">
-              <div className="flex items-center gap-2">
-                <Users size={18} className="text-[var(--text-muted)]" />
-                <span className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                  Active Now
-                </span>
-                <span className="ml-1 bg-[var(--brand)] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
-                  {activeUsers.length}
-                </span>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3">
-              {activeUsers.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-[13px] text-[var(--text-muted)] italic">No active users</p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1">
-                  {activeUsers.map((nickname) => {
-                    const profile = getUserProfile(nickname);
-                    const displayName = profile?.username || nickname;
-                    const avatarUrl = profile?.avatarUrl;
-                    const isOnline = profile?.online;
+          {showActiveUsers && (
+            <div 
+              style={{ width: `${sidebarWidth}px` }}
+              className="bg-[var(--bg-secondary)] border-l border-[var(--border)] flex flex-col flex-shrink-0 animate-in slide-in-from-right duration-300 relative group/sidebar"
+            >
+              {/* Resize Handle */}
+              <div
+                onMouseDown={startResizing}
+                className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-[var(--brand)]/30 active:bg-[var(--brand)] transition-colors z-50"
+              />
 
-                    return (
-                      <div
-                        key={nickname}
-                        className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--bg-modifier-hover)] transition-colors"
-                      >
-                        <div className="relative">
-                          <div className="w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                            {avatarUrl ? (
-                              <img
-                                src={avatarUrl}
-                                alt={displayName}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              displayName?.[0]?.toUpperCase() || '?'
-                            )}
-                          </div>
-                          <div
-                            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] ${
-                              isOnline ? 'bg-[#10b981]' : 'bg-[#ef4444]'
-                            }`}
-                          />
-                        </div>
-                        <span className="text-[14px] font-medium text-[var(--text-normal)] truncate">
-                          {displayName}
-                        </span>
-                      </div>
-                    );
-                  })}
+              <div className="h-14 flex items-center px-4 border-b border-[var(--border)]">
+                <div className="flex items-center gap-2">
+                  <Users size={18} className="text-[var(--text-muted)]" />
+                  <span className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                    Active Now
+                  </span>
+                  <span className="ml-1 bg-[var(--brand)] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                    {activeUsers.length}
+                  </span>
                 </div>
-              )}
+              </div>
+              <div className="flex-1 overflow-y-auto p-3">
+                {activeUsers.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-[13px] text-[var(--text-muted)] italic">No active users</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {activeUsers.map((nickname) => {
+                      const profile = getUserProfile(nickname);
+                      const displayName = profile?.username || nickname;
+                      const avatarUrl = profile?.avatarUrl;
+                      const isOnline = nickname === myUsername ? isConnected : profile?.online;
+
+                      return (
+                        <div
+                          key={nickname}
+                          className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--bg-modifier-hover)] transition-colors"
+                        >
+                          <div className="relative">
+                            <div className="w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                              {avatarUrl ? (
+                                <img
+                                  src={avatarUrl}
+                                  alt={displayName}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                displayName?.[0]?.toUpperCase() || '?'
+                              )}
+                            </div>
+                            <div
+                              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] ${
+                                isOnline ? 'bg-[#10b981]' : 'bg-[#ef4444]'
+                              }`}
+                            />
+                          </div>
+                          <span className="text-[14px] font-medium text-[var(--text-normal)] truncate">
+                            {displayName} {nickname === myUsername && <span className="text-[11px] font-medium text-[var(--text-muted)] ml-1">(You)</span>}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
 
               {/* Bots Section */}
               {roomName && (() => {
@@ -742,8 +757,9 @@ export default function RoomChat() {
               })()}
             </div>
           </div>
-        </div>
-      ) : (
+        )}
+      </div>
+    ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)]">
           <div className="w-24 h-24 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-6 text-[var(--text-normal)] shadow-inner border border-[var(--border)]">
             <Lock size={48} />
@@ -763,6 +779,79 @@ export default function RoomChat() {
           </button>
         </div>
       )}
+      {/* ── Room Info Modal ── */}
+      {showRoomInfo && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200"
+          onClick={() => setShowRoomInfo(false)}
+        >
+          <div 
+            className="w-full max-w-md bg-[var(--bg-primary)] rounded-2xl border border-[var(--border)] shadow-xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-[var(--border)] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--brand)]">
+                  <Hash size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-[var(--text-normal)] tracking-tight">#{room.name}</h2>
+                  <p className="text-[11px] text-[var(--text-muted)] font-medium">Room Information</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowRoomInfo(false)}
+                className="w-8 h-8 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div>
+                <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3">About</h3>
+                <p className="text-[14px] text-[var(--text-normal)] leading-relaxed">
+                  {room.description || "No description available for this community."}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-xl border border-[var(--border)]/50">
+                  <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
+                    <Users size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Members</span>
+                  </div>
+                  <p className="text-lg font-bold text-[var(--text-normal)]">{activeUsers.length}</p>
+                </div>
+                <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-xl border border-[var(--border)]/50">
+                  <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
+                    <Star size={14} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider">Created</span>
+                  </div>
+                  <p className="text-[14px] font-bold text-[var(--text-normal)]">
+                    {new Date(room.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center gap-2 text-[12px] text-[var(--text-muted)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)] animate-pulse" />
+                <span>Created by <span className="font-semibold text-[var(--text-normal)]">{room.created_by}</span></span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[var(--bg-secondary)]/30 border-t border-[var(--border)] flex justify-end">
+              <button
+                onClick={() => setShowRoomInfo(false)}
+                className="px-5 py-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--text-normal)] font-bold text-[13px] rounded-lg border border-[var(--border)] transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
