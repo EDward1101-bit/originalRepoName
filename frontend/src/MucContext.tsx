@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useChatContext } from './ChatContext';
+import { useBotContext } from './BotContext';
 import { MUC_DOMAIN, buildRoomJid } from './config';
 import { supabase } from './supabase';
 import type { ReceivedMessage } from 'stanza/protocol';
@@ -68,6 +69,7 @@ const generateId = () => {
 
 export function MucProvider({ children }: { children: ReactNode }) {
   const { client, myUsername, status, allUsers } = useChatContext();
+  const { triggerDispatch } = useBotContext();
 
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
   const [joinedRooms, setJoinedRooms] = useState<string[]>(() => {
@@ -349,6 +351,43 @@ export function MucProvider({ children }: { children: ReactNode }) {
             ...prev,
             [room.name]: [...(prev[room.name] || []), newMsg],
           }));
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'room_messages' },
+        (payload) => {
+          const row = payload.new as any;
+          if (!row?.id) return;
+          const room = availableRooms.find((r) => r.id === row.room_id);
+          if (!room) return;
+
+          setRoomMessages((prev) => {
+            const msgs = prev[room.name] || [];
+            return {
+              ...prev,
+              [room.name]: msgs.map((m) =>
+                m.id === row.id ? { ...m, body: row.body } : m
+              ),
+            };
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'room_messages' },
+        (payload) => {
+          const row = payload.old as any;
+          if (!row?.id) return;
+          // In a real app we might want to find the room_id differently if the row doesn't have it, 
+          // but we can just filter all rooms since id is a UUID.
+          setRoomMessages((prev) => {
+            const next = { ...prev };
+            for (const roomName in next) {
+              next[roomName] = next[roomName].filter((m) => m.id !== row.id);
+            }
+            return next;
+          });
         }
       )
       .subscribe();
@@ -690,11 +729,11 @@ export function MucProvider({ children }: { children: ReactNode }) {
     const room = availableRooms.find((r) => r.name === roomName);
     if (!room) return;
 
-    // Send via XMPP
+    // Send via XMPP immediately (zero latency)
     const msgId = generateId();
     client.sendMessage({
       to: roomJid,
-      body,
+      body: body,
       type: 'groupchat',
       id: msgId,
     });
@@ -704,7 +743,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
       id: msgId,
       room_id: room.id,
       sender: myUsername,
-      body,
+      body: body,
     });
 
     if (error) {
@@ -715,7 +754,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
         id: msgId,
         room_id: room.id,
         sender: myUsername,
-        body,
+        body: body,
         created_at: new Date(),
         type: 'chat',
       };
@@ -723,6 +762,9 @@ export function MucProvider({ children }: { children: ReactNode }) {
         ...prev,
         [roomName]: [...(prev[roomName] || []), newMsg],
       }));
+
+      // Asynchronously notify bots
+      triggerDispatch(msgId, roomName, body);
     }
   };
 

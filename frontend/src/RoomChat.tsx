@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useMucContext } from './MucContext';
 import { useChatContext } from './ChatContext';
 import { useAuth } from './AuthContext';
+import { useBotContext } from './BotContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
-import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users } from 'lucide-react';
+import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot } from 'lucide-react';
 
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
@@ -29,6 +30,7 @@ export default function RoomChat() {
   } = useMucContext();
   const { user } = useAuth();
   const { myUsername, status, getUserProfile } = useChatContext();
+  const { getBotsForRoom, allBots } = useBotContext();
   const isConnected = status === 'Connected';
 
   const [input, setInput] = useState('');
@@ -373,8 +375,16 @@ export default function RoomChat() {
                     <div className="flex flex-col min-w-0 w-full">
                       {showHeader && (
                         <div className="flex items-baseline gap-2 mb-1">
-                          <span className="font-bold text-[15px] text-[var(--text-normal)]">
+                          <span className="font-bold text-[15px] text-[var(--text-normal)] flex items-center gap-2">
                             {senderName}
+                            {allBots.some(b => b.name === msg.sender) && (
+                              <span className="bg-[var(--brand)] text-white text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm">
+                                <span className="text-[10px]">
+                                  {allBots.find(b => b.name === msg.sender)?.emoji || '🤖'}
+                                </span>
+                                BOT
+                              </span>
+                            )}
                           </span>
                           <span className="text-[12px] text-[var(--text-muted)] font-medium">
                             {formatMessageTimestamp(msg.created_at)}
@@ -647,6 +657,46 @@ export default function RoomChat() {
                   })}
                 </div>
               )}
+
+              {/* Bots Section */}
+              {roomName && (() => {
+                const activeBots = getBotsForRoom(roomName);
+                if (activeBots.length === 0) return null;
+                return (
+                  <>
+                    <div className="mx-2 my-3 h-[1px] bg-[var(--border)] opacity-60" />
+                    <div className="px-2 mb-2 flex items-center gap-1.5">
+                      <Bot size={13} className="text-[var(--text-muted)]" />
+                      <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                        Bots — {activeBots.length}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      {activeBots.map((bot) => (
+                        <div
+                          key={bot.id}
+                          className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--bg-modifier-hover)] transition-colors"
+                        >
+                          <div className="relative">
+                            <div className="w-9 h-9 rounded-full bg-[var(--brand)]/15 flex items-center justify-center text-lg flex-shrink-0">
+                              {bot.emoji}
+                            </div>
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] bg-[#10b981]" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[13px] font-medium text-[var(--text-normal)] truncate block">
+                              {bot.name}
+                            </span>
+                            <span className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-wide">
+                              BOT
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
