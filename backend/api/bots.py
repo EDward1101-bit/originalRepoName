@@ -31,6 +31,10 @@ def _sign_payload(secret: str, payload: dict) -> str:
     return f"sha256={digest}"
 
 
+# In-memory store for bot heartbeats: bot_id -> timestamp
+bot_heartbeats: dict[str, float] = {}
+
+
 # ── Request / Response models ─────────────────────────────────────────────────
 class RegisterBotRequest(BaseModel):
     name: str
@@ -71,7 +75,14 @@ async def list_bots() -> list[dict]:
         .eq("is_active", True)
         .execute()
     )
-    return response.data or []
+    bots = response.data or []
+    current_time = time.time()
+    for bot in bots:
+        if bot.get("is_builtin"):
+            bot["is_online"] = True
+        else:
+            bot["is_online"] = (current_time - bot_heartbeats.get(bot["id"], 0)) <= 60.0
+    return bots
 
 
 @router.post("/register", response_model=RegisterBotResponse)
@@ -121,6 +132,25 @@ async def delete_bot(bot_id: str, owner_username: str) -> dict[str, Any]:
     return {"deleted": True}
 
 
+@router.post("/heartbeat")
+async def bot_heartbeat(x_aether_secret: str = Header(None)) -> dict[str, str]:
+    """Bot SDK endpoint to maintain online status."""
+    if not x_aether_secret:
+        raise HTTPException(status_code=401, detail="Missing X-Aether-Secret header")
+
+    from services.supabase import get_supabase_client
+    supabase = get_supabase_client()
+
+    bots_resp = supabase.table("bots").select("id").eq("webhook_secret", x_aether_secret).eq("is_active", True).execute()
+    if not bots_resp.data:
+        raise HTTPException(status_code=401, detail="Invalid bot secret")
+
+    bot_id = bots_resp.data[0]["id"]
+    bot_heartbeats[bot_id] = time.time()
+
+    return {"status": "ok"}
+
+
 async def process_dispatch(req: DispatchRequest):
     """Background task to notify bots and handle built-ins async."""
     from services.supabase import get_supabase_client
@@ -143,7 +173,20 @@ async def process_dispatch(req: DispatchRequest):
         .eq("is_active", True)
         .execute()
     )
-    bots = bots_resp.data or []
+    all_bots = bots_resp.data or []
+    if not all_bots:
+        return
+
+    # Filter out offline custom bots
+    current_time = time.time()
+    bots = []
+    for bot in all_bots:
+        if bot.get("is_builtin"):
+            bots.append(bot)
+        else:
+            if (current_time - bot_heartbeats.get(bot["id"], 0)) <= 60.0:
+                bots.append(bot)
+
     if not bots:
         return
 

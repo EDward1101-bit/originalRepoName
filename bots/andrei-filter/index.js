@@ -128,7 +128,29 @@ app.post('/webhook', async (req, res) => {
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', bot: 'AndreiFilterBot' }));
 
+// ── Heartbeat: keep the bot marked as "online" on the backend ────────────────
+async function sendHeartbeat() {
+  try {
+    const res = await fetch(`${API_URL}/api/bots/heartbeat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Aether-Secret': BOT_SECRET,
+      },
+    });
+    if (!res.ok) {
+      console.warn(`[AndreiFilterBot] Heartbeat failed: ${res.status}`);
+    }
+  } catch (err) {
+    console.warn(`[AndreiFilterBot] Heartbeat error:`, err.message);
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`[AndreiFilterBot] Bot running on http://localhost:${PORT}`);
   console.log(`[AndreiFilterBot] Webhook endpoint: POST http://localhost:${PORT}/webhook`);
+
+  // Send initial heartbeat immediately, then every 30 seconds
+  sendHeartbeat();
+  setInterval(sendHeartbeat, 30_000);
 });

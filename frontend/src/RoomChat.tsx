@@ -675,20 +675,26 @@ export default function RoomChat() {
                       {activeBots.map((bot) => (
                         <div
                           key={bot.id}
-                          className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--bg-modifier-hover)] transition-colors"
+                          className={`flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-[var(--bg-modifier-hover)] transition-colors ${
+                            !bot.isOnline ? 'opacity-50' : ''
+                          }`}
                         >
                           <div className="relative">
                             <div className="w-9 h-9 rounded-full bg-[var(--brand)]/15 flex items-center justify-center text-lg flex-shrink-0">
                               {bot.emoji}
                             </div>
-                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] bg-[#10b981]" />
+                            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] ${
+                              bot.isOnline ? 'bg-[#22c55e] shadow-[0_0_4px_#22c55e]' : 'bg-[var(--text-muted)]'
+                            }`} />
                           </div>
                           <div className="min-w-0">
                             <span className="text-[13px] font-medium text-[var(--text-normal)] truncate block">
                               {bot.name}
                             </span>
-                            <span className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-wide">
-                              BOT
+                            <span className={`text-[10px] font-bold uppercase tracking-wide ${
+                              bot.isOnline ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'
+                            }`}>
+                              {bot.isOnline ? 'BOT · Online' : 'BOT · Offline'}
                             </span>
                           </div>
                         </div>

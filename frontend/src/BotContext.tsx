@@ -19,6 +19,7 @@ export interface BotDefinition {
   emoji: string;
   tags?: string[];
   isBuiltin: boolean;
+  isOnline: boolean;
   webhookUrl?: string | null;
   ownerUsername?: string | null;
 }
@@ -78,6 +79,7 @@ export function BotProvider({ children }: { children: ReactNode }) {
           description: b.description,
           emoji: b.emoji,
           isBuiltin: b.is_builtin,
+          isOnline: b.is_online ?? false,
           webhookUrl: b.webhook_url,
           ownerUsername: b.owner_username,
         }))
@@ -109,9 +111,11 @@ export function BotProvider({ children }: { children: ReactNode }) {
     setRoomBots(map);
   }, []);
 
-  // Fetch bot catalogue on mount — no auth required
+  // Fetch bot catalogue on mount and poll every 15s for live online status
   useEffect(() => {
     fetchAllBots();
+    const interval = setInterval(fetchAllBots, 15_000);
+    return () => clearInterval(interval);
   }, [fetchAllBots]);
 
   // Fetch room<->bot associations — needs the user to be identified
