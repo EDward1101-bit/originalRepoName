@@ -32,8 +32,20 @@ export default function Chat() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const shouldStickToBottomRef = useRef(true);
+  const initialScrollDoneRef = useRef(false);
+
+  const scrollToBottom = (mode: ScrollBehavior = 'auto') => {
+    if (!messagesContainerRef.current) return;
+    // Jump via scrollTop to avoid long smooth scroll for huge histories.
+    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    // Ensure the last message is visible even with dynamic content height.
+    messagesEndRef.current?.scrollIntoView({ behavior: mode, block: 'end' });
+  };
 
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -121,12 +133,31 @@ export default function Chat() {
   );
 
   useEffect(() => {
+    // Reset sticky + initial scroll when switching conversations.
+    initialScrollDoneRef.current = false;
+    shouldStickToBottomRef.current = true;
+    // Let the DOM paint, then jump to bottom.
+    requestAnimationFrame(() => requestAnimationFrame(() => scrollToBottom('auto')));
+  }, [recipient]);
+
+  useEffect(() => {
     if (isTyping) {
       setIsTyping(false);
       sendTypingIndicator(recipient, false);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     }
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+    // On first load of a conversation, always jump to bottom.
+    if (!initialScrollDoneRef.current) {
+      scrollToBottom('auto');
+      initialScrollDoneRef.current = true;
+      return;
+    }
+
+    // On new messages, only auto-scroll if user is already near bottom.
+    if (shouldStickToBottomRef.current) {
+      scrollToBottom('auto');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredMessages.length]);
 
@@ -266,8 +297,15 @@ export default function Chat() {
 
       {/* Message Feed */}
       <div
+        ref={messagesContainerRef}
         className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5"
         onClick={() => setActiveMenu(null)}
+        onScroll={() => {
+          const el = messagesContainerRef.current;
+          if (!el) return;
+          const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+          shouldStickToBottomRef.current = distanceFromBottom < 120;
+        }}
       >
         {filteredMessages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] opacity-80">

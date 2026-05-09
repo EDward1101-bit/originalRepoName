@@ -425,7 +425,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   }`}
                 >
                   <div className="w-12 h-12 rounded-xl bg-[#0f172a] mb-4 border border-[#334155] flex items-center justify-center">
-                    <Moon size={24} className="text-[#a78bfa]" />
+                    <Moon size={24} className="text-[var(--brand)]" />
                   </div>
                   <p className="font-bold text-[16px] text-left">Dark</p>
                   <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
@@ -441,7 +441,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   }`}
                 >
                   <div className="w-12 h-12 rounded-xl bg-[#f8fafc] mb-4 border border-[#e2e8f0] flex items-center justify-center">
-                    <Sun size={24} className="text-[#7c3aed]" />
+                    <Sun size={24} className="text-[var(--brand)]" />
                   </div>
                   <p className="font-bold text-[16px] text-left">Light</p>
                   <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
