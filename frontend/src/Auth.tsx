@@ -6,7 +6,7 @@ import { supabase } from './supabase';
 import { Lock, UserPlus, Hand } from 'lucide-react';
 
 export default function Auth() {
-  const { signIn, signUp, signOut, user, savePassword } = useAuth();
+  const { signIn, signUp, user, savePassword } = useAuth();
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');

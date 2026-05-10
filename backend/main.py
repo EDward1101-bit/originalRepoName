@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from api import health_router, users_router, bots_router
+from api import bots_router, health_router, users_router
 from api.auth import router as auth_router
 
 
@@ -12,9 +12,7 @@ class Settings(BaseSettings):
     prosody_url: str = "http://prosody:5280"
     environment: str = "development"
 
-    class Config:
-        env_file = ".env"
-        extra = "allow"
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
 
 settings = Settings()

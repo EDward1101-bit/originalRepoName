@@ -1,7 +1,7 @@
 from functools import lru_cache
 
 from pydantic import Field, model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from supabase import Client, create_client
 
 
@@ -19,9 +19,7 @@ class SupabaseSettings(BaseSettings):
             self.supabase_service_key = None
         return self
 
-    class Config:
-        env_file = ".env"
-        extra = "allow"
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
 
 settings = SupabaseSettings()

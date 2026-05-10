@@ -1,9 +1,7 @@
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-from fastapi.testclient import TestClient
-from httpx import AsyncClient
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from services.user_sync import UserSync, UserCreate
+import pytest
+
 from services.prosody import ProsodyClient
 
 
@@ -33,9 +31,9 @@ class TestUserCreationWorkflow:
                     "password": "password123",
                     "email": "test@example.com"
                 }
-                
+
                 response = await async_client.post("/api/users/", json=user_data)
-                
+
                 assert response.status_code == 200
                 data = response.json()
                 assert data["user"]["username"] == "testuser"
@@ -55,7 +53,7 @@ class TestUserCreationWorkflow:
         mock_user_response = MagicMock()
         mock_user_response.data = [{"id": "user123", "username": "testuser"}]
         mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value = mock_user_response
-        
+
         mock_auth_response = MagicMock()
         mock_auth_response.user = MagicMock()
         mock_supabase.auth.sign_in_with_password.return_value = mock_auth_response
@@ -67,9 +65,9 @@ class TestUserCreationWorkflow:
                 "password": "password123",
                 "host": "localhost"
             }
-            
+
             response = await async_client.post("/api/auth/verify", json=auth_data)
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["valid"] is True
@@ -88,9 +86,9 @@ class TestUserCreationWorkflow:
                 "username": "testuser",
                 "password": "password123"
             }
-            
+
             response = await async_client.post("/api/auth/sync-user", json=sync_data)
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["synced"] is True
@@ -110,7 +108,7 @@ class TestHealthCheckIntegration:
         """Test complete health check flow."""
         mock_user_sync = AsyncMock()
         mock_user_sync.health_check.return_value = {"prosody": True}
-        
+
         mock_prosody = AsyncMock()
         mock_prosody.health_check.return_value = True
 
@@ -140,7 +138,7 @@ class TestExternalServiceIntegration:
     async def test_prosody_client_integration(self):
         """Test ProsodyClient with realistic scenarios."""
         client = ProsodyClient(base_url="http://localhost:5280")
-        
+
         # Test health check (would fail in real test without Prosody running)
         try:
             result = await client.health_check()
@@ -154,8 +152,8 @@ class TestExternalServiceIntegration:
 
     def test_supabase_client_integration(self):
         """Test Supabase client configuration."""
-        from services.supabase import get_supabase_client, settings
-        
+        from services.supabase import get_supabase_client
+
         # Test that client can be created (even if credentials are invalid)
         try:
             client = get_supabase_client()
@@ -185,9 +183,9 @@ class TestErrorHandlingIntegration:
                     "username": "testuser",
                     "password": "password123"
                 }
-                
+
                 response = await async_client.post("/api/users/", json=user_data)
-                
+
                 # Should handle the failure gracefully
                 assert response.status_code == 400
                 data = response.json()
@@ -206,9 +204,9 @@ class TestErrorHandlingIntegration:
                 "username": "testuser",
                 "password": "password123"
             }
-            
+
             response = await async_client.post("/api/auth/sync-user", json=sync_data)
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["synced"] is True
@@ -223,7 +221,7 @@ class TestPerformanceIntegration:
     async def test_concurrent_user_creation(self, async_client):
         """Test handling concurrent user creation requests."""
         import asyncio
-        
+
         mock_supabase = MagicMock()
         mock_auth_response = MagicMock()
         mock_auth_response.user.id = "user123"
@@ -245,10 +243,10 @@ class TestPerformanceIntegration:
                     }
                     task = async_client.post("/api/users/", json=user_data)
                     tasks.append(task)
-                
+
                 # Wait for all requests to complete
                 responses = await asyncio.gather(*tasks)
-                
+
                 # All should succeed
                 for i, response in enumerate(responses):
                     assert response.status_code == 200

@@ -1,7 +1,7 @@
 from typing import Any
 
 import httpx
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ProsodySettings(BaseSettings):
@@ -9,9 +9,7 @@ class ProsodySettings(BaseSettings):
     prosody_admin_user: str = "admin"
     prosody_admin_password: str | None = None
 
-    class Config:
-        env_file = ".env"
-        extra = "allow"
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
 
 settings = ProsodySettings()

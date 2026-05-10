@@ -28,7 +28,7 @@ class TestUserCreateRequest:
             "user+tag@example.org",
             "user123@test-domain.com",
         ]
-        
+
         for email in valid_emails:
             user = UserCreateRequest(
                 username="testuser",
@@ -41,7 +41,7 @@ class TestUserCreateRequest:
         """Test that model serialization works correctly."""
         user = UserCreateRequest(**sample_user_data)
         user_dict = user.model_dump()
-        
+
         assert user_dict["username"] == sample_user_data["username"]
         assert user_dict["password"] == sample_user_data["password"]
         assert user_dict["email"] == sample_user_data["email"]
@@ -50,7 +50,7 @@ class TestUserCreateRequest:
         """Test that JSON serialization works correctly."""
         user = UserCreateRequest(**sample_user_data)
         user_json = user.model_dump_json()
-        
+
         assert "testuser" in user_json
         assert "test@example.com" in user_json
 
@@ -84,7 +84,7 @@ class TestUserResponse:
             email="test@example.com",
         )
         user_dict = user.model_dump()
-        
+
         assert user_dict["id"] == "123"
         assert user_dict["username"] == "testuser"
         assert user_dict["email"] == "test@example.com"
@@ -109,7 +109,7 @@ class TestHealthResponse:
         """Test that model serialization works correctly."""
         health = HealthResponse(status="healthy", prosody=True)
         health_dict = health.model_dump()
-        
+
         assert health_dict["status"] == "healthy"
         assert health_dict["prosody"] is True
 
@@ -117,7 +117,7 @@ class TestHealthResponse:
         """Test that JSON serialization works correctly."""
         health = HealthResponse(status="healthy", prosody=True)
         health_json = health.model_dump_json()
-        
+
         assert "healthy" in health_json
         assert "true" in health_json.lower()
 

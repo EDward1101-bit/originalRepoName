@@ -1,11 +1,13 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-import httpx
 
-from services.prosody import ProsodyClient
-from services.user_sync import UserSync, UserCreate
-from services.supabase import get_supabase_client, get_service_client, settings as supabase_settings
+import httpx
+import pytest
+
 from services.get_online_users import OnlineUserClient, get_online_users_xmpp
+from services.prosody import ProsodyClient
+from services.supabase import get_service_client, get_supabase_client
+from services.supabase import settings as supabase_settings
+from services.user_sync import UserCreate, UserSync
 
 
 class TestProsodyClient:
@@ -41,7 +43,7 @@ class TestProsodyClient:
     async def test_get_users_success(self, client):
         """Test successful users retrieval."""
         mock_users = [{"username": "user1"}, {"username": "user2"}]
-        
+
         with patch.object(client.client, 'get') as mock_get:
             mock_response = MagicMock()
             mock_response.status_code = 200
@@ -67,7 +69,7 @@ class TestProsodyClient:
     async def test_get_user_success(self, client):
         """Test successful user retrieval."""
         mock_user = {"username": "testuser", "active": True}
-        
+
         with patch.object(client.client, 'get') as mock_get:
             mock_response = MagicMock()
             mock_response.status_code = 200
@@ -102,7 +104,7 @@ class TestProsodyClient:
     async def test_create_user_success(self, client):
         """Test successful user creation."""
         mock_response_data = {"success": True, "username": "testuser"}
-        
+
         with patch.object(client.client, 'post') as mock_post:
             mock_response = MagicMock()
             mock_response.status_code = 201
@@ -380,11 +382,11 @@ class TestSupabaseService:
         """Test getting Supabase client."""
         mock_client = MagicMock()
         mock_create_client.return_value = mock_client
-        
+
         # Clear cache and test client creation
         get_supabase_client.cache_clear()
         client = get_supabase_client()
-        
+
         mock_create_client.assert_called_once()
         assert client == mock_client
 
@@ -393,12 +395,12 @@ class TestSupabaseService:
         """Test that Supabase client is cached."""
         mock_client = MagicMock()
         mock_create_client.return_value = mock_client
-        
+
         # Clear cache and test client creation
         get_supabase_client.cache_clear()
         client1 = get_supabase_client()
         client2 = get_supabase_client()
-        
+
         # Should only create client once due to caching
         mock_create_client.assert_called_once()
         assert client1 == client2
