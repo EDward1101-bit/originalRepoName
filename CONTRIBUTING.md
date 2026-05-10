@@ -47,16 +47,12 @@ Examples:
 ### Python (Backend)
 
 - Follow PEP 8
-- Use type hints (strict mypy)
-- Run `ruff check .` before committing
-- Run `mypy .` to verify types
+- Run tests before committing
 
 ### TypeScript/React (Frontend)
 
 - Use strict TypeScript
-- Run `npm run lint` before committing
-- Run `npm run typecheck` to verify types
-- Use Prettier for formatting
+- Run tests before committing
 
 ## Commit Messages
 
@@ -100,12 +96,10 @@ Access:
 
 ```bash
 # Backend (in Docker)
-docker-compose exec backend ruff check .
-docker-compose exec backend mypy .
+docker-compose exec backend pytest tests/
 
 # Frontend (in Docker)
-docker-compose exec frontend npm run lint
-docker-compose exec frontend npm run typecheck
+docker-compose exec frontend npm run test
 ```
 
 ### Running Locally (Alternative to Docker)
@@ -134,15 +128,11 @@ npm run build
 
 ```bash
 # Frontend (with Docker)
-docker-compose exec frontend npx prettier --write .
-docker-compose exec frontend npm run lint
-docker-compose exec frontend npm run typecheck
+docker-compose exec frontend npm run test
 
 # Or locally (without Docker)
 cd frontend
-npx prettier --write .
-npm run lint
-npm run typecheck
+npm run test
 ```
 
 This ensures CI passes and prevents formatting-related failures.
