@@ -2,23 +2,22 @@
 """Commit pytest testing implementation."""
 import subprocess
 import sys
-import os
 
 
 def main():
     """Commit the comprehensive pytest testing implementation."""
     print("🚀 Committing comprehensive pytest testing implementation...")
-    
+
     try:
         # Stage all changes
         result = subprocess.run([
             "git", "add", "-A"
         ], capture_output=True, text=True)
-        
+
         if result.returncode != 0:
             print(f"❌ Git add failed: {result.stderr}")
             return False
-        
+
         # Commit with detailed message
         commit_message = """feat: implement comprehensive pytest testing suite
 
@@ -38,20 +37,20 @@ Testing framework includes:
 - Detailed documentation and usage guides
 
 Ready for production use with reliable, fast test execution."""
-        
+
         result = subprocess.run([
             "git", "commit", "-m", commit_message
         ], capture_output=True, text=True)
-        
+
         if result.returncode != 0:
             print(f"❌ Git commit failed: {result.stderr}")
             return False
-        
+
         print("✅ Changes committed successfully!")
         print(f"📝 Commit message: {commit_message[:50]}...")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Commit failed: {e}")
         return False

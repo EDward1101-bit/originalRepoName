@@ -2,8 +2,8 @@
 """
 Quick verification script for pytest setup.
 """
-import sys
 import importlib
+import sys
 from pathlib import Path
 
 
@@ -19,11 +19,11 @@ def check_import(module_name):
 def main():
     """Verify pytest setup."""
     print("🔍 Verifying pytest setup...")
-    
+
     # Check required modules
     required_modules = [
         "pytest",
-        "pytest_asyncio", 
+        "pytest_asyncio",
         "pytest_cov",
         "pytest_mock",
         "httpx",
@@ -32,7 +32,7 @@ def main():
         "pydantic",
         "supabase"
     ]
-    
+
     print("\n📦 Checking dependencies:")
     all_good = True
     for module in required_modules:
@@ -42,23 +42,23 @@ def main():
         if not success:
             print(f"      Error: {error}")
             all_good = False
-    
+
     if not all_good:
         print("\n❌ Some dependencies are missing. Install with:")
         print("   pip install -r requirements.txt")
         return 1
-    
+
     # Check test files exist
     print("\n📁 Checking test files:")
     test_files = [
         "tests/__init__.py",
-        "tests/conftest.py", 
+        "tests/conftest.py",
         "tests/test_models.py",
         "tests/test_services.py",
         "tests/test_api.py",
         "tests/test_integration.py"
     ]
-    
+
     backend_dir = Path(__file__).parent
     for test_file in test_files:
         file_path = backend_dir / test_file
@@ -67,7 +67,7 @@ def main():
         print(f"   {status} {test_file}")
         if not exists:
             all_good = False
-    
+
     # Check configuration
     print("\n⚙️  Checking configuration:")
     config_files = [
@@ -75,7 +75,7 @@ def main():
         "pyproject.toml",
         "Makefile"
     ]
-    
+
     for config_file in config_files:
         file_path = backend_dir / config_file
         exists = file_path.exists()
@@ -83,7 +83,7 @@ def main():
         print(f"   {status} {config_file}")
         if not exists:
             all_good = False
-    
+
     if all_good:
         print("\n🎉 Setup verification successful!")
         print("\n🚀 Ready to run tests:")

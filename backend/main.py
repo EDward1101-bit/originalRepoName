@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic_settings import BaseSettings
 
-from api import health_router, users_router, bots_router
+from api import bots_router, health_router, users_router
 from api.auth import router as auth_router
 
 
