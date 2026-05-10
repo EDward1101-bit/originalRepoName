@@ -3,10 +3,10 @@ import { useMucContext } from './MucContext';
 import { useChatContext } from './ChatContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from './LanguageContext';
-import { Loader2, Trash2, Pencil } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 
 export default function RoomsPage() {
-  const { availableRooms, joinedRooms, roomTypingUsers, createRoom, deleteRoom } = useMucContext();
+  const { availableRooms, joinedRooms, createRoom, deleteRoom } = useMucContext();
   const { myUsername } = useChatContext();
   const navigate = useNavigate();
   const { t } = useTranslation();

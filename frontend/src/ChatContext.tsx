@@ -31,6 +31,7 @@ export interface RegisteredUser {
   xmppUsername: string; // stable XMPP login = email.split('@')[0], never changes
   online: boolean;
   avatarUrl?: string;
+  displayName?: string;
 }
 
 export interface Friendship {
@@ -450,6 +451,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               // Derive the stable XMPP login name from the stored email.
               // This matches the Prosody account created at registration.
               xmppUsername,
+              displayName: u.username,
               avatarUrl: u.avatar_url,
               online: existing?.online ?? false,
             };
