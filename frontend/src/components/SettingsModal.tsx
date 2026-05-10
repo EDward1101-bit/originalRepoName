@@ -158,7 +158,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
         // Session truly gone — update only the public table and local state
         await supabase.from('users').update({ username: newUsername.trim() }).eq('id', user?.id);
         await refreshUserData();
-        setUsernameMsg(t('profile_updated') || 'Your display name has been successfully updated.');
+        setUsernameMsg(t('profile_updated'));
         setNewUsername('');
         return;
       }
@@ -171,7 +171,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
       // Refresh user data to propagate changes
       await refreshUserData();
 
-      setUsernameMsg(t('profile_updated') || 'Your display name has been successfully updated.');
+      setUsernameMsg(t('profile_updated'));
       setNewUsername('');
     } catch (error: any) {
       setUsernameMsg(`Error: ${error.message}`);
@@ -193,7 +193,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             {/* Profile Picture */}
             <div className="mb-8">
               <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
-                Profile Picture
+                {t('profile_picture')}
               </h3>
               <div className="flex items-center gap-6">
                 <div className="relative group">
@@ -229,7 +229,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                     disabled={isUploadingAvatar}
                     className="bg-[var(--brand)] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors shadow-sm disabled:opacity-50"
                   >
-                    {isUploadingAvatar ? 'Uploading...' : 'Change Avatar'}
+                    {isUploadingAvatar ? 'Uploading...' : t('change_avatar')}
                   </button>
                   {avatarUrl && (
                     <button
@@ -248,7 +248,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                       }}
                       className="ml-3 text-[14px] text-[var(--text-muted)] hover:text-[#ef4444] transition-colors font-medium"
                     >
-                      {t('remove') || 'Remove'}
+                      {t('remove')}
                     </button>
                   )}
                 </div>
@@ -280,7 +280,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             {/* Display Name Change */}
             <div className="mb-8">
               <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
-                {t('display_name') || 'Display Name'}
+                {t('display_name')}
               </h3>
               <p className="text-[14px] text-[var(--text-muted)] mb-3">
                 Current:{' '}
@@ -293,7 +293,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   type="text"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
-                  placeholder="Enter new display name"
+                  placeholder={`Enter new ${t('display_name').toLowerCase()}`}
                   className="flex-1 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] outline-none focus:border-[var(--brand)] transition-colors"
                 />
                 <button
@@ -301,7 +301,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   disabled={isChangingUsername || !newUsername.trim()}
                   className="bg-[var(--brand)] text-white px-6 py-3 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors disabled:opacity-50 shadow-sm"
                 >
-                  {isChangingUsername ? 'Saving...' : 'Save'}
+                  {isChangingUsername ? 'Saving...' : t('save')}
                 </button>
               </div>
               {usernameMsg && (
@@ -345,21 +345,21 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             {/* Change Password */}
             <div className="mb-8">
               <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
-                Change Password
+                {t('update_password')}
               </h3>
               <div className="flex flex-col gap-3">
                 <input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="New password (min. 6 characters)"
+                  placeholder={t('new_password') + ' (min. 6 characters)'}
                   className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] outline-none focus:border-[var(--brand)] transition-colors"
                 />
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm new password"
+                  placeholder={t('confirm_password')}
                   className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] outline-none focus:border-[var(--brand)] transition-colors"
                 />
                 <div className="flex items-center gap-3 mt-1">
@@ -368,7 +368,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                     disabled={isChangingPassword || !newPassword}
                     className="bg-[var(--brand)] text-white px-6 py-3 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors disabled:opacity-50 shadow-sm"
                   >
-                    {isChangingPassword ? 'Updating...' : 'Update Password'}
+                    {isChangingPassword ? 'Updating...' : t('update_password')}
                   </button>
                   {passwordMsg && (
                     <p
@@ -384,18 +384,18 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             {/* Danger Zone */}
             <div>
               <h3 className="text-[13px] font-bold text-[#ef4444] mb-4 uppercase tracking-wide">
-                Danger Zone
+                {t('danger_zone')}
               </h3>
               <div className="bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold text-[15px]">Delete Account</p>
+                    <p className="font-bold text-[15px]">{t('delete_account')}</p>
                     <p className="text-[13px] text-[var(--text-muted)]">
                       Permanently delete your account and all data.
                     </p>
                   </div>
                   <button className="bg-[#ef4444] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[#dc2626] transition-colors shadow-sm">
-                    Delete Account
+                    {t('delete_account')}
                   </button>
                 </div>
               </div>
@@ -406,14 +406,14 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
       case 'Appearance':
         return (
           <div className="max-w-2xl text-[var(--text-normal)]">
-            <h2 className="text-2xl font-bold mb-2 tracking-tight">Appearance</h2>
+            <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('appearance')}</h2>
             <p className="text-[var(--text-muted)] text-[15px] mb-8">
               Customize the look and feel of Aether.
             </p>
 
             <div className="mb-8">
               <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
-                Theme
+                {t('theme')}
               </h3>
               <div className="flex gap-4">
                 <button
@@ -427,7 +427,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   <div className="w-12 h-12 rounded-xl bg-[#0f172a] mb-4 border border-[#334155] flex items-center justify-center">
                     <Moon size={24} className="text-[var(--brand)]" />
                   </div>
-                  <p className="font-bold text-[16px] text-left">Dark</p>
+                  <p className="font-bold text-[16px] text-left">{t('dark')}</p>
                   <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
                     Easy on the eyes
                   </p>
@@ -443,7 +443,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   <div className="w-12 h-12 rounded-xl bg-[#f8fafc] mb-4 border border-[#e2e8f0] flex items-center justify-center">
                     <Sun size={24} className="text-[var(--brand)]" />
                   </div>
-                  <p className="font-bold text-[16px] text-left">Light</p>
+                  <p className="font-bold text-[16px] text-left">{t('light')}</p>
                   <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
                     Clean and bright
                   </p>
@@ -456,14 +456,14 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
       case 'Voice & Video':
         return (
           <div className="max-w-2xl text-[var(--text-normal)]">
-            <h2 className="text-2xl font-bold mb-2 tracking-tight">Voice &amp; Video</h2>
+            <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('voice_video')}</h2>
             <p className="text-[var(--text-muted)] text-[15px] mb-8">
-              Select your input and output devices.
+              {t('select_your_input_and_output_devices')}
             </p>
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-[13px] font-bold text-[var(--text-muted)] uppercase mb-3 tracking-wide">
-                  Input Device
+                  {t('input_device')}
                 </label>
                 <select className="w-full bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] rounded-xl px-4 py-3 outline-none focus:border-[var(--brand)] transition-colors">
                   <option>Default</option>
@@ -484,7 +484,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
       case 'Integrations':
         return (
           <div className="max-w-2xl text-[var(--text-normal)]">
-            <h2 className="text-2xl font-bold mb-2 tracking-tight">Integrations</h2>
+            <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('integrations')}</h2>
             <p className="text-[var(--text-muted)] text-[15px] mb-8">
               Connect your favorite apps and services.
             </p>

@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useChatContext } from './ChatContext';
 import { useAuth } from './AuthContext';
+import { useTranslation } from './LanguageContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
-import { ArrowLeft, Phone, Video, MessageSquare, MoreHorizontal, Edit2, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Star } from 'lucide-react';
+import { Phone, Video, MessageSquare, MoreHorizontal, Edit2, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Star } from 'lucide-react';
 
 export default function Chat() {
   const { username } = useParams<{ username: string }>();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const {
     messages,
@@ -25,6 +25,7 @@ export default function Chat() {
     clearUnread,
     setCurrentChat,
   } = useChatContext();
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -239,13 +240,7 @@ export default function Chat() {
     <div className="flex flex-col h-full bg-[var(--bg-primary)]">
       {/* Chat Header */}
       <header className="h-16 flex items-center px-6 border-b border-[var(--border)] flex-shrink-0 z-10 shadow-sm bg-[var(--bg-secondary)]/50 backdrop-blur-sm">
-        <button
-          onClick={() => navigate('/dms')}
-          className="lg:hidden mr-4 w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors cursor-pointer"
-        >
-          <ArrowLeft size={24} />
-        </button>
-        <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4">
           <div className="relative w-10 h-10">
             <div className="w-full h-full rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-lg shadow-inner overflow-hidden">
               {avatarUrl ? (
@@ -263,7 +258,7 @@ export default function Chat() {
               {displayName}
             </h1>
             <p className="text-[13px] text-[var(--text-muted)] font-medium">
-              {isOnline ? 'Online' : 'Offline'}
+              {isOnline ? t('online') : t('offline')}
             </p>
           </div>
         </div>
@@ -276,19 +271,19 @@ export default function Chat() {
                 ? 'bg-[#f59e0b]/10 text-[#f59e0b]'
                 : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
             }`}
-            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            title={isFavorite ? t('remove_from_favorites') : t('add_to_favorites')}
           >
             <Star size={20} fill={favoriteId ? '#f59e0b' : 'none'} />
           </button>
           <button
             className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
-            title="Start Voice Call"
+            title={t('start_voice_call')}
           >
             <Phone size={24} />
           </button>
           <button
             className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
-            title="Start Video Call"
+            title={t('start_video_call')}
           >
             <Video size={24} />
           </button>
@@ -313,9 +308,9 @@ export default function Chat() {
               <MessageSquare size={48} className="text-[var(--brand)]" />
             </div>
             <h2 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
-              Say hello to {recipient}!
+              {t('say_hello')} {recipient}!
             </h2>
-            <p className="text-[15px]">This is the beginning of your direct message history.</p>
+            <p className="text-[15px]">{t('beginning_of_dm')}</p>
           </div>
         ) : (
           filteredMessages.map((msg, index) => {
@@ -325,7 +320,7 @@ export default function Chat() {
 
             // Always show 'You' for own messages
             const senderName = isSent
-              ? 'You'
+              ? t('you')
               : senderProfile?.username || msg.from;
 
             const senderAvatar = isSent
@@ -387,13 +382,13 @@ export default function Chat() {
                           onClick={handleSaveEdit}
                           className="text-[var(--brand)] font-medium hover:underline"
                         >
-                          Save
+                          {t('save_changes')}
                         </button>
                         <button
                           onClick={handleCancelEdit}
                           className="text-[var(--text-muted)] hover:underline"
                         >
-                          Cancel
+                          {t('discard_changes')}
                         </button>
                         <span className="text-[var(--text-muted)]">
                           (press Enter to save, Esc to cancel)
@@ -488,7 +483,7 @@ export default function Chat() {
               ></span>
             </div>
             <span className="text-[12px] text-[var(--text-muted)] font-medium">
-              {recipientProfile?.username || recipient} is typing...
+              {recipientProfile?.username || recipient} {t('typing')}
             </span>
           </div>
         )}
@@ -559,7 +554,7 @@ export default function Chat() {
 
           <input
             className="flex-1 bg-transparent border-none outline-none text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] px-2"
-            placeholder={`Message @${recipient}`}
+            placeholder={t('message_placeholder') + recipient}
             type="text"
             value={input}
             onChange={handleInputChange}

@@ -12,16 +12,24 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
-    return (localStorage.getItem('aether_lang') as Language) || 'en';
+    const saved = localStorage.getItem('aether_lang');
+    const lang = (saved as Language) || 'en';
+    console.log('[LanguageContext] Initializing with language:', lang);
+    return lang;
   });
 
   const setLanguage = (lang: Language) => {
+    console.log('[LanguageContext] Setting language to:', lang);
     setLanguageState(lang);
     localStorage.setItem('aether_lang', lang);
   };
 
   const t = (key: TranslationKey): string => {
-    return translations[language][key] || translations['en'][key] || key;
+    const translation = translations[language]?.[key] || translations['en'][key] || key;
+    if (!translations[language]?.[key] && !translations['en'][key]) {
+      console.warn('[LanguageContext] Missing translation key:', key);
+    }
+    return translation;
   };
 
   return (

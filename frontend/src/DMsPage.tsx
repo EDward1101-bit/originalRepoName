@@ -1,5 +1,4 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   useChatContext,
   type Friendship,
@@ -9,7 +8,7 @@ import {
 import { formatMessageTimestamp } from './utils/time';
 import { supabase } from './supabase';
 import { useTranslation } from './LanguageContext';
-import { MessageSquare, Inbox, Check, X, UserPlus, Users, MessageCircle, UserMinus, Search, Loader2, Pencil } from 'lucide-react';
+import { MessageSquare, Inbox, Check, X, UserPlus, Users, UserMinus, Search, Loader2, Pencil } from 'lucide-react';
 
 export default function DMsPage() {
   const { t } = useTranslation();
@@ -24,7 +23,6 @@ export default function DMsPage() {
     typingUsers,
     unreadCounts,
   } = useChatContext();
-  const navigate = useNavigate();
 
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [showRequests, setShowRequests] = useState(false);
@@ -134,7 +132,7 @@ export default function DMsPage() {
       <header className="h-16 flex items-center px-6 border-b border-[var(--border)] shrink-0 z-10 shadow-sm bg-[var(--bg-secondary)]/50 backdrop-blur-sm">
         <div className="flex items-center gap-4 flex-1">
           <MessageSquare size={28} className="text-[var(--brand)]" />
-          <h1 className="text-[18px] font-bold tracking-tight">{t('messages') || 'Messages'}</h1>
+          <h1 className="text-[18px] font-bold tracking-tight">{t('messages')}</h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -147,7 +145,7 @@ export default function DMsPage() {
                   ? 'text-[var(--brand)] bg-[var(--brand)]/10 hover:bg-[var(--brand)]/20'
                   : 'text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)]'
               }`}
-              title="Friend Requests"
+              title={t('friend_requests')}
             >
               <Inbox size={24} />
               {pendingReceived.length > 0 && (
@@ -161,7 +159,7 @@ export default function DMsPage() {
                 <div className="absolute right-0 top-14 w-80 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden">
                   <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-tertiary)] flex justify-between items-center">
                     <h3 className="font-bold text-[15px] text-[var(--text-normal)]">
-                      Friend Requests
+                      {t('friend_requests')}
                     </h3>
                     <span className="bg-[var(--brand)] text-white text-xs font-bold px-2 py-0.5 rounded-full">
                       {pendingReceived.length}
@@ -172,7 +170,7 @@ export default function DMsPage() {
                     {pendingReceived.length === 0 ? (
                       <div className="p-6 flex flex-col items-center justify-center text-[var(--text-muted)] text-center">
                         <Inbox size={40} className="mb-2 opacity-50 text-[var(--brand)]" />
-                        <p className="text-sm font-medium">No pending requests</p>
+                        <p className="text-sm font-medium">{t('no_pending_requests')}</p>
                       </div>
                     ) : (
                       pendingReceived.map((f: Friendship) => (
@@ -188,7 +186,7 @@ export default function DMsPage() {
                               {allUsers.find((u) => u.id === f.requester_id)?.username ?? f.requester_id}
                             </span>
                             <span className="text-[12px] text-[var(--text-muted)]">
-                              Wants to be friends
+                              {t('wants_to_be_friends')}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -198,7 +196,7 @@ export default function DMsPage() {
                                 if (pendingReceived.length === 1) setShowRequests(false);
                               }}
                               className="w-8 h-8 rounded-lg bg-[#10b981] text-white flex items-center justify-center hover:bg-[#059669] transition-colors shadow-sm"
-                              title="Accept"
+                              title={t('accept')}
                             >
                               <Check size={16} />
                             </button>
@@ -208,7 +206,7 @@ export default function DMsPage() {
                                 if (pendingReceived.length === 1) setShowRequests(false);
                               }}
                               className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[#ef4444] hover:text-white transition-colors border border-[var(--border)]"
-                              title="Decline"
+                              title={t('decline')}
                             >
                               <X size={16} />
                             </button>
@@ -227,7 +225,7 @@ export default function DMsPage() {
             className="flex items-center gap-2 bg-[var(--brand)] text-white px-4 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
           >
             <UserPlus size={20} />
-            {t('add_friend') || 'Add Friend'}
+            {t('add_friend')}
           </button>
         </div>
       </header>
@@ -240,16 +238,16 @@ export default function DMsPage() {
               <Users size={48} className="text-[var(--brand)]" />
             </div>
             <h2 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
-              {t('no_conversations') || 'No conversations yet'}
+              {t('no_conversations')}
             </h2>
             <p className="text-[15px] mb-6">
-              {t('add_friend_to_chat') || 'Add a friend to start chatting!'}
+              {t('add_friend_to_chat')}
             </p>
             <button
               onClick={() => setShowAddFriend(true)}
               className="bg-[var(--brand)] text-white px-6 py-3 rounded-xl font-bold hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
             >
-              {t('add_first_friend') || 'Add Your First Friend'}
+              {t('add_first_friend')}
             </button>
           </div>
         ) : (
@@ -263,7 +261,6 @@ export default function DMsPage() {
               return (
                 <div
                   key={u.id}
-                  onClick={() => navigate(`/dms/${u.xmppUsername}`)}
                   className={`flex items-center gap-4 px-6 py-4 cursor-pointer transition-all border-b border-[var(--border)]/30 ${
                     hasUnread
                       ? 'bg-[var(--brand)]/[0.06] hover:bg-[var(--brand)]/[0.10]'
@@ -310,13 +307,13 @@ export default function DMsPage() {
                       {typingUsers[u.xmppUsername] ? (
                         <span className="flex items-center gap-1">
                           <Pencil size={12} className="animate-pulse" />
-                          typing...
+                          {t('typing')}
                         </span>
                       ) : lastMsg
                         ? lastMsg.body.includes('chat-media')
-                          ? '📎 Attachment'
+                          ? t('attachment')
                           : lastMsg.body
-                        : 'No messages yet'}
+                        : t('no_messages_yet')}
                     </p>
                   </div>
 
@@ -326,16 +323,7 @@ export default function DMsPage() {
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </div>
                     )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/dms/${u.xmppUsername}`);
-                      }}
-                      className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand)]/10 transition-colors"
-                    >
-                      <MessageCircle size={22} />
-                    </button>
-                    <button
+                                        <button
                       onClick={(e) => {
                         e.stopPropagation();
                         if (rel && confirm(`Remove ${u.username} from your friends?`)) {
@@ -371,10 +359,10 @@ export default function DMsPage() {
             <div className="flex items-center justify-between p-6 border-b border-[var(--border)]">
               <div>
                 <h2 className="text-[20px] font-bold tracking-tight">
-                  {t('add_friend') || 'Add Friend'}
+                  {t('add_friend')}
                 </h2>
                 <p className="text-[14px] text-[var(--text-muted)] mt-1">
-                  Search for users by their Aether username.
+                  {t('search_for_users')}
                 </p>
               </div>
               <button
@@ -394,7 +382,7 @@ export default function DMsPage() {
                 <Search size={22} className="text-[var(--text-muted)]" />
                 <input
                   type="text"
-                  placeholder={t('search_users') || 'Search users by name...'}
+                  placeholder={t('search_users')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus

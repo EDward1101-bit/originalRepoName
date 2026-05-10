@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Switch, Route, Redirect } from 'react-router-dom';
 import Auth from './Auth';
 import Chat from './Chat';
 import DMsPage from './DMsPage';
@@ -11,6 +11,7 @@ import RoomsPage from './RoomsPage';
 import RoomChat from './RoomChat';
 import RoomsRedirect from './RoomsRedirect';
 import BotsPage from './BotsPage';
+import { useTranslation } from './LanguageContext';
 
 console.log('[App] Starting...');
 
@@ -20,17 +21,29 @@ function AuthenticatedRoutes() {
     <ChatProvider>
       <BotProvider>
         <MucProvider>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/dms" element={<DMsPage />} />
-              <Route path="/dms/:username" element={<Chat />} />
-              <Route path="/rooms" element={<RoomsRedirect />} />
-              <Route path="/rooms/explore" element={<RoomsPage />} />
-              <Route path="/rooms/:roomName" element={<RoomChat />} />
-              <Route path="/bots" element={<BotsPage />} />
-              <Route path="*" element={<Navigate to="/dms" replace />} />
+          <Switch>
+            <Route path="/dms" exact>
+              <Layout><DMsPage /></Layout>
             </Route>
-          </Routes>
+            <Route path="/dms/:username">
+              <Layout><Chat /></Layout>
+            </Route>
+            <Route path="/rooms" exact>
+              <Layout><RoomsRedirect /></Layout>
+            </Route>
+            <Route path="/rooms/explore" exact>
+              <Layout><RoomsPage /></Layout>
+            </Route>
+            <Route path="/rooms/:roomName">
+              <Layout><RoomChat /></Layout>
+            </Route>
+            <Route path="/bots" exact>
+              <Layout><BotsPage /></Layout>
+            </Route>
+            <Route path="*">
+              <Layout><Redirect to="/dms" /></Layout>
+            </Route>
+          </Switch>
         </MucProvider>
       </BotProvider>
     </ChatProvider>
@@ -39,6 +52,7 @@ function AuthenticatedRoutes() {
 
 function App() {
   const { user, password, loading } = useAuth();
+  const { t } = useTranslation();
 
   console.log('[App] Auth state:', { user: !!user, hasPassword: !!password, loading });
 
@@ -54,9 +68,9 @@ function App() {
             </div>
 
             <div className="mt-6 text-center">
-              <h1 className="text-[20px] font-bold tracking-tight text-[var(--text-normal)]">Aether</h1>
+              <h1 className="text-[20px] font-bold tracking-tight text-[var(--text-normal)]">{t('aether')}</h1>
               <p className="mt-1 text-[13px] font-medium text-[var(--text-muted)]">
-                Connecting you to your spaces
+                {t('connecting')}
               </p>
             </div>
 
