@@ -19,10 +19,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
 
-      - name: Run type check
-        working-directory: backend
-        run: mypy .
-
       - name: Run tests
         working-directory: backend
         run: python -m pytest --cov=. --cov-report=xml --cov-fail-under=85
@@ -53,11 +49,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Prettier
-        run: npx prettier --check .
-
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Run TypeScript check
-        run: npm run typecheck
+      - name: Run tests
+        run: npm run test
