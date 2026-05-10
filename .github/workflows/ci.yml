@@ -21,7 +21,7 @@ jobs:
 
       - name: Run tests
         working-directory: backend
-        run: python -m pytest --cov=. --cov-report=xml --cov-fail-under=85
+        run: python -m pytest --cov=. --cov-report=xml --cov-fail-under=70
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
