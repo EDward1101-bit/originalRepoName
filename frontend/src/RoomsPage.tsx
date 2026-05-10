@@ -7,7 +7,7 @@ import { Loader2, Trash2 } from 'lucide-react';
 
 export default function RoomsPage() {
   const { availableRooms, joinedRooms, createRoom, deleteRoom } = useMucContext();
-  const { myUsername } = useChatContext();
+  const { myUsername, getUserProfile } = useChatContext();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -81,12 +81,15 @@ export default function RoomsPage() {
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {availableRooms.map((room) => (
-                <div
-                  key={room.id}
-                  className="bg-[var(--bg-secondary)] rounded-md overflow-hidden border border-[var(--border)] hover:border-[var(--brand)]/50 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col h-[200px]"
-                  onClick={() => navigate(`/rooms/${room.name}`)}
-                >
+              {availableRooms.map((room) => {
+                const creatorProfile = getUserProfile(room.created_by);
+                const creatorName = creatorProfile?.username || room.created_by;
+                return (
+                  <div
+                    key={room.id}
+                    className="bg-[var(--bg-secondary)] rounded-md overflow-hidden border border-[var(--border)] hover:border-[var(--brand)]/50 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col h-[200px]"
+                    onClick={() => navigate(`/rooms/${room.name}`)}
+                  >
                   <div className="h-16 bg-gradient-to-r from-[var(--bg-tertiary)] to-[var(--bg-modifier-hover)] relative flex-shrink-0">
                     <div className="absolute inset-0 bg-gradient-to-br from-[var(--brand)]/10 to-transparent" />
                     <div className="absolute -bottom-5 left-4 w-10 h-10 rounded-md bg-[var(--bg-primary)] p-0.5 shadow-lg group-hover:scale-110 transition-transform">
@@ -102,7 +105,7 @@ export default function RoomsPage() {
                           {room.name}
                         </h3>
                         <p className="text-[10px] text-[var(--text-muted)] font-medium mt-1">
-                          by {room.created_by}
+                          by {creatorName}
                         </p>
                       </div>
 
@@ -132,8 +135,9 @@ export default function RoomsPage() {
                       </div>
                     )}
                   </div>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

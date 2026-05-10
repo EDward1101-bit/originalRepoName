@@ -33,6 +33,27 @@ export default function RoomChat() {
   const { getBotsForRoom, allBots } = useBotContext();
   const isConnected = status === 'Connected';
 
+  const resolveDisplayName = useCallback(
+    (xmppName?: string) => {
+      if (!xmppName) return '';
+      const profile = getUserProfile(xmppName);
+      return profile?.username || xmppName;
+    },
+    [getUserProfile]
+  );
+
+  const formatSystemMessage = useCallback(
+    (body: string) => {
+      const match = body.match(/^(.*) has (entered|left) the room\.$/);
+      if (!match) return body;
+      const nickname = match[1];
+      const verb = match[2];
+      const displayName = resolveDisplayName(nickname);
+      return `${displayName} has ${verb} the room.`;
+    },
+    [resolveDisplayName]
+  );
+
   const [input, setInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -377,7 +398,7 @@ export default function RoomChat() {
                         <Info size={20} className="text-[#10b981]" />
                       </div>
                       <div className="flex-1 text-[14px] text-[var(--text-muted)] font-medium italic">
-                        {msg.body}
+                        {formatSystemMessage(msg.body)}
                       </div>
                     </div>
                   );
@@ -836,7 +857,7 @@ export default function RoomChat() {
 
               <div className="pt-2 flex items-center gap-2 text-[12px] text-[var(--text-muted)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)] animate-pulse" />
-                <span>Created by <span className="font-semibold text-[var(--text-normal)]">{room.created_by}</span></span>
+                <span>Created by <span className="font-semibold text-[var(--text-normal)]">{resolveDisplayName(room.created_by)}</span></span>
               </div>
             </div>
 
