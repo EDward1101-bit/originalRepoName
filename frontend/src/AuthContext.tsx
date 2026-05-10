@@ -2,13 +2,16 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
+type SignInData = Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>['data'];
+type SignUpData = Awaited<ReturnType<typeof supabase.auth.signUp>>['data'];
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   password: string | null;
-  signIn: (email: string, password: string) => Promise<any>;
-  signUp: (email: string, password: string, username?: string) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<SignInData>;
+  signUp: (email: string, password: string, username?: string) => Promise<SignUpData>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateProfile: (updates: { display_name?: string; avatar_url?: string }) => Promise<void>;

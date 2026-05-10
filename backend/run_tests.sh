@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 VENV_PATH="../.venv"
 
 # Check if venv exists, if not, create it
@@ -13,12 +16,8 @@ fi
 PIP_PATH="$VENV_PATH/bin/pip"
 PYTEST_PATH="$VENV_PATH/bin/pytest"
 
-# Install dependencies if pytest doesn't exist
-if [ ! -f "$PYTEST_PATH" ]; then
-    echo "Installing dependencies..."
-    "$PIP_PATH" install -r requirements.txt
-    "$PIP_PATH" install pytest pytest-asyncio httpx respx
-fi
+echo "Installing dependencies..."
+"$PIP_PATH" install -r requirements.txt
 
 echo "Running tests..."
 # Run pytest

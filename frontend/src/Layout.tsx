@@ -9,6 +9,8 @@ import PushNotificationBar from './components/PushNotificationBar';
 import { supabase } from './supabase';
 import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, X, Bot, ArrowLeft, Compass, Hash, ShieldCheck } from 'lucide-react';
 
+type TranslationFn = ReturnType<typeof useTranslation>['t'];
+
 export default function Layout() {
   const { user } = useAuth();
   const { status, myUsername, myUserId, unreadCounts, clearUnread, friendships, allUsers } = useChatContext();
@@ -352,7 +354,7 @@ function ChannelsColumn({
   onlineFriendsCount: number,
   status: string,
   isConnected: boolean,
-  t: any,
+  t: TranslationFn,
   setSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>
 }) {
   return (
