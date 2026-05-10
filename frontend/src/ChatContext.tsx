@@ -106,11 +106,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [typingUsers, setTypingUsers] = useState<Record<string, number>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const currentChatRef = useRef<string | null>(null);
-  const [_currentChat, _setCurrentChat] = useState<string | null>(null);
+
 
   const setCurrentChat = useCallback((chatId: string | null) => {
     currentChatRef.current = chatId;
-    _setCurrentChat(chatId);
+
     // Immediately clear unread for the chat being opened
     if (chatId) {
       setUnreadCounts((prev) => {

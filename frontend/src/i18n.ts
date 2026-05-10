@@ -35,6 +35,22 @@ export const translations = {
     online: 'Online',
     offline: 'Offline',
     
+    // Settings Subtitles & Texts
+    user_settings: 'USER SETTINGS',
+    app_settings: 'APP SETTINGS',
+    general_subtitle: 'Manage your profile, language, and account preferences.',
+    account_subtitle: 'Manage your account security and credentials.',
+    appearance_subtitle: 'Customize the look and feel of Aether.',
+    integrations_subtitle: 'Connect your favorite apps and services.',
+    current: 'Current',
+    easy_on_eyes: 'Easy on the eyes',
+    clean_and_bright: 'Clean and bright',
+    coming_soon: 'Coming Soon',
+    connect: 'Connect',
+    under_construction: 'This section is under construction.',
+    enter_new: 'Enter new',
+    delete_account_desc: 'Permanently delete your account and all data.',
+    
     // Actions
     add_friend: 'Add Friend',
     search: 'Search',
@@ -89,6 +105,7 @@ export const translations = {
     start_of_room: 'This is the start of the',
     channel: 'channel.',
     you_havent_joined: 'You haven\'t joined this room',
+    join_room_message: 'Join {roomName} to see messages and participate in the conversation.',
     
     // Status & Indicators
     connected: 'Connected',
@@ -107,6 +124,34 @@ export const translations = {
     // Room System Messages
     entered_room: 'has entered the room.',
     left_room: 'has left the room.',
+    
+    // Bots Page
+    bot_directory: 'Bot Directory',
+    invite_bots: 'Invite bots to your rooms · Build your own bot',
+    register_bot: 'Register a Bot',
+    available_bots: 'Available Bots',
+    no_bots: 'No bots registered yet.',
+    be_the_first: 'Be the first to build one!',
+    official: 'Official',
+    your_rooms: 'Your Rooms',
+    no_rooms_created: 'You haven\'t created any rooms yet.',
+    active: 'Active',
+    invite: 'Invite',
+    delete_bot: 'Delete Bot?',
+    delete_bot_desc: 'Are you sure you want to delete {botName}? This action cannot be undone and it will be removed from all rooms.',
+    webhook_desc: 'Point Aether to your webhook URL. We\'ll POST every message through it and use the response as the filtered body.',
+    bot_registered: '🎉 Bot registered!',
+    copy_secret_warning: 'Copy your webhook secret now. It won\'t be shown again.',
+    bot_id: 'Bot ID',
+    webhook_secret: 'Webhook Secret',
+    register_another_bot: 'Register Another Bot',
+    bot_name: 'Bot Name *',
+    bot_desc_placeholder: 'What does this bot do?',
+    emoji_icon: 'Emoji Icon',
+    webhook_url: 'Webhook URL *',
+    localhost: 'Localhost',
+    registering: 'Registering...',
+    select_bot_manage: 'Select a bot to manage.',
     
     // App Name
     aether: 'Aether',
@@ -158,7 +203,6 @@ export const translations = {
     start_video_call: 'Start Video Call',
     save_changes: 'Save Changes',
     discard_changes: 'Discard Changes',
-    join_room_message: 'Join #{roomName} to see the message history and participate in the conversation.',
     sent_you_message: 'sent you a message',
     back: 'Back',
     clear_all: 'Clear',
@@ -205,6 +249,22 @@ export const translations = {
     delete_account: 'Șterge Contul',
     online: 'Online',
     offline: 'Offline',
+    
+    // Settings Subtitles & Texts
+    user_settings: 'SETĂRI UTILIZATOR',
+    app_settings: 'SETĂRI APLICAȚIE',
+    general_subtitle: 'Gestionează-ți profilul, limba și preferințele contului.',
+    account_subtitle: 'Gestionează securitatea și credențialele contului tău.',
+    appearance_subtitle: 'Personalizează aspectul Aether.',
+    integrations_subtitle: 'Conectează-ți aplicațiile și serviciile preferate.',
+    current: 'Curent',
+    easy_on_eyes: 'Plăcut pentru ochi',
+    clean_and_bright: 'Curat și luminos',
+    coming_soon: 'În curând',
+    connect: 'Conectează',
+    under_construction: 'Această secțiune este în construcție.',
+    enter_new: 'Introdu noul',
+    delete_account_desc: 'Șterge permanent contul tău și toate datele.',
     
     // Actions
     add_friend: 'Adaugă Prieten',
@@ -259,7 +319,8 @@ export const translations = {
     welcome_to_room: 'Bun venit în',
     start_of_room: 'Acesta este începutul canalului',
     channel: 'canal.',
-    you_havent_joined: 'Nu ai intrat în această cameră',
+    you_havent_joined: 'Nu te-ai alăturat acestei camere',
+    join_room_message: 'Alătură-te camerei {roomName} pentru a vedea mesajele și a participa la conversație.',
     
     // Status & Indicators
     connected: 'Conectat',
@@ -278,6 +339,34 @@ export const translations = {
     // Room System Messages
     entered_room: 'a intrat în cameră.',
     left_room: 'a părăsit camera.',
+    
+    // Bots Page
+    bot_directory: 'Director de Boți',
+    invite_bots: 'Invită boți în camerele tale · Creează-ți propriul bot',
+    register_bot: 'Înregistrează un Bot',
+    available_bots: 'Boți Disponibili',
+    no_bots: 'Niciun bot înregistrat încă.',
+    be_the_first: 'Fii primul care construiește unul!',
+    official: 'Oficial',
+    your_rooms: 'Camerele Tale',
+    no_rooms_created: 'Nu ai creat nicio cameră încă.',
+    active: 'Activ',
+    invite: 'Invită',
+    delete_bot: 'Ștergi Botul?',
+    delete_bot_desc: 'Ești sigur că vrei să ștergi botul {botName}? Această acțiune nu poate fi anulată și va fi eliminat din toate camerele.',
+    webhook_desc: 'Asociază Aether cu URL-ul webhook-ului tău. Vom face POST cu fiecare mesaj, iar răspunsul va fi folosit ca mesaj filtrat.',
+    bot_registered: '🎉 Bot înregistrat!',
+    copy_secret_warning: 'Copiază secretul webhook-ului acum. Nu va mai fi afișat din nou.',
+    bot_id: 'ID Bot',
+    webhook_secret: 'Secret Webhook',
+    register_another_bot: 'Înregistrează Alt Bot',
+    bot_name: 'Nume Bot *',
+    bot_desc_placeholder: 'Ce face acest bot?',
+    emoji_icon: 'Iconiță Emoji',
+    webhook_url: 'URL Webhook *',
+    localhost: 'Localhost',
+    registering: 'Se înregistrează...',
+    select_bot_manage: 'Selectează un bot pentru gestionare.',
     
     // App Name
     aether: 'Aether',
@@ -329,7 +418,7 @@ export const translations = {
     start_video_call: 'Pornește Apel Video',
     save_changes: 'Salvează Modificările',
     discard_changes: 'Renunță la Modificări',
-    join_room_message: 'Intră în #{roomName} pentru a vedea istoricul mesajelor și a participa la conversație.',
+
     sent_you_message: 'ți-a trimis un mesaj',
     back: 'Înapoi',
     clear_all: 'Șterge tot',

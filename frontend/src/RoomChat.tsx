@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useChatContext } from './ChatContext';
 import { useTranslation } from './LanguageContext';
 import { useBotContext } from './BotContext';
+import { useMucContext } from './MucContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
@@ -12,6 +13,7 @@ import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Tr
 
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
+  const navigate = useNavigate();
   const {
     availableRooms,
     joinedRooms,
@@ -49,9 +51,10 @@ export default function RoomChat() {
       const nickname = match[1];
       const verb = match[2];
       const displayName = resolveDisplayName(nickname);
-      return `${displayName} has ${verb} the room.`;
+      const action = verb === 'entered' ? t('entered_room') : t('left_room');
+      return `${displayName} ${action}`;
     },
-    [resolveDisplayName]
+    [resolveDisplayName, t]
   );
 
   const [input, setInput] = useState('');
@@ -103,7 +106,7 @@ export default function RoomChat() {
   const shouldStickToBottomRef = useRef(true);
   const initialScrollDoneRef = useRef(false);
 
-  const scrollToBottom = (mode: ScrollBehavior = 'auto') => {
+  const scrollToBottom = (mode: 'auto' | 'smooth' = 'auto') => {
     if (!messagesContainerRef.current) return;
     messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     messagesEndRef.current?.scrollIntoView({ behavior: mode, block: 'end' });
@@ -149,7 +152,6 @@ export default function RoomChat() {
     if (shouldStickToBottomRef.current) {
       scrollToBottom('auto');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length]);
 
   const handleJoin = async () => {
@@ -409,6 +411,7 @@ export default function RoomChat() {
                   messages[index - 1].type === 'system';
 
                 const isDeleted = msg.body === '\u{1F6AB} This message was deleted';
+                const messageBodyToRender = isDeleted ? t('message_deleted') : msg.body;
 
                 return (
                   <div
@@ -458,7 +461,7 @@ export default function RoomChat() {
                         <div
                           className={`text-[15px] whitespace-pre-wrap break-words leading-[1.4rem] ${isDeleted ? 'text-[var(--text-muted)] italic' : 'text-[var(--text-normal)]'}`}
                         >
-                          {msg.body}
+                          {messageBodyToRender}
                         </div>
                       )}
                     </div>
@@ -788,7 +791,7 @@ export default function RoomChat() {
             {t('you_havent_joined')}
           </h3>
           <p className="mb-8 text-center max-w-md text-[15px] leading-relaxed">
-            {t('join_room_message', {roomName: room.name})}
+            {t('join_room_message').replace('{roomName}', room.name)}
           </p>
           <button
             onClick={handleJoin}

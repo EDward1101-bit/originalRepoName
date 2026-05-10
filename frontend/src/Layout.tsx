@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useChatContext } from './ChatContext';
@@ -109,7 +109,7 @@ export default function Layout({ children }: LayoutProps = {}) {
       return [t('bots')];
     }
     return [t('aether')];
-  }, [location.pathname]);
+  }, [location.pathname, t]);
 
   // Room unread: read directly from MucContext (tracked per-room, skipped when in that room)
   const roomUnread = Object.values(roomUnreadCounts).reduce((acc, n) => acc + n, 0);
@@ -251,8 +251,7 @@ function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread:
       <div className="relative group">
         <NavLink
           to="/dms"
-          className="w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]"
-          activeClassName="!rounded-[14px] bg-[var(--brand)] text-white"
+          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)] ${isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : ''}`}
         >
           <MessageSquare size={22} />
         </NavLink>
@@ -268,8 +267,7 @@ function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread:
       <div className="relative group">
         <NavLink
           to="/rooms"
-          className="w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]"
-          activeClassName="!rounded-[14px] bg-[var(--brand)] text-white"
+          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)] ${isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : ''}`}
         >
           <Server size={22} />
         </NavLink>
@@ -285,8 +283,7 @@ function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread:
       <div className="relative group">
         <NavLink
           to="/bots"
-          className="w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]"
-          activeClassName="!rounded-[14px] bg-[var(--brand)] text-white"
+          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)] ${isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : ''}`}
         >
           <Bot size={22} />
         </NavLink>
@@ -367,8 +364,7 @@ function ChannelsColumn({
                       <NavLink
                         key={roomName}
                         to={`/rooms/${roomName}`}
-                        className="flex items-center gap-2 px-2 py-1 rounded-md transition-all group text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]"
-                        activeClassName="bg-[var(--brand)]/15 text-[var(--brand)]"
+                        className={({ isActive }) => `flex items-center gap-2 px-2 py-1 rounded-md transition-all group text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] ${isActive ? 'bg-[var(--brand)]/15 text-[var(--brand)]' : ''}`}
                       >
                         <div className="w-4 h-4 rounded flex items-center justify-center bg-[var(--bg-secondary)] flex-shrink-0">
                           <Hash size={10} />
@@ -405,8 +401,7 @@ function ChannelsColumn({
               <div className="mb-4">
                 <NavLink
                   to="/rooms/explore"
-                  className="flex items-center gap-2 px-2 py-1 rounded-md transition-all text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]"
-                  activeClassName="bg-[var(--brand)]/15 text-[var(--brand)]"
+                  className={({ isActive }) => `flex items-center gap-2 px-2 py-1 rounded-md transition-all text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] ${isActive ? 'bg-[var(--brand)]/15 text-[var(--brand)]' : ''}`}
                 >
                   <div className="w-4 h-4 rounded flex items-center justify-center bg-[var(--bg-secondary)] flex-shrink-0">
                     <Compass size={10} />
@@ -459,8 +454,7 @@ function ChannelsColumn({
                       <div key={fav.id} className="group flex items-center gap-2">
                         <NavLink
                           to={`/dms/${fav.name}`}
-                          className="flex-1 flex items-center gap-3 px-3 py-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all"
-                          activeClassName="bg-[var(--bg-modifier-selected)] text-[var(--brand)]"
+                          className={({ isActive }) => `flex-1 flex items-center gap-3 px-3 py-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''}`}
                         >
                           <MessageSquare size={16} />
                           <span className="font-medium text-[14px] truncate">{fav.name}</span>

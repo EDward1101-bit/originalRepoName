@@ -1,17 +1,19 @@
-import { Switch, Route, Redirect } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Auth from './Auth';
-import Chat from './Chat';
-import DMsPage from './DMsPage';
 import Layout from './Layout';
 import { useAuth } from './AuthContext';
 import { ChatProvider } from './ChatContext';
 import { MucProvider } from './MucContext';
 import { BotProvider } from './BotContext';
-import RoomsPage from './RoomsPage';
-import RoomChat from './RoomChat';
-import RoomsRedirect from './RoomsRedirect';
-import BotsPage from './BotsPage';
 import { useTranslation } from './LanguageContext';
+
+const Chat = React.lazy(() => import('./Chat'));
+const DMsPage = React.lazy(() => import('./DMsPage'));
+const RoomsPage = React.lazy(() => import('./RoomsPage'));
+const RoomChat = React.lazy(() => import('./RoomChat'));
+const RoomsRedirect = React.lazy(() => import('./RoomsRedirect'));
+const BotsPage = React.lazy(() => import('./BotsPage'));
 
 console.log('[App] Starting...');
 
@@ -21,29 +23,21 @@ function AuthenticatedRoutes() {
     <ChatProvider>
       <BotProvider>
         <MucProvider>
-          <Switch>
-            <Route path="/dms" exact>
-              <Layout><DMsPage /></Layout>
-            </Route>
-            <Route path="/dms/:username">
-              <Layout><Chat /></Layout>
-            </Route>
-            <Route path="/rooms" exact>
-              <Layout><RoomsRedirect /></Layout>
-            </Route>
-            <Route path="/rooms/explore" exact>
-              <Layout><RoomsPage /></Layout>
-            </Route>
-            <Route path="/rooms/:roomName">
-              <Layout><RoomChat /></Layout>
-            </Route>
-            <Route path="/bots" exact>
-              <Layout><BotsPage /></Layout>
-            </Route>
-            <Route path="*">
-              <Layout><Redirect to="/dms" /></Layout>
-            </Route>
-          </Switch>
+          <Suspense fallback={
+            <div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)]">
+              <div className="w-8 h-8 rounded-full border-4 border-[var(--brand)]/20 border-t-[var(--brand)] animate-spin" />
+            </div>
+          }>
+            <Routes>
+              <Route path="/dms" element={<Layout><DMsPage /></Layout>} />
+              <Route path="/dms/:username" element={<Layout><Chat /></Layout>} />
+              <Route path="/rooms" element={<Layout><RoomsRedirect /></Layout>} />
+              <Route path="/rooms/explore" element={<Layout><RoomsPage /></Layout>} />
+              <Route path="/rooms/:roomName" element={<Layout><RoomChat /></Layout>} />
+              <Route path="/bots" element={<Layout><BotsPage /></Layout>} />
+              <Route path="*" element={<Layout><Navigate to="/dms" replace /></Layout>} />
+            </Routes>
+          </Suspense>
         </MucProvider>
       </BotProvider>
     </ChatProvider>

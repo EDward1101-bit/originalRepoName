@@ -2,7 +2,7 @@ import { useTranslation } from '../LanguageContext';
 import { Globe } from 'lucide-react';
 
 export default function LanguageSelector() {
-  const { language, setLanguage, t } = useTranslation();
+  const { language, setLanguage } = useTranslation();
 
   const languages = [
     { code: 'en', name: 'English', flag: '🇺🇸' },

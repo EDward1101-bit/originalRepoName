@@ -42,11 +42,11 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const tabs = [
-    { name: 'General', label: t('general'), Icon: Settings, category: 'USER SETTINGS' },
-    { name: 'My Account', label: t('account'), Icon: User, category: 'USER SETTINGS' },
-    { name: 'Appearance', label: t('appearance'), Icon: Palette, category: 'APP SETTINGS' },
-    { name: 'Voice & Video', label: t('voice_video'), Icon: Mic, category: 'APP SETTINGS' },
-    { name: 'Integrations', label: t('integrations'), Icon: Puzzle, category: 'APP SETTINGS' },
+    { name: 'General', label: t('general'), Icon: Settings, category: t('user_settings') },
+    { name: 'My Account', label: t('account'), Icon: User, category: t('user_settings') },
+    { name: 'Appearance', label: t('appearance'), Icon: Palette, category: t('app_settings') },
+    { name: 'Voice & Video', label: t('voice_video'), Icon: Mic, category: t('app_settings') },
+    { name: 'Integrations', label: t('integrations'), Icon: Puzzle, category: t('app_settings') },
   ];
 
   const handleSignOut = async () => {
@@ -187,7 +187,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
           <div className="max-w-2xl text-[var(--text-normal)]">
             <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('general')}</h2>
             <p className="text-[var(--text-muted)] text-[15px] mb-8">
-              Manage your profile, language, and account preferences.
+              {t('general_subtitle')}
             </p>
 
             {/* Profile Picture */}
@@ -283,7 +283,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                 {t('display_name')}
               </h3>
               <p className="text-[14px] text-[var(--text-muted)] mb-3">
-                Current:{' '}
+                {t('current')}:{' '}
                 <span className="font-bold text-[var(--text-normal)]">
                   {user?.user_metadata?.display_name || myUsername}
                 </span>
@@ -293,7 +293,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   type="text"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
-                  placeholder={`Enter new ${t('display_name').toLowerCase()}`}
+                  placeholder={`${t('enter_new')} ${t('display_name').toLowerCase()}`}
                   className="flex-1 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] outline-none focus:border-[var(--brand)] transition-colors"
                 />
                 <button
@@ -320,7 +320,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
           <div className="max-w-2xl text-[var(--text-normal)]">
             <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('account')}</h2>
             <p className="text-[var(--text-muted)] text-[15px] mb-8">
-              Manage your account security and credentials.
+              {t('account_subtitle')}
             </p>
 
             {/* Account Info Card */}
@@ -391,7 +391,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   <div>
                     <p className="font-bold text-[15px]">{t('delete_account')}</p>
                     <p className="text-[13px] text-[var(--text-muted)]">
-                      Permanently delete your account and all data.
+                      {t('delete_account_desc')}
                     </p>
                   </div>
                   <button className="bg-[#ef4444] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[#dc2626] transition-colors shadow-sm">
@@ -408,7 +408,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
           <div className="max-w-2xl text-[var(--text-normal)]">
             <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('appearance')}</h2>
             <p className="text-[var(--text-muted)] text-[15px] mb-8">
-              Customize the look and feel of Aether.
+              {t('appearance_subtitle')}
             </p>
 
             <div className="mb-8">
@@ -429,7 +429,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   </div>
                   <p className="font-bold text-[16px] text-left">{t('dark')}</p>
                   <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
-                    Easy on the eyes
+                    {t('easy_on_eyes')}
                   </p>
                 </button>
                 <button
@@ -445,7 +445,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   </div>
                   <p className="font-bold text-[16px] text-left">{t('light')}</p>
                   <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
-                    Clean and bright
+                    {t('clean_and_bright')}
                   </p>
                 </button>
               </div>
@@ -486,7 +486,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
           <div className="max-w-2xl text-[var(--text-normal)]">
             <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('integrations')}</h2>
             <p className="text-[var(--text-muted)] text-[15px] mb-8">
-              Connect your favorite apps and services.
+              {t('integrations_subtitle')}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-[var(--bg-tertiary)] p-5 rounded-2xl flex items-center justify-between border border-[var(--border)]">
@@ -494,10 +494,10 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   <div className="w-10 h-10 rounded-xl bg-[#8b5cf6] flex items-center justify-center">
                     <Puzzle size={22} className="text-white" />
                   </div>
-                  <span className="font-bold text-[15px]">Coming Soon</span>
+                  <span className="font-bold text-[15px]">{t('coming_soon')}</span>
                 </div>
                 <button className="text-[var(--brand)] text-[14px] font-bold opacity-50 cursor-not-allowed">
-                  Connect
+                  {t('connect')}
                 </button>
               </div>
             </div>
@@ -508,7 +508,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
         return (
           <div className="text-[var(--text-normal)]">
             <h2 className="text-2xl font-bold mb-4 tracking-tight">{activeTab}</h2>
-            <p className="text-[var(--text-muted)]">This section is under construction.</p>
+            <p className="text-[var(--text-muted)]">{t('under_construction')}</p>
           </div>
         );
     }

@@ -40,7 +40,7 @@ export default function Chat() {
   const shouldStickToBottomRef = useRef(true);
   const initialScrollDoneRef = useRef(false);
 
-  const scrollToBottom = (mode: ScrollBehavior = 'auto') => {
+  const scrollToBottom = (mode: 'auto' | 'smooth' = 'auto') => {
     if (!messagesContainerRef.current) return;
     // Jump via scrollTop to avoid long smooth scroll for huge histories.
     messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
@@ -328,6 +328,7 @@ export default function Chat() {
               : senderProfile?.avatarUrl;
 
             const isDeleted = msg.body === '\u{1F6AB} This message was deleted';
+            const messageBodyToRender = isDeleted ? t('message_deleted') : msg.body;
             const canEdit =
               isSent && !isDeleted && Date.now() - msg.time.getTime() < 15 * 60 * 1000;
 
@@ -401,7 +402,7 @@ export default function Chat() {
                     <div
                       className={`text-[15px] whitespace-pre-wrap break-words leading-[1.4rem] ${isDeleted ? 'text-[var(--text-muted)] italic' : 'text-[var(--text-normal)]'}`}
                     >
-                      {msg.body}
+                      {messageBodyToRender}
                     </div>
                   )}
                 </div>

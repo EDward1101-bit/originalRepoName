@@ -102,10 +102,10 @@ export default function PushNotificationBar() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
 
-  // Cleanup all pending timers when the component unmounts
   useEffect(() => {
+    const timers = timerMapRef.current;
     return () => {
-      Object.values(timerMapRef.current).forEach(clearTimeout);
+      Object.values(timers).forEach(clearTimeout);
     };
   }, []);
 

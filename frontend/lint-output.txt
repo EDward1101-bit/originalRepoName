@@ -1,0 +1,32 @@
+
+> xmpp-chat-frontend@0.1.0 lint
+> eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+
+
+C:\Users\esmar\OneDrive\Desktop\proiectMDS\originalRepoName\frontend\src\BotsPage.tsx
+  58:36  error  'React' is not defined  no-undef
+
+C:\Users\esmar\OneDrive\Desktop\proiectMDS\originalRepoName\frontend\src\Chat.tsx
+  43:33  error  'ScrollBehavior' is not defined  no-undef
+
+C:\Users\esmar\OneDrive\Desktop\proiectMDS\originalRepoName\frontend\src\ChatContext.tsx
+  109:10  warning  '_currentChat' is assigned a value but never used  no-unused-vars
+
+C:\Users\esmar\OneDrive\Desktop\proiectMDS\originalRepoName\frontend\src\Layout.tsx
+   15:14  error    'React' is not defined                                                                              no-undef
+  112:6   warning  React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  325:17  error    'React' is not defined                                                                              no-undef
+  325:32  error    'React' is not defined                                                                              no-undef
+  331:20  error    'React' is not defined                                                                              no-undef
+  331:35  error    'React' is not defined                                                                              no-undef
+
+C:\Users\esmar\OneDrive\Desktop\proiectMDS\originalRepoName\frontend\src\RoomChat.tsx
+  109:33  error  'ScrollBehavior' is not defined                                                                 no-undef
+  155:5   error  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+C:\Users\esmar\OneDrive\Desktop\proiectMDS\originalRepoName\frontend\src\components\PushNotificationBar.tsx
+  108:33  warning  The ref value 'timerMapRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'timerMapRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+✖ 12 problems (9 errors, 3 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+

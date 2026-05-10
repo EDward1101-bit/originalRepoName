@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useBotContext } from './BotContext';
 import type { BotDefinition, RegisteredBot } from './BotContext';
 import { useMucContext } from './MucContext';
 import { useChatContext } from './ChatContext';
+import { useTranslation } from './LanguageContext';
 import {
   CheckCircle2,
   XCircle,
@@ -24,6 +25,7 @@ export default function BotsPage() {
   const { allBots, isBotInRoom, inviteBot, removeBot, registerBot, deleteBot } = useBotContext();
   const { availableRooms } = useMucContext();
   const { myUsername } = useChatContext();
+  const { t } = useTranslation();
 
   const [selectedBot, setSelectedBot] = useState<BotDefinition | null>(allBots[0] ?? null);
   const [panel, setPanel] = useState<Panel>('manage');
@@ -109,9 +111,9 @@ export default function BotsPage() {
               <Bot size={22} className="text-[var(--brand)]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Bot Directory</h1>
+              <h1 className="text-2xl font-bold">{t('bot_directory')}</h1>
               <p className="text-sm text-[var(--text-muted)] mt-0.5">
-                Invite bots to your rooms · Build your own bot
+                {t('invite_bots')}
               </p>
             </div>
           </div>
@@ -124,7 +126,7 @@ export default function BotsPage() {
             }`}
           >
             <Plus size={15} />
-            Register a Bot
+            {t('register_bot')}
           </button>
         </div>
       </div>
@@ -133,7 +135,7 @@ export default function BotsPage() {
         {/* Bot List */}
         <div className="flex-1 overflow-y-auto p-8">
           <h2 className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-4">
-            Available Bots — {allBots.length}
+            {t('available_bots')} — {allBots.length}
           </h2>
 
           {allBots.length === 0 ? (
@@ -141,9 +143,9 @@ export default function BotsPage() {
               <div className="w-20 h-20 rounded-full bg-[var(--bg-secondary)] flex items-center justify-center mb-4 text-4xl">
                 🤖
               </div>
-              <p className="text-[15px] text-[var(--text-muted)] italic">No bots registered yet.</p>
+              <p className="text-[15px] text-[var(--text-muted)] italic">{t('no_bots')}</p>
               <p className="text-[12px] text-[var(--text-muted)] opacity-60 mt-1">
-                Be the first to build one!
+                {t('be_the_first')}
               </p>
             </div>
           ) : (
@@ -176,7 +178,7 @@ export default function BotsPage() {
                         </span>
                         {bot.isBuiltin && (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#10b981]/15 text-[#10b981] uppercase tracking-wide">
-                            Official
+                            {t('official')}
                           </span>
                         )}
                         <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
@@ -187,7 +189,7 @@ export default function BotsPage() {
                           <span className={`w-1.5 h-1.5 rounded-full ${
                             bot.isOnline ? 'bg-[#22c55e] shadow-[0_0_4px_#22c55e]' : 'bg-[var(--text-muted)]'
                           }`} />
-                          {bot.isOnline ? 'Online' : 'Offline'}
+                          {bot.isOnline ? t('online') : t('offline')}
                         </span>
                       </div>
                       <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
@@ -232,23 +234,23 @@ export default function BotsPage() {
           {panel === 'register' && (
             <>
               <div className="p-6 border-b border-[var(--border)]">
-                <h3 className="font-bold text-[18px]">Register a Bot</h3>
+                <h3 className="font-bold text-[18px]">{t('register_bot')}</h3>
                 <p className="text-[12px] text-[var(--text-muted)] mt-1 leading-relaxed">
-                  Point Aether to your webhook URL. We'll POST every message through it and use the response as the filtered body.
+                  {t('webhook_desc')}
                 </p>
               </div>
               <div className="flex-1 overflow-y-auto p-6">
                 {registeredResult ? (
                   <div className="flex flex-col gap-4">
                     <div className="p-4 bg-[#10b981]/10 border border-[#10b981]/30 rounded-xl">
-                      <p className="text-[13px] font-bold text-[#10b981] mb-1">🎉 Bot registered!</p>
+                      <p className="text-[13px] font-bold text-[#10b981] mb-1">{t('bot_registered')}</p>
                       <p className="text-[12px] text-[var(--text-muted)] leading-relaxed">
-                        Copy your webhook secret now. <strong>It won't be shown again.</strong>
+                        {t('copy_secret_warning')}
                       </p>
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
-                        Bot ID
+                        {t('bot_id')}
                       </label>
                       <code className="text-[13px] bg-[var(--bg-tertiary)] px-3 py-2 rounded-lg block text-[var(--text-normal)] font-mono">
                         {registeredResult.bot_id}
@@ -256,7 +258,7 @@ export default function BotsPage() {
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
-                        Webhook Secret
+                        {t('webhook_secret')}
                       </label>
                       <div className="flex gap-2">
                         <code className="flex-1 text-[12px] bg-[var(--bg-tertiary)] px-3 py-2 rounded-lg text-[var(--text-normal)] font-mono truncate border border-[var(--brand)]/30">
@@ -274,14 +276,14 @@ export default function BotsPage() {
                       onClick={() => setRegisteredResult(null)}
                       className="w-full py-2.5 rounded-xl bg-[var(--brand)] text-white font-bold text-[13px] hover:bg-[var(--brand-hover)] transition-colors mt-2"
                     >
-                      Register Another Bot
+                      {t('register_another_bot')}
                     </button>
                   </div>
                 ) : (
                   <form onSubmit={handleRegister} className="flex flex-col gap-4">
                     <div>
                       <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
-                        Bot Name *
+                        {t('bot_name')}
                       </label>
                       <input
                         className={inputCls}
@@ -293,18 +295,18 @@ export default function BotsPage() {
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
-                        Description
+                        {t('description')}
                       </label>
                       <textarea
                         className={`${inputCls} resize-none h-20`}
-                        placeholder="What does this bot do?"
+                        placeholder={t('bot_desc_placeholder')}
                         value={form.description}
                         onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                       />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
-                        Emoji Icon
+                        {t('emoji_icon')}
                       </label>
                       <input
                         className={inputCls}
@@ -317,14 +319,14 @@ export default function BotsPage() {
                     <div>
                       <div className="flex justify-between items-center mb-2">
                         <label className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider block">
-                          Webhook URL *
+                          {t('webhook_url')}
                         </label>
                         <button
                           type="button"
                           onClick={() => setForm((f) => ({ ...f, webhookUrl: 'http://172.17.0.1:4001/webhook' }))}
                           className="text-[10px] font-bold text-[var(--brand)] hover:opacity-80 uppercase tracking-wide bg-[var(--brand)]/10 px-2 py-1 rounded transition-colors"
                         >
-                          Localhost
+                          {t('localhost')}
                         </button>
                       </div>
                       <input
@@ -347,7 +349,7 @@ export default function BotsPage() {
                       className="w-full py-2.5 rounded-xl bg-[var(--brand)] text-white font-bold text-[13px] hover:bg-[var(--brand-hover)] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {isRegistering ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
-                      {isRegistering ? 'Registering…' : 'Register Bot'}
+                      {isRegistering ? t('registering') : t('register_bot')}
                     </button>
                   </form>
                 )}
@@ -375,7 +377,7 @@ export default function BotsPage() {
                         <span className={`w-2 h-2 rounded-full ${
                           selectedBot.isOnline ? 'bg-[#22c55e] shadow-[0_0_6px_#22c55e]' : 'bg-[var(--text-muted)]'
                         }`} />
-                        {selectedBot.isOnline ? 'Online' : 'Offline'}
+                        {selectedBot.isOnline ? t('online') : t('offline')}
                       </span>
                       <span className="text-[11px] text-[var(--text-muted)]">
                         · {selectedBot.isBuiltin ? 'Official · Always available' : `By ${selectedBot.ownerUsername ?? 'unknown'}`}
@@ -392,7 +394,7 @@ export default function BotsPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <Shield size={14} className="text-[var(--text-muted)]" />
                   <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                    Your Rooms
+                    {t('your_rooms')}
                   </p>
                 </div>
 
@@ -400,7 +402,7 @@ export default function BotsPage() {
                   <div className="text-center py-10">
                     <div className="text-4xl mb-3">🏠</div>
                     <p className="text-[13px] text-[var(--text-muted)] italic">
-                      You haven't created any rooms yet.
+                      {t('no_rooms_created')}
                     </p>
                   </div>
                 ) : (
@@ -427,7 +429,7 @@ export default function BotsPage() {
                             </div>
                             <div className="min-w-0">
                               <p className="text-[13px] font-semibold truncate">{room.name}</p>
-                              {active && <p className="text-[11px] text-[var(--brand)] font-medium">Active</p>}
+                              {active && <p className="text-[11px] text-[var(--brand)] font-medium">{t('active')}</p>}
                             </div>
                           </div>
                           <button
@@ -442,9 +444,9 @@ export default function BotsPage() {
                             {isLoading ? (
                               <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                             ) : active ? (
-                              <><XCircle size={13} /> Remove</>
+                              <><XCircle size={13} /> {t('remove')}</>
                             ) : (
-                              <><CheckCircle2 size={13} /> Invite</>
+                              <><CheckCircle2 size={13} /> {t('invite')}</>
                             )}
                           </button>
                         </div>
@@ -459,7 +461,7 @@ export default function BotsPage() {
           {panel === 'manage' && !selectedBot && (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
               <div className="text-5xl mb-4">🤖</div>
-              <p className="text-[14px] text-[var(--text-muted)] italic">Select a bot to manage.</p>
+              <p className="text-[14px] text-[var(--text-muted)] italic">{t('select_bot_manage')}</p>
             </div>
           )}
         </div>
@@ -473,9 +475,9 @@ export default function BotsPage() {
               <div className="w-12 h-12 rounded-full bg-[#ef4444]/10 flex items-center justify-center text-[#ef4444] mb-4">
                 <AlertTriangle size={24} />
               </div>
-              <h3 className="text-xl font-bold mb-2 tracking-tight">Delete Bot?</h3>
+              <h3 className="text-xl font-bold mb-2 tracking-tight">{t('delete_bot')}</h3>
               <p className="text-[14px] text-[var(--text-muted)] leading-relaxed">
-                Are you sure you want to delete <strong className="text-[var(--text-normal)]">{botToDelete.name}</strong>? This action cannot be undone and it will be removed from all rooms.
+                {t('delete_bot_desc').replace('{botName}', botToDelete.name)}
               </p>
             </div>
             <div className="p-4 bg-[var(--bg-secondary)] border-t border-[var(--border)] flex gap-3 justify-end">
@@ -484,7 +486,7 @@ export default function BotsPage() {
                 disabled={deletingBotId !== null}
                 className="px-4 py-2 rounded-xl text-[14px] font-medium text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors disabled:opacity-50"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 onClick={confirmDeleteBot}
@@ -492,7 +494,7 @@ export default function BotsPage() {
                 className="px-5 py-2 rounded-xl text-[14px] font-medium bg-[#ef4444] text-white hover:bg-[#ef4444]/90 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
               >
                 {deletingBotId !== null && <Loader2 size={16} className="animate-spin" />}
-                Delete Bot
+                {t('delete')}
               </button>
             </div>
           </div>
