@@ -152,6 +152,12 @@ export const translations = {
     localhost: 'Localhost',
     registering: 'Registering...',
     select_bot_manage: 'Select a bot to manage.',
+    official_always_available: 'Official · Always available',
+    by_author: 'By {author}',
+    unknown: 'unknown',
+    you_created_room: 'You created this room',
+    swear_shield_desc: 'Automatically censors profanity in messages before they are sent. All room members see clean, filtered text.',
+    ping_bot_desc: 'Says pong!',
     
     // App Name
     aether: 'Aether',
@@ -367,6 +373,12 @@ export const translations = {
     localhost: 'Localhost',
     registering: 'Se înregistrează...',
     select_bot_manage: 'Selectează un bot pentru gestionare.',
+    official_always_available: 'Oficial · Mereu disponibil',
+    by_author: 'De {author}',
+    unknown: 'necunoscut',
+    you_created_room: 'Tu ai creat această cameră',
+    swear_shield_desc: 'Cenzurează automat profanitățile din mesaje înainte de a fi trimise. Toți membrii camerei văd un text curat și filtrat.',
+    ping_bot_desc: 'Zice pong!',
     
     // App Name
     aether: 'Aether',

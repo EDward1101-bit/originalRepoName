@@ -381,7 +381,7 @@ function ChannelsColumn({
                               className="text-[#10b981] opacity-80 hover:opacity-100 transition-opacity cursor-help" 
                             />
                             <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] text-[10px] font-bold rounded-md opacity-0 group-hover/owner:opacity-100 transition-all pointer-events-none z-[100] shadow-2xl whitespace-nowrap translate-x-1 group-hover/owner:translate-x-0">
-                              You created this room
+                              {t('you_created_room')}
                               <div className="absolute left-full top-1/2 -translate-y-1/2 border-[4px] border-transparent border-l-[var(--bg-tertiary)]" />
                             </div>
                           </div>
