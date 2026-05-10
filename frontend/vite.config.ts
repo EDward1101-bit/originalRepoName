@@ -25,4 +25,17 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-supabase': ['@supabase/supabase-js', '@supabase/ssr'],
+          'vendor-ui': ['lucide-react'],
+          'vendor-xmpp': ['stanza'],
+          'vendor-emoji': ['emoji-picker-react']
+        }
+      }
+    }
+  }
 });

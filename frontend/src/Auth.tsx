@@ -255,7 +255,7 @@ export default function Auth() {
 
         <div className="mt-5 text-[14px] text-center">
           <span className="text-[var(--text-muted)]">
-            {isSignUp ? 'Already have an account? ' : 'Need an account? '}
+            {isSignUp ? t('have_account') + ' ' : t('no_account') + ' '}
           </span>
           <button
             onClick={() => {
@@ -264,7 +264,7 @@ export default function Auth() {
             }}
             className="text-[var(--brand)] font-medium hover:underline"
           >
-            {isSignUp ? 'Sign In' : 'Register'}
+            {isSignUp ? t('sign_in') : t('register')}
           </button>
         </div>
 

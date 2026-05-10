@@ -1,16 +1,19 @@
+import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Auth from './Auth';
-import Chat from './Chat';
-import DMsPage from './DMsPage';
 import Layout from './Layout';
 import { useAuth } from './AuthContext';
 import { ChatProvider } from './ChatContext';
 import { MucProvider } from './MucContext';
 import { BotProvider } from './BotContext';
-import RoomsPage from './RoomsPage';
-import RoomChat from './RoomChat';
-import RoomsRedirect from './RoomsRedirect';
-import BotsPage from './BotsPage';
+import { useTranslation } from './LanguageContext';
+
+const Chat = React.lazy(() => import('./Chat'));
+const DMsPage = React.lazy(() => import('./DMsPage'));
+const RoomsPage = React.lazy(() => import('./RoomsPage'));
+const RoomChat = React.lazy(() => import('./RoomChat'));
+const RoomsRedirect = React.lazy(() => import('./RoomsRedirect'));
+const BotsPage = React.lazy(() => import('./BotsPage'));
 
 console.log('[App] Starting...');
 
@@ -20,17 +23,21 @@ function AuthenticatedRoutes() {
     <ChatProvider>
       <BotProvider>
         <MucProvider>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/dms" element={<DMsPage />} />
-              <Route path="/dms/:username" element={<Chat />} />
-              <Route path="/rooms" element={<RoomsRedirect />} />
-              <Route path="/rooms/explore" element={<RoomsPage />} />
-              <Route path="/rooms/:roomName" element={<RoomChat />} />
-              <Route path="/bots" element={<BotsPage />} />
-              <Route path="*" element={<Navigate to="/dms" replace />} />
-            </Route>
-          </Routes>
+          <Suspense fallback={
+            <div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)]">
+              <div className="w-8 h-8 rounded-full border-4 border-[var(--brand)]/20 border-t-[var(--brand)] animate-spin" />
+            </div>
+          }>
+            <Routes>
+              <Route path="/dms" element={<Layout><DMsPage /></Layout>} />
+              <Route path="/dms/:username" element={<Layout><Chat /></Layout>} />
+              <Route path="/rooms" element={<Layout><RoomsRedirect /></Layout>} />
+              <Route path="/rooms/explore" element={<Layout><RoomsPage /></Layout>} />
+              <Route path="/rooms/:roomName" element={<Layout><RoomChat /></Layout>} />
+              <Route path="/bots" element={<Layout><BotsPage /></Layout>} />
+              <Route path="*" element={<Layout><Navigate to="/dms" replace /></Layout>} />
+            </Routes>
+          </Suspense>
         </MucProvider>
       </BotProvider>
     </ChatProvider>
@@ -39,6 +46,7 @@ function AuthenticatedRoutes() {
 
 function App() {
   const { user, password, loading } = useAuth();
+  const { t } = useTranslation();
 
   console.log('[App] Auth state:', { user: !!user, hasPassword: !!password, loading });
 
@@ -54,9 +62,9 @@ function App() {
             </div>
 
             <div className="mt-6 text-center">
-              <h1 className="text-[20px] font-bold tracking-tight text-[var(--text-normal)]">Aether</h1>
+              <h1 className="text-[20px] font-bold tracking-tight text-[var(--text-normal)]">{t('aether')}</h1>
               <p className="mt-1 text-[13px] font-medium text-[var(--text-muted)]">
-                Connecting you to your spaces
+                {t('connecting')}
               </p>
             </div>
 

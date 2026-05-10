@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useChatContext } from '../ChatContext';
+import { useTranslation } from '../LanguageContext';
 import { X, MessageSquare } from 'lucide-react';
 
 interface PushNotification {
@@ -16,8 +17,8 @@ const DISMISS_AFTER_MS = 5500;
 
 export default function PushNotificationBar() {
   const { messages, myUsername, getUserProfile } = useChatContext();
-  const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const locationRef = useRef(location.pathname);
 
   useEffect(() => {
@@ -101,10 +102,10 @@ export default function PushNotificationBar() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
 
-  // Cleanup all pending timers when the component unmounts
   useEffect(() => {
+    const timers = timerMapRef.current;
     return () => {
-      Object.values(timerMapRef.current).forEach(clearTimeout);
+      Object.values(timers).forEach(clearTimeout);
     };
   }, []);
 
@@ -119,7 +120,7 @@ export default function PushNotificationBar() {
       {notifications.map((notif) => {
         const isDismissing = dismissing.has(notif.id);
         const isMedia = notif.message.includes('chat-media') || notif.message.includes('supabase');
-        const preview = isMedia ? '📎 Sent an attachment' : notif.message;
+        const preview = isMedia ? t('attachment') : notif.message;
 
         return (
           <div
@@ -172,7 +173,7 @@ export default function PushNotificationBar() {
                     {notif.senderDisplayName}
                   </span>
                   <span className="text-[11px] text-white/40 font-medium flex-shrink-0">
-                    sent you a message
+                    {t('sent_you_message')}
                   </span>
                 </div>
                 <p className="text-[13px] text-white/70 truncate leading-snug">
@@ -183,13 +184,10 @@ export default function PushNotificationBar() {
               {/* Actions */}
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
-                  onClick={() => {
-                    dismiss(notif.id);
-                    navigate(`/dms/${notif.senderXmpp}`);
-                  }}
+                  onClick={() => dismiss(notif.id)}
                   className="text-[12px] font-bold text-[var(--brand)] bg-[var(--brand)]/15 hover:bg-[var(--brand)]/25 px-3 py-1.5 rounded-lg transition-colors"
                 >
-                  Reply
+                  {t('reply')}
                 </button>
                 <button
                   onClick={() => dismiss(notif.id)}

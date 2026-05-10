@@ -28,7 +28,7 @@ export default function RoomsPage() {
       setNewRoomName('');
       setNewRoomDesc('');
     } catch (err: any) {
-      setError(err.message || 'Failed to create room.');
+      setError(err.message || t('failed_to_create_room'));
     } finally {
       setIsCreating(false);
     }
@@ -43,7 +43,7 @@ export default function RoomsPage() {
     try {
       await deleteRoom(roomId, roomName);
     } catch (err: any) {
-      setError(err.message || 'Failed to delete room.');
+      setError(err.message || t('failed_to_delete_room'));
     } finally {
       setDeletingId(null);
     }
@@ -56,10 +56,10 @@ export default function RoomsPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand)]/10 via-transparent to-[#8b5cf6]/10 pointer-events-none" />
         <div className="relative z-10 flex flex-col items-center text-center">
           <h1 className="text-3xl font-black tracking-tight text-[var(--text-normal)]">
-            {t('explore_servers') || 'Find your community'}
+            {t('find_your_community')}
           </h1>
           <p className="text-[15px] text-[var(--text-muted)] mt-2 max-w-lg">
-            Discover new spaces to talk, play, and connect with people from around the world.
+            {t('discover_new_spaces')}
           </p>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function RoomsPage() {
         {/* Room List */}
         <div className="flex-1 overflow-y-auto p-8">
           <h2 className="text-[20px] font-bold text-[var(--text-normal)] mb-6">
-            {t('featured_communities') || 'Featured Communities'}
+            {t('featured_communities')}
           </h2>
           {error && (
             <div className="mb-4 p-3 bg-[var(--color-status-dnd)] text-white rounded-md text-sm">
@@ -77,7 +77,7 @@ export default function RoomsPage() {
           )}
           {availableRooms.length === 0 ? (
             <p className="text-[var(--text-muted)] text-sm">
-              {t('no_servers') || 'No servers available. Create one to get started!'}
+              {t('no_servers')}
             </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -125,13 +125,13 @@ export default function RoomsPage() {
                     </div>
 
                     <p className="text-[13px] text-[var(--text-muted)] flex-1 line-clamp-2 leading-relaxed">
-                      {room.description || 'Welcome to our server! Hang out and chat with us.'}
+                      {room.description || t('welcome_to_our_server')}
                     </p>
 
                     {joinedRooms.includes(room.name) && (
                       <div className="mt-2 flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
-                        <span className="text-[10px] font-bold text-[#22c55e] uppercase tracking-wider">Joined</span>
+                        <span className="text-[10px] font-bold text-[#22c55e] uppercase tracking-wider">{t('joined')}</span>
                       </div>
                     )}
                   </div>
@@ -146,36 +146,36 @@ export default function RoomsPage() {
         <div className="w-[340px] bg-[var(--bg-secondary)] border-l border-[var(--border)] flex flex-col p-8 overflow-y-auto hidden lg:flex shadow-[-4px_0_20px_rgba(0,0,0,0.05)]">
           <div className="mb-8">
             <h2 className="text-xl font-bold text-[var(--text-normal)] tracking-tight">
-              {t('create_server') || 'Build a space'}
+              {t('build_a_space')}
             </h2>
             <p className="text-[13px] text-[var(--text-muted)] mt-1">
-              Give your new community a name and a home.
+              {t('give_your_community_a_name')}
             </p>
           </div>
           <form onSubmit={handleCreateRoom} className="flex flex-col gap-6">
             <div className="space-y-2">
               <label className="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-1">
-                {t('server_name') || 'Server Name'}
+                {t('server_name')}
               </label>
               <input
                 type="text"
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
-                placeholder="e.g. gamers-haven"
+                placeholder={t('gamers_haven_placeholder')}
                 className="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-md px-4 py-3 text-[var(--text-normal)] text-[15px] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/50 transition-all shadow-sm"
                 required
                 pattern="^[a-zA-Z0-9_]+$"
-                title="Only letters, numbers, and underscores are allowed"
+                title={t('only_letters_numbers')}
               />
             </div>
             <div className="space-y-2">
               <label className="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest ml-1">
-                {t('description') || 'Description'}
+                {t('description')}
               </label>
               <textarea
                 value={newRoomDesc}
                 onChange={(e) => setNewRoomDesc(e.target.value)}
-                placeholder="What is this server about?"
+                placeholder={t('server_about_placeholder')}
                 className="w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-md px-4 py-3 text-[var(--text-normal)] text-[15px] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/50 transition-all resize-none h-32 shadow-sm"
               />
             </div>
@@ -185,7 +185,7 @@ export default function RoomsPage() {
               disabled={isCreating || !newRoomName.trim()}
               className="mt-4 w-full bg-[var(--brand)] text-white py-3.5 rounded-md font-bold text-[15px] hover:bg-[var(--brand-hover)] hover:shadow-lg hover:shadow-[var(--brand)]/20 active:scale-95 disabled:opacity-50 transition-all"
             >
-              {isCreating ? <Loader2 className="animate-spin mx-auto" size={20} /> : t('create') || 'Create Server'}
+              {isCreating ? <Loader2 className="animate-spin mx-auto" size={20} /> : t('create')}
             </button>
           </form>
         </div>

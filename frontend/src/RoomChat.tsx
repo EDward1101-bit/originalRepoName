@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMucContext } from './MucContext';
-import { useChatContext } from './ChatContext';
 import { useAuth } from './AuthContext';
+import { useChatContext } from './ChatContext';
+import { useTranslation } from './LanguageContext';
 import { useBotContext } from './BotContext';
+import { useMucContext } from './MucContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
@@ -32,6 +33,7 @@ export default function RoomChat() {
   const { myUsername, status, getUserProfile } = useChatContext();
   const { getBotsForRoom, allBots } = useBotContext();
   const isConnected = status === 'Connected';
+  const { t } = useTranslation();
 
   const resolveDisplayName = useCallback(
     (xmppName?: string) => {
@@ -49,9 +51,10 @@ export default function RoomChat() {
       const nickname = match[1];
       const verb = match[2];
       const displayName = resolveDisplayName(nickname);
-      return `${displayName} has ${verb} the room.`;
+      const action = verb === 'entered' ? t('entered_room') : t('left_room');
+      return `${displayName} ${action}`;
     },
-    [resolveDisplayName]
+    [resolveDisplayName, t]
   );
 
   const [input, setInput] = useState('');
@@ -100,11 +103,10 @@ export default function RoomChat() {
     };
   }, [handleMouseMove, stopResizing]);
 
-
   const shouldStickToBottomRef = useRef(true);
   const initialScrollDoneRef = useRef(false);
 
-  const scrollToBottom = (mode: ScrollBehavior = 'auto') => {
+  const scrollToBottom = (mode: 'auto' | 'smooth' = 'auto') => {
     if (!messagesContainerRef.current) return;
     messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     messagesEndRef.current?.scrollIntoView({ behavior: mode, block: 'end' });
@@ -150,7 +152,6 @@ export default function RoomChat() {
     if (shouldStickToBottomRef.current) {
       scrollToBottom('auto');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length]);
 
   const handleJoin = async () => {
@@ -258,16 +259,16 @@ export default function RoomChat() {
         <div className="text-center p-8 bg-[var(--bg-secondary)] rounded-md max-w-md border border-[var(--border)] shadow-xl">
           <div className="text-6xl text-[#ef4444] mb-4">⚠️</div>
           <h2 className="text-2xl font-bold mb-2 text-[var(--text-normal)] tracking-tight">
-            Room Not Found
+            {t('room_not_found')}
           </h2>
           <p className="text-[var(--text-muted)] mb-6">
-            The room &quot;{roomName}&quot; does not exist or you don&apos;t have access to it.
+            {t('room_not_exist').replace('{roomName}', roomName)}
           </p>
           <button
             onClick={() => navigate('/rooms')}
             className="bg-[var(--brand)] text-white px-6 py-2.5 rounded-md font-medium transition-all hover:bg-[var(--brand-hover)] shadow-sm"
           >
-            Back to Servers
+            {t('back_to_servers')}
           </button>
         </div>
       </div>
@@ -295,7 +296,7 @@ export default function RoomChat() {
             </div>
             <div>
               <h2 className="font-bold text-[16px] tracking-tight">{room.name}</h2>
-              <p className="text-[11px] text-[var(--text-muted)] font-medium">Click for info</p>
+              <p className="text-[11px] text-[var(--text-muted)] font-medium">{t('click_for_info')}</p>
             </div>
           </div>
         </div>
@@ -309,7 +310,7 @@ export default function RoomChat() {
                   ? 'bg-[var(--brand)]/10 text-[var(--brand)]' 
                   : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
               }`}
-              title="Toggle Member List"
+              title={t('toggle_member_list')}
             >
               <Users size={22} />
             </button>
@@ -319,7 +320,7 @@ export default function RoomChat() {
             <button
               onClick={handleLeave}
               className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[#ef4444]/10 hover:text-[#ef4444] transition-colors"
-              title="Leave Room"
+              title={t('leave_room')}
             >
               <LogOut size={24} />
             </button>
@@ -329,7 +330,7 @@ export default function RoomChat() {
               disabled={!isConnected}
               className="text-sm bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white font-bold px-4 py-2 rounded-md transition-all shadow-sm disabled:opacity-50"
             >
-              {isConnected ? 'Join Room' : status}
+              {isConnected ? t('join_room') : status}
             </button>
           )}
 
@@ -337,13 +338,13 @@ export default function RoomChat() {
 
           <button
             className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
-            title="Start Voice Call"
+            title={t('start_voice_call')}
           >
             <Phone size={24} />
           </button>
           <button
             className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
-            title="Start Video Call"
+            title={t('start_video_call')}
           >
             <Video size={24} />
           </button>
@@ -371,9 +372,9 @@ export default function RoomChat() {
                   <Hash size={48} className="text-[var(--brand)]" />
                 </div>
                 <h2 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
-                  Welcome to #{room.name}!
+                  {t('welcome_to_room')} #{room.name}!
                 </h2>
-                <p className="text-[15px]">This is the start of the #{room.name} channel.</p>
+                <p className="text-[15px]">{t('start_of_room')} #{room.name} {t('channel')}</p>
               </div>
             ) : (
               messages.map((msg, index) => {
@@ -381,7 +382,7 @@ export default function RoomChat() {
                 const senderProfile = getUserProfile(msg.sender);
 
                 const senderName = isSentByMe
-                  ? 'You'
+                  ? t('you')
                   : senderProfile?.username || msg.sender;
 
                 const senderAvatar = isSentByMe
@@ -410,6 +411,7 @@ export default function RoomChat() {
                   messages[index - 1].type === 'system';
 
                 const isDeleted = msg.body === '\u{1F6AB} This message was deleted';
+                const messageBodyToRender = isDeleted ? t('message_deleted') : msg.body;
 
                 return (
                   <div
@@ -424,6 +426,7 @@ export default function RoomChat() {
                           <img
                             src={senderAvatar}
                             alt={senderName}
+                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -459,7 +462,7 @@ export default function RoomChat() {
                         <div
                           className={`text-[15px] whitespace-pre-wrap break-words leading-[1.4rem] ${isDeleted ? 'text-[var(--text-muted)] italic' : 'text-[var(--text-normal)]'}`}
                         >
-                          {msg.body}
+                          {messageBodyToRender}
                         </div>
                       )}
                     </div>
@@ -547,8 +550,8 @@ export default function RoomChat() {
                 </div>
                 <span className="text-[12px] text-[var(--text-muted)] font-medium">
                   {Object.keys(roomTypingUsers[roomName]).length === 1
-                    ? `${getUserProfile(Object.keys(roomTypingUsers[roomName])[0])?.username || Object.keys(roomTypingUsers[roomName])[0]} is typing...`
-                    : `${Object.keys(roomTypingUsers[roomName]).length} people are typing...`}
+                    ? `${Object.keys(roomTypingUsers[roomName])[0]} ${t('typing')}`
+                    : `${Object.keys(roomTypingUsers[roomName]).length} ${t('people_typing')}`}
                 </span>
               </div>
             )}
@@ -622,7 +625,7 @@ export default function RoomChat() {
 
               <input
                 className="flex-1 bg-transparent border-none outline-none text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] px-2"
-                placeholder={`Message #${room.name}`}
+                placeholder={t('message_placeholder') + `#${room.name}`}
                 type="text"
                 value={input}
                 onChange={handleInputChange}
@@ -678,7 +681,7 @@ export default function RoomChat() {
                 <div className="flex items-center gap-2">
                   <Users size={18} className="text-[var(--text-muted)]" />
                   <span className="text-[13px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                    Active Now
+                    {t('active_now')}
                   </span>
                   <span className="ml-1 bg-[var(--brand)] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
                     {activeUsers.length}
@@ -688,7 +691,7 @@ export default function RoomChat() {
               <div className="flex-1 overflow-y-auto p-3">
                 {activeUsers.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-[13px] text-[var(--text-muted)] italic">No active users</p>
+                    <p className="text-[13px] text-[var(--text-muted)] italic">{t('no_active_users')}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-1">
@@ -767,7 +770,7 @@ export default function RoomChat() {
                             <span className={`text-[10px] font-bold uppercase tracking-wide ${
                               bot.isOnline ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'
                             }`}>
-                              {bot.isOnline ? 'BOT · Online' : 'BOT · Offline'}
+                              {bot.isOnline ? t('bot_online') : t('bot_offline')}
                             </span>
                           </div>
                         </div>
@@ -786,10 +789,10 @@ export default function RoomChat() {
             <Lock size={48} />
           </div>
           <h3 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
-            You haven&apos;t joined this room
+            {t('you_havent_joined')}
           </h3>
           <p className="mb-8 text-center max-w-md text-[15px] leading-relaxed">
-            Join #{room.name} to see the message history and participate in the conversation.
+            {t('join_room_message').replace('{roomName}', room.name)}
           </p>
           <button
             onClick={handleJoin}
@@ -817,7 +820,7 @@ export default function RoomChat() {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-[var(--text-normal)] tracking-tight">#{room.name}</h2>
-                  <p className="text-[11px] text-[var(--text-muted)] font-medium">Room Information</p>
+                  <p className="text-[11px] text-[var(--text-muted)] font-medium">{t('room_information')}</p>
                 </div>
               </div>
               <button 
@@ -830,9 +833,9 @@ export default function RoomChat() {
 
             <div className="p-6 space-y-6">
               <div>
-                <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3">About</h3>
+                <h3 className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3">{t('about')}</h3>
                 <p className="text-[14px] text-[var(--text-normal)] leading-relaxed">
-                  {room.description || "No description available for this community."}
+                  {room.description || t('no_description_available')}
                 </p>
               </div>
 
@@ -840,14 +843,14 @@ export default function RoomChat() {
                 <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-md border border-[var(--border)]/50">
                   <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
                     <Users size={14} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Members</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider">{t('members')}</span>
                   </div>
                   <p className="text-lg font-bold text-[var(--text-normal)]">{activeUsers.length}</p>
                 </div>
                 <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-md border border-[var(--border)]/50">
                   <div className="flex items-center gap-2 text-[var(--text-muted)] mb-1">
                     <Star size={14} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Created</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider">{t('created')}</span>
                   </div>
                   <p className="text-[14px] font-bold text-[var(--text-normal)]">
                     {new Date(room.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -857,7 +860,7 @@ export default function RoomChat() {
 
               <div className="pt-2 flex items-center gap-2 text-[12px] text-[var(--text-muted)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)] animate-pulse" />
-                <span>Created by <span className="font-semibold text-[var(--text-normal)]">{resolveDisplayName(room.created_by)}</span></span>
+                <span>{t('created')} <span className="font-semibold text-[var(--text-normal)]">{new Date(room.created_at).toLocaleDateString()}</span></span>
               </div>
             </div>
 
@@ -866,7 +869,7 @@ export default function RoomChat() {
                 onClick={() => setShowRoomInfo(false)}
                 className="px-5 py-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--text-normal)] font-bold text-[13px] rounded-md border border-[var(--border)] transition-all"
               >
-                Close
+                {t('close')}
               </button>
             </div>
           </div>

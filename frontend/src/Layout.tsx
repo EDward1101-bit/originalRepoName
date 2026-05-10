@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useChatContext } from './ChatContext';
 import { useMucContext } from './MucContext';
@@ -7,11 +7,15 @@ import { useTranslation } from './LanguageContext';
 import SettingsModal from './components/SettingsModal';
 import PushNotificationBar from './components/PushNotificationBar';
 import { supabase } from './supabase';
-import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, X, Bot, ArrowLeft, Compass, Hash, ShieldCheck } from 'lucide-react';
+import { MessageSquare, Server, Plus, Mic, Headphones, Settings, Menu, Star, TrendingUp, Users, X, Bot, Compass, Hash, ShieldCheck } from 'lucide-react';
 
 type TranslationFn = ReturnType<typeof useTranslation>['t'];
 
-export default function Layout() {
+interface LayoutProps {
+  children?: React.ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps = {}) {
   const { user } = useAuth();
   const { status, myUsername, myUserId, unreadCounts, clearUnread, friendships, allUsers } = useChatContext();
   const { availableRooms, joinedRooms, roomUnreadCounts, clearRoomUnread } = useMucContext();
@@ -19,7 +23,6 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
 
   // Favorites state from Supabase
   const [favorites, setFavorites] = useState<{ id: string; type: 'dm' | 'room'; name: string }[]>([]);
@@ -95,20 +98,18 @@ export default function Layout() {
     const leaf = parts[1] || '';
 
     if (section === 'dms') {
-      return leaf ? ['Direct Messages', leaf] : ['Direct Messages'];
+      return leaf ? [t('direct_messages'), leaf] : [t('direct_messages')];
     }
     if (section === 'rooms') {
-      if (!leaf) return ['Rooms'];
-      if (leaf === 'explore') return ['Rooms', 'Explore'];
-      return ['Rooms', `#${leaf}`];
+      if (!leaf) return [t('rooms')];
+      if (leaf === 'explore') return [t('rooms'), t('explore')];
+      return [t('rooms'), `#${leaf}`];
     }
     if (section === 'bots') {
-      return ['Bots'];
+      return [t('bots')];
     }
-    return ['Aether'];
-  }, [location.pathname]);
-
-  const canGoBack = breadcrumbs.length > 1;
+    return [t('aether')];
+  }, [location.pathname, t]);
 
   // Room unread: read directly from MucContext (tracked per-room, skipped when in that room)
   const roomUnread = Object.values(roomUnreadCounts).reduce((acc, n) => acc + n, 0);
@@ -205,7 +206,7 @@ export default function Layout() {
               <Menu size={22} />
             </button>
             <span className="text-[18px] font-bold text-[var(--text-normal)] tracking-tight">
-              Aether
+              {t('aether')}
             </span>
           </div>
 
@@ -215,17 +216,7 @@ export default function Layout() {
           {/* Breadcrumbs (desktop) */}
           <div className="hidden lg:flex flex-none items-center justify-between px-6 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
             <div className="flex items-center gap-2 min-w-0">
-              {canGoBack && (
-                <button
-                  onClick={() => navigate(-1)}
-                  className="w-8 h-8 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors flex-shrink-0"
-                  aria-label="Go back"
-                  title="Back"
-                >
-                  <ArrowLeft size={18} />
-                </button>
-              )}
-              <div className="text-[12px] font-medium text-[var(--text-muted)] truncate">
+                            <div className="text-[12px] font-medium text-[var(--text-muted)] truncate">
                 {breadcrumbs.join(' / ')}
               </div>
             </div>
@@ -238,13 +229,13 @@ export default function Layout() {
               title={status}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[var(--brand)]' : 'bg-[#ef4444]'}`} />
-              {isConnected ? 'Connected' : 'Disconnected'}
+              {isConnected ? t('connected') : t('disconnected')}
             </div>
           </div>
 
           {/* Content */}
           <main className="flex-1 overflow-hidden relative">
-            <Outlet />
+            {children}
           </main>
         </div>
       </div>
@@ -260,13 +251,7 @@ function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread:
       <div className="relative group">
         <NavLink
           to="/dms"
-          className={({ isActive }) =>
-            `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm ${
-              isActive
-                ? '!rounded-[14px] bg-[var(--brand)] text-white'
-                : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
-            }`
-          }
+          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)] ${isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : ''}`}
         >
           <MessageSquare size={22} />
         </NavLink>
@@ -282,13 +267,7 @@ function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread:
       <div className="relative group">
         <NavLink
           to="/rooms"
-          className={({ isActive }) =>
-            `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm ${
-              isActive
-                ? '!rounded-[14px] bg-[var(--brand)] text-white'
-                : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
-            }`
-          }
+          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)] ${isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : ''}`}
         >
           <Server size={22} />
         </NavLink>
@@ -304,13 +283,7 @@ function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread:
       <div className="relative group">
         <NavLink
           to="/bots"
-          className={({ isActive }) =>
-            `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm ${
-              isActive
-                ? '!rounded-[14px] bg-[var(--brand)] text-white'
-                : 'bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)]'
-            }`
-          }
+          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)] ${isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : ''}`}
         >
           <Bot size={22} />
         </NavLink>
@@ -361,7 +334,7 @@ function ChannelsColumn({
     <div className="w-64 bg-[var(--bg-primary)] h-full flex flex-col flex-shrink-0 border-r border-[var(--border)] overflow-hidden">
       {/* Header Area */}
       <div className="h-14 flex-shrink-0 border-b border-[var(--border)] flex items-center px-4">
-        <h2 className="font-bold text-[16px] tracking-tight text-[var(--text-normal)]">Aether</h2>
+        <h2 className="font-bold text-[16px] tracking-tight text-[var(--text-normal)]">{t('aether')}</h2>
       </div>
 
       {/* Favorites or Joined Rooms based on current route */}
@@ -373,12 +346,12 @@ function ChannelsColumn({
               {/* ── Rooms You Are In ── */}
               <div className="flex items-center justify-between mb-1.5">
                 <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                  Rooms You Are In
+                  {t('rooms_you_are_in')}
                 </p>
               </div>
               {joinedRooms.length === 0 ? (
                 <div className="py-3 text-center">
-                  <p className="text-[12px] text-[var(--text-muted)] italic">No rooms joined yet</p>
+                  <p className="text-[12px] text-[var(--text-muted)] italic">{t('no_rooms_joined')}</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-0.5 mb-1.5">
@@ -391,13 +364,7 @@ function ChannelsColumn({
                       <NavLink
                         key={roomName}
                         to={`/rooms/${roomName}`}
-                        className={({ isActive }) =>
-                          `flex items-center gap-2 px-2 py-1 rounded-md transition-all group ${
-                            isActive
-                              ? 'bg-[var(--brand)]/15 text-[var(--brand)]'
-                              : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
-                          }`
-                        }
+                        className={({ isActive }) => `flex items-center gap-2 px-2 py-1 rounded-md transition-all group text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] ${isActive ? 'bg-[var(--brand)]/15 text-[var(--brand)]' : ''}`}
                       >
                         <div className="w-4 h-4 rounded flex items-center justify-center bg-[var(--bg-secondary)] flex-shrink-0">
                           <Hash size={10} />
@@ -414,7 +381,7 @@ function ChannelsColumn({
                               className="text-[#10b981] opacity-80 hover:opacity-100 transition-opacity cursor-help" 
                             />
                             <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] text-[10px] font-bold rounded-md opacity-0 group-hover/owner:opacity-100 transition-all pointer-events-none z-[100] shadow-2xl whitespace-nowrap translate-x-1 group-hover/owner:translate-x-0">
-                              You created this room
+                              {t('you_created_room')}
                               <div className="absolute left-full top-1/2 -translate-y-1/2 border-[4px] border-transparent border-l-[var(--bg-tertiary)]" />
                             </div>
                           </div>
@@ -434,18 +401,12 @@ function ChannelsColumn({
               <div className="mb-4">
                 <NavLink
                   to="/rooms/explore"
-                  className={({ isActive }) =>
-                    `flex items-center gap-2 px-2 py-1 rounded-md transition-all ${
-                      isActive
-                        ? 'bg-[var(--brand)]/15 text-[var(--brand)]'
-                        : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
-                    }`
-                  }
+                  className={({ isActive }) => `flex items-center gap-2 px-2 py-1 rounded-md transition-all text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] ${isActive ? 'bg-[var(--brand)]/15 text-[var(--brand)]' : ''}`}
                 >
                   <div className="w-4 h-4 rounded flex items-center justify-center bg-[var(--bg-secondary)] flex-shrink-0">
                     <Compass size={10} />
                   </div>
-                  <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded bg-[var(--bg-secondary)]">Explore Rooms</span>
+                  <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded bg-[var(--bg-secondary)]">{t('explore_servers')}</span>
                 </NavLink>
               </div>
             </>
@@ -454,7 +415,7 @@ function ChannelsColumn({
             <>
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                  Favorites
+                  {t('favorites')}
                 </p>
                 {favorites.length > 0 && (
                   <button
@@ -466,7 +427,7 @@ function ChannelsColumn({
                       setFavorites([]);
                     }}
                     className="text-[10px] text-[var(--text-muted)] hover:text-[#ef4444] transition-colors"
-                    title="Clear all"
+                    title={t('clear_all')}
                   >
                     Clear
                   </button>
@@ -479,10 +440,10 @@ function ChannelsColumn({
                     <div className="px-3 py-6 text-center">
                       <Star size={24} className="text-[var(--text-muted)] mx-auto mb-2 opacity-40" />
                       <p className="text-[13px] text-[var(--text-muted)] italic">
-                        Pin your favorite chats
+                        {t('pin_favorite_chats')}
                       </p>
                       <p className="text-[11px] text-[var(--text-muted)] opacity-60 mt-1">
-                        Click the star in any conversation
+                        {t('click_star_conversation')}
                       </p>
                     </div>
                   );
@@ -493,11 +454,7 @@ function ChannelsColumn({
                       <div key={fav.id} className="group flex items-center gap-2">
                         <NavLink
                           to={`/dms/${fav.name}`}
-                          className={({ isActive }) =>
-                            `flex-1 flex items-center gap-3 px-3 py-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${
-                              isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''
-                            }`
-                          }
+                          className={({ isActive }) => `flex-1 flex items-center gap-3 px-3 py-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''}`}
                         >
                           <MessageSquare size={16} />
                           <span className="font-medium text-[14px] truncate">{fav.name}</span>
@@ -505,7 +462,7 @@ function ChannelsColumn({
                         <button
                           onClick={() => removeFavorite(fav.id)}
                           className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-all"
-                          title="Remove from favorites"
+                          title={t('remove')}
                         >
                           <X size={14} />
                         </button>
@@ -522,7 +479,7 @@ function ChannelsColumn({
       {/* Quick Stats */}
       <div className="px-4 py-2 border-t border-[var(--border)]">
         <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-          Your Stats
+          {t('your_stats')}
         </p>
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-md border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
@@ -530,7 +487,7 @@ function ChannelsColumn({
               <div className="w-5 h-5 rounded-md bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
                 <Users size={12} />
               </div>
-              <span className="text-[11px] font-semibold text-[var(--text-muted)]">Friends</span>
+              <span className="text-[11px] font-semibold text-[var(--text-muted)]">{t('friends')}</span>
             </div>
             <span className="text-[12px] font-bold text-[var(--text-normal)]">{acceptedFriendsCount}</span>
           </div>
@@ -540,7 +497,7 @@ function ChannelsColumn({
               <div className="w-5 h-5 rounded-md bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
                 <TrendingUp size={12} />
               </div>
-              <span className="text-[11px] font-semibold text-[var(--text-muted)]">Online Friends</span>
+              <span className="text-[11px] font-semibold text-[var(--text-muted)]">{t('friends')} {t('online')}</span>
             </div>
             <span className="text-[12px] font-bold text-[var(--text-normal)]">{onlineFriendsCount}</span>
           </div>
@@ -550,7 +507,7 @@ function ChannelsColumn({
               <div className="w-5 h-5 rounded-md bg-[#f59e0b]/10 flex items-center justify-center text-[#f59e0b]">
                 <Server size={12} />
               </div>
-              <span className="text-[11px] font-semibold text-[var(--text-muted)]">Rooms Joined</span>
+              <span className="text-[11px] font-semibold text-[var(--text-muted)]">{t('rooms')}</span>
             </div>
             <span className="text-[12px] font-bold text-[var(--text-normal)]">{joinedRooms.length}</span>
           </div>
