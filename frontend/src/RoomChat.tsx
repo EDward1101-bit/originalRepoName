@@ -426,6 +426,7 @@ export default function RoomChat() {
                           <img
                             src={senderAvatar}
                             alt={senderName}
+                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         ) : (

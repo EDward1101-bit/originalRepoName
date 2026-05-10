@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   useChatContext,
   type Friendship,
@@ -12,6 +13,7 @@ import { MessageSquare, Inbox, Check, X, UserPlus, Users, UserMinus, Search, Loa
 
 export default function DMsPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const {
     allUsers,
     friendships,
@@ -261,6 +263,7 @@ export default function DMsPage() {
               return (
                 <div
                   key={u.id}
+                  onClick={() => navigate(`/dms/${u.xmppUsername}`)}
                   className={`flex items-center gap-4 px-6 py-4 cursor-pointer transition-all border-b border-[var(--border)]/30 ${
                     hasUnread
                       ? 'bg-[var(--brand)]/[0.06] hover:bg-[var(--brand)]/[0.10]'
@@ -310,9 +313,11 @@ export default function DMsPage() {
                           {t('typing')}
                         </span>
                       ) : lastMsg
-                        ? lastMsg.body.includes('chat-media')
-                          ? t('attachment')
-                          : lastMsg.body
+                        ? lastMsg.body === '🚫 This message was deleted'
+                          ? <span className="text-[#ef4444]">{t('message_deleted')}</span>
+                          : lastMsg.body.includes('chat-media')
+                            ? t('attachment')
+                            : lastMsg.body
                         : t('no_messages_yet')}
                     </p>
                   </div>

@@ -343,6 +343,7 @@ export default function Chat() {
                       <img
                         src={senderAvatar}
                         alt={senderName}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     ) : (
