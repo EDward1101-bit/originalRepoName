@@ -16,6 +16,11 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
 
+  const isErrorMessage = (text: string) => {
+    const normalized = text.toLowerCase();
+    return normalized.includes('error') || normalized.includes('fail') || normalized.includes('taken');
+  };
+
   const syncUserToProsody = async (username: string, password: string) => {
     try {
       const response = await fetch(`${API_URL}/api/auth/sync-user`, {
@@ -26,6 +31,19 @@ export default function Auth() {
       return response.ok;
     } catch {
       return false;
+    }
+  };
+
+  const checkUsernameAvailable = async (name: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/users/${encodeURIComponent(name)}`);
+      if (!response.ok) {
+        throw new Error('Username availability check failed');
+      }
+      const data = (await response.json()) as { exists?: boolean };
+      return !data.exists;
+    } catch {
+      throw new Error('Could not verify username availability. Please try again.');
     }
   };
 
@@ -59,6 +77,11 @@ export default function Auth() {
       if (isSignUp) {
         if (!username) {
           throw new Error('Username is required for sign up.');
+        }
+        const available = await checkUsernameAvailable(username.trim());
+        if (!available) {
+          setMessage('Username is already taken. Please choose another.');
+          return;
         }
         const authData = await signUp(email, password, username);
         if (authData?.user?.id) {
@@ -162,7 +185,7 @@ export default function Auth() {
 
           {message && (
             <p
-              className={`mt-4 text-sm text-center font-medium ${message.includes('Error') ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+              className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
             >
               {message}
             </p>
@@ -270,7 +293,7 @@ export default function Auth() {
 
         {message && (
           <p
-            className={`mt-4 text-sm text-center font-medium ${message.includes('fail') || message.includes('Error') || message.includes('error') ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+            className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
           >
             {message}
           </p>
