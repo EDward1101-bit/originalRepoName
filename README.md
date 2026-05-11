@@ -1,7 +1,7 @@
 <div align="center">
   <!-- <img src="https://via.placeholder.com/150" alt="Aether Chat Logo" width="150" height="150" /> -->
   <h1>Aether Chat</h1>
-  <p><strong>A modern, high-performance XMPP communication platform</strong></p>
+  <p><strong>A modern, real-time messaging platform built on XMPP</strong></p>
   
   [![React](https://img.shields.io/badge/React-19.0-blue?logo=react&logoColor=white)](#)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript&logoColor=white)](#)
@@ -14,24 +14,24 @@
 
 ---
 
-## 📖 Overview
+## 📖 Despre Proiect
 
-**Aether Chat** is a modern, real-time communication platform built around the robust XMPP protocol. Bridging the gap between reliable enterprise messaging infrastructure and cutting-edge web technologies, Aether Chat delivers a modern, Discord-style experience tailored for speed, scalability, and security.
+Aether Chat este o platformă de mesagerie în timp real pe care am construit-o pentru a explora cum un protocol tradițional și robust precum XMPP poate fi integrat cu un frontend modern în React. Obiectivul meu a fost să creez o interfață similară cu Discord, complet web-based, rapidă și scalabilă.
 
-This project showcases a complete full-stack architecture, utilizing a **React 19** frontend, a **FastAPI** Python backend, **Supabase** for persistence, and **Prosody** as the XMPP server engine.
+Sistemul folosește React 19 și TailwindCSS pentru UI, comunicând cu un backend scris în Python (FastAPI). Pentru infrastructura de mesagerie live am configurat un server XMPP Prosody, iar pentru autentificare și persistența datelor folosesc Supabase.
 
-> **Note**: This repository serves as a portfolio piece demonstrating advanced architectural patterns, real-time websocket integration, and modern UI/UX practices.
+Este în primul rând un proiect de portofoliu în care m-am concentrat pe decizii arhitecturale solide, gestionarea corectă a conexiunilor prin WebSockets și crearea unei experiențe de utilizare fluide.
 
-## ✨ Key Features
+## ✨ Funcționalități Principale
 
-- **Real-Time Communication Engine**: Powered by XMPP (`stanza.js` on frontend, `slixmpp` on backend) and Prosody for lightning-fast message delivery.
-- **Modern UI/UX**: Built with React 19, Tailwind CSS v4, and Lucide Icons, providing a responsive, beautiful, and intuitive interface.
-- **Robust Authentication & Discovery**: Integrated with Supabase for secure JWT-based authentication and advanced user search capabilities.
-- **Performance Optimized**: Features dynamic code splitting, chunk management, and Vite 6 to guarantee sub-second load times.
-- **Internationalization (i18n)**: Fully localized UI ensuring global accessibility without performance bottlenecks.
-- **Developer Experience**: Fully containerized with Docker, strict type checking, and comprehensive backend tests (`pytest`).
+- **Mesagerie în Timp Real**: Implementată prin XMPP folosind un server Prosody. Frontend-ul folosește librăria `stanza.js`, în timp ce backend-ul interacționează cu serverul prin `slixmpp`.
+- **Interfață tip Discord**: Construită de la zero folosind React 19 și Tailwind CSS v4, cu suport pentru teme și un design fluid.
+- **Autentificare și Căutare Utilizatori**: Gestionate prin Supabase. Utilizatorii se pot înregistra, loga securizat via JWT și pot căuta alți utilizatori din platformă.
+- **Optimizare și Viteză**: Proiectul este construit cu Vite 6, folosind code-splitting dinamic și chunk management pentru a menține un timp de încărcare minim.
+- **Suport Multi-limbă (i18n)**: Interfața este complet localizată.
+- **Docker Ready**: Întregul sistem (Frontend, Backend, XMPP Server) poate fi pornit folosind o singură comandă de `docker-compose`.
 
-## 🏗️ Architecture
+## 🏗️ Arhitectura Sistemului
 
 ```mermaid
 graph TD
@@ -41,78 +41,73 @@ graph TD
     API --> |Admin API| Prosody
 ```
 
-### Tech Stack Deep Dive
+### Stack Tehnologic
 
-| Layer | Technologies |
+| Componentă | Tehnologii |
 | :--- | :--- |
 | **Frontend** | React 19, TypeScript, Vite 6, TailwindCSS 4, React Router 7, Stanza.js, i18n |
 | **Backend** | Python 3.12, FastAPI, Slixmpp, Pydantic, Passlib, Pytest |
-| **Database** | Supabase (PostgreSQL) |
-| **Infrastructure** | Docker, Docker Compose, Prosody XMPP |
+| **Bază de Date** | Supabase (PostgreSQL) |
+| **Infrastructură**| Docker, Docker Compose, Prosody XMPP |
 
-## 🚀 Quick Start (Docker)
+## 🚀 Rulare Locală (Quick Start)
 
-The entire platform is containerized for an effortless setup.
+Platforma este complet containerizată cu Docker pentru a fi ușor de testat pe orice sistem (Windows, Mac, Linux).
 
-**Prerequisites**: [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+**Cerințe**: [Docker Desktop](https://www.docker.com/products/docker-desktop/) trebuie să fie instalat și pornit.
 
-### 1. Clone the Repository
+### 1. Clonează proiectul
 ```bash
-git clone https://github.com/yourusername/aether-chat.git
-cd aether-chat
+git clone https://github.com/EDward1101-bit/originalRepoName
+cd originalRepoName
 ```
 
-### 2. Environment Setup
-Create the necessary environment files:
+### 2. Configurează variabilele de mediu
+Trebuie să copiezi fișierele de configurare example și să introduci credențialele tale de Supabase:
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
-*(Make sure to populate the `.env` files with your Supabase credentials)*
+*(Deschide cele două fișiere `.env` și adaugă `SUPABASE_URL` și cheile anon/service.)*
 
-### 3. Build and Run
+### 3. Pornește containerele
+Comanda de mai jos va descărca imaginile necesare, va construi proiectul și va porni serverele:
 ```bash
 docker-compose up --build
 ```
 
-### 4. Access the Application
-- **Frontend App**: [http://localhost:5173](http://localhost:5173)
-- **Backend API**: [http://localhost:8000](http://localhost:8000)
-- **API Documentation (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
+### 4. Accesează Aplicația
+- **Aplicația Frontend**: [http://localhost:5173](http://localhost:5173)
+- **API-ul Backend**: [http://localhost:8000](http://localhost:8000)
+- **Documentația API (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## 📁 Project Structure
+## 📁 Structura Proiectului
 
 ```text
 aether-chat/
-├── backend/               # FastAPI Python application
-│   ├── api/               # REST controllers
-│   ├── models/            # Pydantic & DB models
-│   ├── services/          # Business logic & Slixmpp integration
-│   ├── tests/             # Pytest test suite
-│   └── main.py            # Application entry point
-├── frontend/              # React application
-│   ├── src/               # React components, contexts, hooks
-│   ├── index.html         # Entry HTML
-│   └── vite.config.ts     # Vite bundler config
-├── prosody/               # XMPP server configuration & plugins
-└── docker-compose.yml     # Container orchestration
+├── backend/               # Aplicația Python / FastAPI
+│   ├── api/               # Endpoint-uri REST
+│   ├── models/            # Modele de date Pydantic și baza de date
+│   ├── services/          # Logica de business și integrarea Slixmpp
+│   ├── tests/             # Suita de teste Pytest
+│   └── main.py            # Entry point-ul API-ului
+├── frontend/              # Aplicația React
+│   ├── src/               # Componente, contexte, hook-uri
+│   ├── index.html         # Fișierul HTML principal
+│   └── vite.config.ts     # Configurarea bundler-ului Vite
+├── prosody/               # Configurările și plugin-urile serverului XMPP
+└── docker-compose.yml     # Orchestrarea containerelor
 ```
 
-## 🗺️ Roadmap / Future Work
+## 🗺️ Roadmap / Dezvoltări Viitoare
 
-- [x] Core Authentication and User Discoverability
-- [x] XMPP Integration via Websockets
-- [x] Internationalization (i18n)
-- [ ] **WebRTC Integration**: Voice and video calling.
-- [ ] **End-to-End Encryption (E2EE)**: OMEMO protocol implementation.
-- [ ] **File Transfers**: XMPP SI file transfer support.
+- [x] Autentificare de bază și funcționalitate de search utilizatori
+- [x] Integrare XMPP prin Websockets
+- [x] Internaționalizare (i18n)
+- [ ] **Integrare WebRTC**: Apeluri audio și video.
+- [ ] **End-to-End Encryption (E2EE)**: Implementarea protocolului OMEMO.
+- [ ] **Transfer de Fișiere**: Suport pentru trimiterea de atașamente.
 
-## 🤝 Contributing
+## 📝 Licență
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](#). For major changes, please open an issue first to discuss what you would like to change.
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for more details.
-
-## 📝 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+Distribuit sub licența MIT. Vezi fișierul `LICENSE` pentru detalii.
