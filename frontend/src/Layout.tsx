@@ -138,7 +138,7 @@ export default function Layout({ children }: LayoutProps = {}) {
   }, [location.pathname, clearUnread, clearRoomUnread]);
 
   return (
-    <div className="h-screen w-full bg-[var(--bg-secondary)] text-[var(--text-normal)] font-body p-3 antialiased">
+    <div className="h-screen w-full bg-[var(--bg-secondary)] text-[var(--text-normal)] font-body p-3 antialiased" data-testid="chat-interface">
       <div className="h-full w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg shadow-xl overflow-hidden flex">
 
         {settingsOpen && (
@@ -539,7 +539,7 @@ function ChannelsColumn({
               className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-primary)] z-10 ${isConnected ? 'bg-[var(--status-online)]' : 'bg-[var(--status-dnd)]'}`}
             />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0" data-testid="user-status">
             <p className="text-[14px] font-bold text-[var(--text-normal)] truncate leading-tight">
               {user?.user_metadata?.display_name || myUsername}
             </p>
@@ -559,6 +559,7 @@ function ChannelsColumn({
           <button
             onClick={() => setSettingsOpen(true)}
             className="w-8 h-8 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
+            data-testid="settings-button"
           >
             <Settings size={16} />
           </button>

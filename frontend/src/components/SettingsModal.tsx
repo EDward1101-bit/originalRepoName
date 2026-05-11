@@ -546,6 +546,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
           <button
             onClick={handleSignOut}
             className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors flex items-center gap-3"
+            data-testid="logout-button"
           >
             <LogOut size={20} />
             {t('logout')}

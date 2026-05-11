@@ -295,6 +295,7 @@ export default function Chat() {
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5"
         onClick={() => setActiveMenu(null)}
+        data-testid="message-list"
         onScroll={() => {
           const el = messagesContainerRef.current;
           if (!el) return;
@@ -562,6 +563,7 @@ export default function Chat() {
             onChange={handleInputChange}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             disabled={isUploading}
+            data-testid="message-input"
           />
 
           <div className="flex items-center gap-1">
@@ -582,6 +584,7 @@ export default function Chat() {
                 onClick={handleSend}
                 disabled={isUploading}
                 className="w-10 h-10 rounded-xl bg-[var(--brand)] text-white flex items-center justify-center hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
+                data-testid="send-button"
               >
                 <Send size={22} />
               </button>

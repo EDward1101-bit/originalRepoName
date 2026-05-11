@@ -210,7 +210,7 @@ export default function Auth() {
           </p>
         </div>
 
-        <form onSubmit={handleAuth} className="flex flex-col gap-5">
+        <form onSubmit={handleAuth} className="flex flex-col gap-5" data-testid="auth-form">
           <div>
             <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
               Email <span className="text-[var(--danger)]">*</span>
@@ -222,6 +222,7 @@ export default function Auth() {
               className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
               required
               placeholder="you@example.com"
+              data-testid="email-input"
             />
           </div>
 
@@ -237,6 +238,7 @@ export default function Auth() {
                 className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
                 required
                 placeholder="Choose a username"
+                data-testid="username-input"
               />
             </div>
           )}
@@ -252,6 +254,7 @@ export default function Auth() {
               className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
               required
               placeholder="••••••••"
+              data-testid="password-input"
             />
             {!isSignUp && (
               <button
@@ -271,6 +274,7 @@ export default function Auth() {
             type="submit"
             disabled={loading}
             className="w-full bg-[var(--brand)] text-white font-bold text-[15px] py-3.5 rounded-xl hover:bg-[var(--brand-hover)] transition-colors mt-1 disabled:opacity-50 shadow-sm"
+            data-testid="submit-button"
           >
             {loading ? '...' : isSignUp ? t('register') : t('sign_in')}
           </button>
@@ -294,6 +298,7 @@ export default function Auth() {
         {message && (
           <p
             className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
+            data-testid="auth-error"
           >
             {message}
           </p>
