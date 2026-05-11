@@ -14,24 +14,22 @@
 
 ---
 
-## 📖 Why I built this
+## 📖 About The Project
 
-I started Aether Chat to see if I could bridge the gap between a bulletproof, traditional protocol like XMPP and a cutting-edge React stack. My goal was simple: build a Discord-like web chat that is actually fast, responsive, and easy to deploy.
+Aether Chat is a real-time messaging platform built to integrate the robust XMPP protocol with a modern web frontend. The objective is to provide a fast, scalable, and fully responsive web-based communication experience.
 
-The UI is built from scratch with React 19 and Tailwind CSS, backed by a Python FastAPI server. For the actual live messaging, I set up a Prosody XMPP server, keeping user data and authentication tightly managed via Supabase.
+The system utilizes React 19 and Tailwind CSS for the user interface, communicating with a Python FastAPI backend. Real-time messaging infrastructure is powered by a Prosody XMPP server, while Supabase handles secure authentication and data persistence.
 
-This repo is my playground for architectural decisions, handling tricky WebSocket connections, and writing clean, scalable code.
+## ✨ Key Features
 
-## ✨ What's working so far
+- **Real-Time Messaging**: Implemented via XMPP using a Prosody server. The frontend utilizes `stanza.js` over WebSockets, while the backend interacts through `slixmpp`.
+- **Modern Interface**: Built from scratch using React 19 and Tailwind CSS v4, featuring a fluid, responsive design with comprehensive theme support.
+- **Authentication & Discovery**: Powered by Supabase. Secure user registration, JWT-based login, and global user search functionality.
+- **Optimized Performance**: Packaged with Vite 6, utilizing dynamic code-splitting and chunk management for minimal load times.
+- **Internationalization (i18n)**: Fully localized interface with multi-language support.
+- **Docker Ready**: The entire infrastructure (Frontend, Backend, XMPP Server) can be deployed using a single `docker-compose` command.
 
-- **Real-Time Messaging**: Runs on XMPP. I'm using `stanza.js` on the client and `slixmpp` on the backend to talk to the Prosody server.
-- **Fluid UI**: Fully responsive, dark/light modes, and a layout that feels native.
-- **Auth & Discovery**: Handled securely by Supabase. You can register, log in with JWTs, and search the platform for other users.
-- **Vite Optimized**: Dynamic code splitting and chunk management means it loads almost instantly.
-- **i18n Ready**: The entire interface supports multiple languages out of the box.
-- **Containerized**: Everything (Frontend, API, DB connections, XMPP Server) spins up with a single `docker-compose` command.
-
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
 ```mermaid
 graph TD
@@ -41,73 +39,59 @@ graph TD
     API --> |Admin API| Prosody
 ```
 
-### Stack Details
+### Technology Stack
 
 | Component | Technologies |
 | :--- | :--- |
-| **Frontend** | React 19, TypeScript, Vite 6, TailwindCSS 4, React Router 7, Stanza.js, i18n |
+| **Frontend** | React 19, TypeScript, Vite 6, Tailwind CSS 4, React Router 7, Stanza.js, i18n |
 | **Backend** | Python 3.12, FastAPI, Slixmpp, Pydantic, Passlib, Pytest |
 | **Database** | Supabase (PostgreSQL) |
 | **Infrastructure**| Docker, Docker Compose, Prosody XMPP |
 
-## 🚀 Running it locally
+## 🚀 Quick Start
 
-I've Dockerized the whole stack so you don't have to install Python or Node locally if you don't want to.
+The platform is fully containerized using Docker for seamless local deployment.
 
-**Prerequisites**: Just make sure you have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed.
+**Prerequisites**: [Docker Desktop](https://www.docker.com/products/docker-desktop/) must be installed and running.
 
-### 1. Clone it
+### 1. Clone the repository
 ```bash
 git clone https://github.com/EDward1101-bit/originalRepoName
 cd originalRepoName
 ```
 
-### 2. Set up environments
-Copy the example configs and drop in your Supabase credentials:
+### 2. Configure environment variables
+Copy the example configuration files and add your Supabase credentials:
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
 *(Open both `.env` files and add your `SUPABASE_URL` and `SUPABASE_ANON_KEY` / `SERVICE_KEY`.)*
 
-### 3. Spin it up
-This grabs the images, installs dependencies, and boots the servers:
+### 3. Start the containers
+The following command will build the project and initialize all services:
 ```bash
 docker-compose up --build
 ```
 
-### 4. Check it out
+### 4. Access the Application
 - **Frontend App**: [http://localhost:5173](http://localhost:5173)
 - **Backend API**: [http://localhost:8000](http://localhost:8000)
-- **API Docs (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## 📁 Repository Structure
+## 🗺️ Roadmap / Future Work
 
-```text
-.
-├── backend/               # FastAPI Python application
-│   ├── api/               # REST endpoints
-│   ├── models/            # Pydantic models
-│   ├── services/          # Core business logic & Slixmpp integration
-│   ├── tests/             # Pytest test suite
-│   └── main.py            # API entry point
-├── frontend/              # React application
-│   ├── src/               # React components, contexts, hooks
-│   ├── index.html         # Main HTML
-│   └── vite.config.ts     # Vite bundler config
-├── prosody/               # XMPP server config & Lua plugins
-└── docker-compose.yml     # Container orchestration
-```
+- [x] Core Authentication and User Discoverability
+- [x] XMPP Integration via Websockets
+- [x] Internationalization (i18n)
+- [ ] **WebRTC Integration**: Voice and video calling.
+- [ ] **End-to-End Encryption (E2EE)**: OMEMO protocol implementation.
+- [ ] **File Transfers**: XMPP SI file transfer support.
 
-## 🗺️ What's Next?
+## 🤝 Contributing
 
-- [x] Core Auth and User Search
-- [x] XMPP Websocket Integration
-- [x] Multi-language support (i18n)
-- [ ] **WebRTC**: Voice and video calling directly in the browser.
-- [ ] **E2EE**: End-to-End Encryption using OMEMO.
-- [ ] **File Transfers**: Sending attachments via XMPP.
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](#). For major changes, please open an issue first to discuss what you would like to change.
 
 ## 📝 License
 
-Distributed under the MIT License. See `LICENSE` for details.
+Distributed under the MIT License. See `LICENSE` for more information.
