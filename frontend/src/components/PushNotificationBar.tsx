@@ -135,7 +135,7 @@ export default function PushNotificationBar() {
             <div
               className="relative flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, rgba(30,27,75,0.97) 0%, rgba(17,24,39,0.97) 100%)',
+                background: 'linear-gradient(135deg, var(--overlay-surface-start) 0%, var(--overlay-surface-end) 100%)',
                 backdropFilter: 'blur(20px)',
               }}
             >
@@ -161,7 +161,7 @@ export default function PushNotificationBar() {
                   )}
                 </div>
                 {/* Small message icon badge */}
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[var(--brand)] flex items-center justify-center border-[2px] border-[#111827]">
+                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[var(--brand)] flex items-center justify-center border-[2px] border-[var(--overlay-border)]">
                   <MessageSquare size={9} className="text-white" />
                 </div>
               </div>

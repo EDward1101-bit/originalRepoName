@@ -16,6 +16,11 @@ export default function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
 
+  const isErrorMessage = (text: string) => {
+    const normalized = text.toLowerCase();
+    return normalized.includes('error') || normalized.includes('fail') || normalized.includes('taken');
+  };
+
   const syncUserToProsody = async (username: string, password: string) => {
     try {
       const response = await fetch(`${API_URL}/api/auth/sync-user`, {
@@ -26,6 +31,19 @@ export default function Auth() {
       return response.ok;
     } catch {
       return false;
+    }
+  };
+
+  const checkUsernameAvailable = async (name: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/users/${encodeURIComponent(name)}`);
+      if (!response.ok) {
+        throw new Error('Username availability check failed');
+      }
+      const data = (await response.json()) as { exists?: boolean };
+      return !data.exists;
+    } catch {
+      throw new Error('Could not verify username availability. Please try again.');
     }
   };
 
@@ -59,6 +77,11 @@ export default function Auth() {
       if (isSignUp) {
         if (!username) {
           throw new Error('Username is required for sign up.');
+        }
+        const available = await checkUsernameAvailable(username.trim());
+        if (!available) {
+          setMessage('Username is already taken. Please choose another.');
+          return;
         }
         const authData = await signUp(email, password, username);
         if (authData?.user?.id) {
@@ -162,7 +185,7 @@ export default function Auth() {
 
           {message && (
             <p
-              className={`mt-4 text-sm text-center font-medium ${message.includes('Error') ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+              className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
             >
               {message}
             </p>
@@ -190,7 +213,7 @@ export default function Auth() {
         <form onSubmit={handleAuth} className="flex flex-col gap-5">
           <div>
             <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-              Email <span className="text-[#ef4444]">*</span>
+              Email <span className="text-[var(--danger)]">*</span>
             </label>
             <input
               type="email"
@@ -205,7 +228,7 @@ export default function Auth() {
           {isSignUp && (
             <div>
               <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-                Username <span className="text-[#ef4444]">*</span>
+                Username <span className="text-[var(--danger)]">*</span>
               </label>
               <input
                 type="text"
@@ -220,7 +243,7 @@ export default function Auth() {
 
           <div>
             <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-              Password <span className="text-[#ef4444]">*</span>
+              Password <span className="text-[var(--danger)]">*</span>
             </label>
             <input
               type="password"
@@ -270,7 +293,7 @@ export default function Auth() {
 
         {message && (
           <p
-            className={`mt-4 text-sm text-center font-medium ${message.includes('fail') || message.includes('Error') || message.includes('error') ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+            className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
           >
             {message}
           </p>
