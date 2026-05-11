@@ -79,14 +79,6 @@ docker-compose up --build
 - **Backend API**: [http://localhost:8000](http://localhost:8000)
 - **API Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## 🗺️ Roadmap / Future Work
-
-- [x] Core Authentication and User Discoverability
-- [x] XMPP Integration via Websockets
-- [x] Internationalization (i18n)
-- [ ] **WebRTC Integration**: Voice and video calling.
-- [ ] **End-to-End Encryption (E2EE)**: OMEMO protocol implementation.
-- [ ] **File Transfers**: XMPP SI file transfer support.
 
 ## 🤝 Contributing
 
