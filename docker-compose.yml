@@ -37,6 +37,7 @@ services:
       - ./backend:/app
     depends_on:
       - prosody
+    init: true
     restart: unless-stopped
     networks:
       - xmpp-network
@@ -58,6 +59,7 @@ services:
       - /app/node_modules/.cache
     depends_on:
       - backend
+    init: true
     restart: unless-stopped
     networks:
       - xmpp-network

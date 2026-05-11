@@ -14,24 +14,24 @@
 
 ---
 
-## 📖 Despre Proiect
+## 📖 Why I built this
 
-Aether Chat este o platformă de mesagerie în timp real pe care am construit-o pentru a explora cum un protocol tradițional și robust precum XMPP poate fi integrat cu un frontend modern în React. Obiectivul meu a fost să creez o interfață similară cu Discord, complet web-based, rapidă și scalabilă.
+I started Aether Chat to see if I could bridge the gap between a bulletproof, traditional protocol like XMPP and a cutting-edge React stack. My goal was simple: build a Discord-like web chat that is actually fast, responsive, and easy to deploy.
 
-Sistemul folosește React 19 și TailwindCSS pentru UI, comunicând cu un backend scris în Python (FastAPI). Pentru infrastructura de mesagerie live am configurat un server XMPP Prosody, iar pentru autentificare și persistența datelor folosesc Supabase.
+The UI is built from scratch with React 19 and Tailwind CSS, backed by a Python FastAPI server. For the actual live messaging, I set up a Prosody XMPP server, keeping user data and authentication tightly managed via Supabase.
 
-Este în primul rând un proiect de portofoliu în care m-am concentrat pe decizii arhitecturale solide, gestionarea corectă a conexiunilor prin WebSockets și crearea unei experiențe de utilizare fluide.
+This repo is my playground for architectural decisions, handling tricky WebSocket connections, and writing clean, scalable code.
 
-## ✨ Funcționalități Principale
+## ✨ What's working so far
 
-- **Mesagerie în Timp Real**: Implementată prin XMPP folosind un server Prosody. Frontend-ul folosește librăria `stanza.js`, în timp ce backend-ul interacționează cu serverul prin `slixmpp`.
-- **Interfață tip Discord**: Construită de la zero folosind React 19 și Tailwind CSS v4, cu suport pentru teme și un design fluid.
-- **Autentificare și Căutare Utilizatori**: Gestionate prin Supabase. Utilizatorii se pot înregistra, loga securizat via JWT și pot căuta alți utilizatori din platformă.
-- **Optimizare și Viteză**: Proiectul este construit cu Vite 6, folosind code-splitting dinamic și chunk management pentru a menține un timp de încărcare minim.
-- **Suport Multi-limbă (i18n)**: Interfața este complet localizată.
-- **Docker Ready**: Întregul sistem (Frontend, Backend, XMPP Server) poate fi pornit folosind o singură comandă de `docker-compose`.
+- **Real-Time Messaging**: Runs on XMPP. I'm using `stanza.js` on the client and `slixmpp` on the backend to talk to the Prosody server.
+- **Fluid UI**: Fully responsive, dark/light modes, and a layout that feels native.
+- **Auth & Discovery**: Handled securely by Supabase. You can register, log in with JWTs, and search the platform for other users.
+- **Vite Optimized**: Dynamic code splitting and chunk management means it loads almost instantly.
+- **i18n Ready**: The entire interface supports multiple languages out of the box.
+- **Containerized**: Everything (Frontend, API, DB connections, XMPP Server) spins up with a single `docker-compose` command.
 
-## 🏗️ Arhitectura Sistemului
+## 🏗️ Architecture
 
 ```mermaid
 graph TD
@@ -41,73 +41,73 @@ graph TD
     API --> |Admin API| Prosody
 ```
 
-### Stack Tehnologic
+### Stack Details
 
-| Componentă | Tehnologii |
+| Component | Technologies |
 | :--- | :--- |
 | **Frontend** | React 19, TypeScript, Vite 6, TailwindCSS 4, React Router 7, Stanza.js, i18n |
 | **Backend** | Python 3.12, FastAPI, Slixmpp, Pydantic, Passlib, Pytest |
-| **Bază de Date** | Supabase (PostgreSQL) |
-| **Infrastructură**| Docker, Docker Compose, Prosody XMPP |
+| **Database** | Supabase (PostgreSQL) |
+| **Infrastructure**| Docker, Docker Compose, Prosody XMPP |
 
-## 🚀 Rulare Locală (Quick Start)
+## 🚀 Running it locally
 
-Platforma este complet containerizată cu Docker pentru a fi ușor de testat pe orice sistem (Windows, Mac, Linux).
+I've Dockerized the whole stack so you don't have to install Python or Node locally if you don't want to.
 
-**Cerințe**: [Docker Desktop](https://www.docker.com/products/docker-desktop/) trebuie să fie instalat și pornit.
+**Prerequisites**: Just make sure you have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed.
 
-### 1. Clonează proiectul
+### 1. Clone it
 ```bash
 git clone https://github.com/EDward1101-bit/originalRepoName
 cd originalRepoName
 ```
 
-### 2. Configurează variabilele de mediu
-Trebuie să copiezi fișierele de configurare example și să introduci credențialele tale de Supabase:
+### 2. Set up environments
+Copy the example configs and drop in your Supabase credentials:
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
-*(Deschide cele două fișiere `.env` și adaugă `SUPABASE_URL` și cheile anon/service.)*
+*(Open both `.env` files and add your `SUPABASE_URL` and `SUPABASE_ANON_KEY` / `SERVICE_KEY`.)*
 
-### 3. Pornește containerele
-Comanda de mai jos va descărca imaginile necesare, va construi proiectul și va porni serverele:
+### 3. Spin it up
+This grabs the images, installs dependencies, and boots the servers:
 ```bash
 docker-compose up --build
 ```
 
-### 4. Accesează Aplicația
-- **Aplicația Frontend**: [http://localhost:5173](http://localhost:5173)
-- **API-ul Backend**: [http://localhost:8000](http://localhost:8000)
-- **Documentația API (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
+### 4. Check it out
+- **Frontend App**: [http://localhost:5173](http://localhost:5173)
+- **Backend API**: [http://localhost:8000](http://localhost:8000)
+- **API Docs (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## 📁 Structura Proiectului
+## 📁 Repository Structure
 
 ```text
-aether-chat/
-├── backend/               # Aplicația Python / FastAPI
-│   ├── api/               # Endpoint-uri REST
-│   ├── models/            # Modele de date Pydantic și baza de date
-│   ├── services/          # Logica de business și integrarea Slixmpp
-│   ├── tests/             # Suita de teste Pytest
-│   └── main.py            # Entry point-ul API-ului
-├── frontend/              # Aplicația React
-│   ├── src/               # Componente, contexte, hook-uri
-│   ├── index.html         # Fișierul HTML principal
-│   └── vite.config.ts     # Configurarea bundler-ului Vite
-├── prosody/               # Configurările și plugin-urile serverului XMPP
-└── docker-compose.yml     # Orchestrarea containerelor
+.
+├── backend/               # FastAPI Python application
+│   ├── api/               # REST endpoints
+│   ├── models/            # Pydantic models
+│   ├── services/          # Core business logic & Slixmpp integration
+│   ├── tests/             # Pytest test suite
+│   └── main.py            # API entry point
+├── frontend/              # React application
+│   ├── src/               # React components, contexts, hooks
+│   ├── index.html         # Main HTML
+│   └── vite.config.ts     # Vite bundler config
+├── prosody/               # XMPP server config & Lua plugins
+└── docker-compose.yml     # Container orchestration
 ```
 
-## 🗺️ Roadmap / Dezvoltări Viitoare
+## 🗺️ What's Next?
 
-- [x] Autentificare de bază și funcționalitate de search utilizatori
-- [x] Integrare XMPP prin Websockets
-- [x] Internaționalizare (i18n)
-- [ ] **Integrare WebRTC**: Apeluri audio și video.
-- [ ] **End-to-End Encryption (E2EE)**: Implementarea protocolului OMEMO.
-- [ ] **Transfer de Fișiere**: Suport pentru trimiterea de atașamente.
+- [x] Core Auth and User Search
+- [x] XMPP Websocket Integration
+- [x] Multi-language support (i18n)
+- [ ] **WebRTC**: Voice and video calling directly in the browser.
+- [ ] **E2EE**: End-to-End Encryption using OMEMO.
+- [ ] **File Transfers**: Sending attachments via XMPP.
 
-## 📝 Licență
+## 📝 License
 
-Distribuit sub licența MIT. Vezi fișierul `LICENSE` pentru detalii.
+Distributed under the MIT License. See `LICENSE` for details.

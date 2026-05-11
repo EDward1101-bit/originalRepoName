@@ -25,7 +25,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
   // Profile picture
   const [avatarUrl, setAvatarUrl] = useState<string | null>(
-    () => localStorage.getItem('aether_avatar') || null
+    () => user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar') || null
   );
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -205,7 +205,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                     />
                   ) : (
                     <div className="w-20 h-20 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-3xl font-bold border-2 border-[var(--border)] shadow-md">
-                      {myUsername?.[0]?.toUpperCase() || '?'}
+                      {user?.user_metadata?.display_name?.[0]?.toUpperCase() || myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
                     </div>
                   )}
                   <button
@@ -333,7 +333,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                 />
               ) : (
                 <div className="w-16 h-16 bg-[var(--brand)] rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md">
-                  {myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
+                  {user?.user_metadata?.display_name?.[0]?.toUpperCase() || myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
                 </div>
               )}
               <div className="flex-1">
