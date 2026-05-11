@@ -257,7 +257,7 @@ export default function RoomChat() {
     return (
       <div className="flex h-full items-center justify-center bg-[var(--bg-primary)]">
         <div className="text-center p-8 bg-[var(--bg-secondary)] rounded-md max-w-md border border-[var(--border)] shadow-xl">
-          <div className="text-6xl text-[#ef4444] mb-4">⚠️</div>
+          <div className="text-6xl text-[var(--danger)] mb-4">⚠️</div>
           <h2 className="text-2xl font-bold mb-2 text-[var(--text-normal)] tracking-tight">
             {t('room_not_found')}
           </h2>
@@ -319,7 +319,7 @@ export default function RoomChat() {
           {isJoined ? (
             <button
               onClick={handleLeave}
-              className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[#ef4444]/10 hover:text-[#ef4444] transition-colors"
+              className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--danger)]/10 hover:text-[var(--danger)] transition-colors"
               title={t('leave_room')}
             >
               <LogOut size={24} />
@@ -396,7 +396,7 @@ export default function RoomChat() {
                       className="flex gap-4 -mx-6 px-6 py-2 hover:bg-[var(--bg-modifier-hover)] transition-colors"
                     >
                       <div className="w-10 shrink-0 flex justify-end items-center">
-                        <Info size={20} className="text-[#10b981]" />
+                        <Info size={20} className="text-[var(--success)]" />
                       </div>
                       <div className="flex-1 text-[14px] text-[var(--text-muted)] font-medium italic">
                         {formatSystemMessage(msg.body)}
@@ -420,7 +420,7 @@ export default function RoomChat() {
                   >
                     {showHeader ? (
                       <div
-                        className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm overflow-hidden ${isSentByMe ? 'bg-[var(--brand)]' : 'bg-[#8b5cf6]'}`}
+                        className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm overflow-hidden ${isSentByMe ? 'bg-[var(--brand)]' : 'bg-[var(--accent)]'}`}
                       >
                         {senderAvatar ? (
                           <img
@@ -502,7 +502,7 @@ export default function RoomChat() {
                                   }
                                   setActiveMenu(null);
                                 }}
-                                className="w-full text-left px-4 py-2.5 text-[14px] text-[#ef4444] hover:bg-[#ef4444]/10 flex items-center gap-3"
+                                className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--danger)] hover:bg-[var(--danger)]/10 flex items-center gap-3"
                               >
                                 <Trash2 size={18} />
                                 Delete for Everyone
@@ -594,7 +594,7 @@ export default function RoomChat() {
                     )}
                     <button
                       onClick={() => removeStagedFile(index)}
-                      className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#ef4444] text-white flex items-center justify-center opacity-0 group-hover/staged:opacity-100 transition-opacity shadow-md"
+                      className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[var(--danger)] text-white flex items-center justify-center opacity-0 group-hover/staged:opacity-100 transition-opacity shadow-md"
                     >
                       <X size={14} />
                     </button>
@@ -720,7 +720,7 @@ export default function RoomChat() {
                             </div>
                             <div
                               className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] ${
-                                isOnline ? 'bg-[#10b981]' : 'bg-[#ef4444]'
+                                isOnline ? 'bg-[var(--status-online)]' : 'bg-[var(--status-dnd)]'
                               }`}
                             />
                           </div>
@@ -760,7 +760,7 @@ export default function RoomChat() {
                               {bot.emoji}
                             </div>
                             <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] ${
-                              bot.isOnline ? 'bg-[#22c55e] shadow-[0_0_4px_#22c55e]' : 'bg-[var(--text-muted)]'
+                              bot.isOnline ? 'bg-[var(--status-online)] shadow-[0_0_4px_var(--status-online)]' : 'bg-[var(--text-muted)]'
                             }`} />
                           </div>
                           <div className="min-w-0">

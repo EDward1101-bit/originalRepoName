@@ -185,7 +185,7 @@ export default function Auth() {
 
           {message && (
             <p
-              className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+              className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
             >
               {message}
             </p>
@@ -213,7 +213,7 @@ export default function Auth() {
         <form onSubmit={handleAuth} className="flex flex-col gap-5">
           <div>
             <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-              Email <span className="text-[#ef4444]">*</span>
+              Email <span className="text-[var(--danger)]">*</span>
             </label>
             <input
               type="email"
@@ -228,7 +228,7 @@ export default function Auth() {
           {isSignUp && (
             <div>
               <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-                Username <span className="text-[#ef4444]">*</span>
+                Username <span className="text-[var(--danger)]">*</span>
               </label>
               <input
                 type="text"
@@ -243,7 +243,7 @@ export default function Auth() {
 
           <div>
             <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-              Password <span className="text-[#ef4444]">*</span>
+              Password <span className="text-[var(--danger)]">*</span>
             </label>
             <input
               type="password"
@@ -293,7 +293,7 @@ export default function Auth() {
 
         {message && (
           <p
-            className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+            className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
           >
             {message}
           </p>

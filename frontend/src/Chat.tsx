@@ -250,7 +250,7 @@ export default function Chat() {
               )}
             </div>
             <div
-              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--bg-secondary)] z-10 ${isOnline ? 'bg-[#10b981]' : 'bg-[#9ca3af]'}`}
+              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--bg-secondary)] z-10 ${isOnline ? 'bg-[var(--status-online)]' : 'bg-[var(--status-offline)]'}`}
             />
           </div>
           <div>
@@ -268,12 +268,12 @@ export default function Chat() {
             onClick={toggleFavorite}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
               isFavorite
-                ? 'bg-[#f59e0b]/10 text-[#f59e0b]'
+                ? 'bg-[var(--warning)]/10 text-[var(--warning)]'
                 : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
             }`}
             title={isFavorite ? t('remove_from_favorites') : t('add_to_favorites')}
           >
-            <Star size={20} fill={favoriteId ? '#f59e0b' : 'none'} />
+            <Star size={20} fill={favoriteId ? 'var(--warning)' : 'none'} />
           </button>
           <button
             className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
@@ -453,7 +453,7 @@ export default function Chat() {
                               deleteMessageForEveryone(msg.id);
                               setActiveMenu(null);
                             }}
-                            className="w-full text-left px-4 py-2.5 text-[14px] text-[#ef4444] hover:bg-[#ef4444]/10 flex items-center gap-3"
+                            className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--danger)] hover:bg-[var(--danger)]/10 flex items-center gap-3"
                           >
                             <Trash2 size={18} />
                             Delete for Everyone
@@ -525,7 +525,7 @@ export default function Chat() {
                 )}
                 <button
                   onClick={() => removeStagedFile(index)}
-                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#ef4444] text-white flex items-center justify-center opacity-0 group-hover/staged:opacity-100 transition-opacity shadow-md"
+                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[var(--danger)] text-white flex items-center justify-center opacity-0 group-hover/staged:opacity-100 transition-opacity shadow-md"
                 >
                   <X size={14} />
                 </button>

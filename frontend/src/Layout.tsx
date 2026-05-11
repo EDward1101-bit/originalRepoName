@@ -224,11 +224,11 @@ export default function Layout({ children }: LayoutProps = {}) {
               className={`ml-4 inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
                 isConnected
                   ? 'bg-[var(--brand)]/10 text-[var(--brand)] border-[var(--brand)]/20'
-                  : 'bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/20'
+                  : 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/20'
               }`}
               title={status}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[var(--brand)]' : 'bg-[#ef4444]'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[var(--brand)]' : 'bg-[var(--danger)]'}`} />
               {isConnected ? t('connected') : t('disconnected')}
             </div>
           </div>
@@ -256,7 +256,7 @@ function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread:
           <MessageSquare size={22} />
         </NavLink>
         {dmUnread > 0 && (
-          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[var(--bg-tertiary)]">
+          <div className="absolute -top-2 -right-2 bg-[var(--danger)] text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[var(--bg-tertiary)]">
             {dmUnread > 99 ? '99+' : dmUnread}
           </div>
         )}
@@ -272,7 +272,7 @@ function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread:
           <Server size={22} />
         </NavLink>
         {roomUnread > 0 && (
-          <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[var(--bg-tertiary)]">
+          <div className="absolute -top-2 -right-2 bg-[var(--danger)] text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[var(--bg-tertiary)]">
             {roomUnread > 99 ? '99+' : roomUnread}
           </div>
         )}
@@ -378,7 +378,7 @@ function ChannelsColumn({
                           <div className="relative group/owner ml-auto mr-1 flex items-center justify-center">
                             <ShieldCheck 
                               size={12} 
-                              className="text-[#10b981] opacity-80 hover:opacity-100 transition-opacity cursor-help" 
+                              className="text-[var(--success)] opacity-80 hover:opacity-100 transition-opacity cursor-help" 
                             />
                             <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] text-[10px] font-bold rounded-md opacity-0 group-hover/owner:opacity-100 transition-all pointer-events-none z-[100] shadow-2xl whitespace-nowrap translate-x-1 group-hover/owner:translate-x-0">
                               {t('you_created_room')}
@@ -426,7 +426,7 @@ function ChannelsColumn({
                       );
                       setFavorites([]);
                     }}
-                    className="text-[10px] text-[var(--text-muted)] hover:text-[#ef4444] transition-colors"
+                    className="text-[10px] text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors"
                     title={t('clear_all')}
                   >
                     Clear
@@ -461,7 +461,7 @@ function ChannelsColumn({
                         </NavLink>
                         <button
                           onClick={() => removeFavorite(fav.id)}
-                          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-all"
+                          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-all"
                           title={t('remove')}
                         >
                           <X size={14} />
@@ -494,7 +494,7 @@ function ChannelsColumn({
 
           <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-md border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+              <div className="w-5 h-5 rounded-md bg-[var(--success)]/10 flex items-center justify-center text-[var(--success)]">
                 <TrendingUp size={12} />
               </div>
               <span className="text-[11px] font-semibold text-[var(--text-muted)]">{t('friends')} {t('online')}</span>
@@ -504,7 +504,7 @@ function ChannelsColumn({
 
           <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-md border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md bg-[#f59e0b]/10 flex items-center justify-center text-[#f59e0b]">
+              <div className="w-5 h-5 rounded-md bg-[var(--warning)]/10 flex items-center justify-center text-[var(--warning)]">
                 <Server size={12} />
               </div>
               <span className="text-[11px] font-semibold text-[var(--text-muted)]">{t('rooms')}</span>
@@ -536,7 +536,7 @@ function ChannelsColumn({
             </div>
             {/* Status dot - positioned on top of the avatar */}
             <div
-              className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-primary)] z-10 ${isConnected ? 'bg-[#10b981]' : 'bg-[#ef4444]'}`}
+              className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-primary)] z-10 ${isConnected ? 'bg-[var(--status-online)]' : 'bg-[var(--status-dnd)]'}`}
             />
           </div>
           <div className="flex-1 min-w-0">

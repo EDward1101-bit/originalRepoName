@@ -246,7 +246,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                           console.error('Failed to sync avatar removal to DB:', err);
                         }
                       }}
-                      className="ml-3 text-[14px] text-[var(--text-muted)] hover:text-[#ef4444] transition-colors font-medium"
+                      className="ml-3 text-[14px] text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors font-medium"
                     >
                       {t('remove')}
                     </button>
@@ -306,7 +306,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
               </div>
               {usernameMsg && (
                 <p
-                  className={`mt-2 text-[13px] font-medium ${usernameMsg.includes('Error') ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+                  className={`mt-2 text-[13px] font-medium ${usernameMsg.includes('Error') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
                 >
                   {usernameMsg}
                 </p>
@@ -372,7 +372,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   </button>
                   {passwordMsg && (
                     <p
-                      className={`text-[13px] font-medium ${passwordMsg.includes('Error') ? 'text-[#ef4444]' : 'text-[#10b981]'}`}
+                      className={`text-[13px] font-medium ${passwordMsg.includes('Error') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
                     >
                       {passwordMsg}
                     </p>
@@ -383,10 +383,10 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
             {/* Danger Zone */}
             <div>
-              <h3 className="text-[13px] font-bold text-[#ef4444] mb-4 uppercase tracking-wide">
+              <h3 className="text-[13px] font-bold text-[var(--danger)] mb-4 uppercase tracking-wide">
                 {t('danger_zone')}
               </h3>
-              <div className="bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-2xl p-5">
+              <div className="bg-[var(--danger)]/10 border border-[var(--danger)]/30 rounded-2xl p-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-bold text-[15px]">{t('delete_account')}</p>
@@ -394,7 +394,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                       {t('delete_account_desc')}
                     </p>
                   </div>
-                  <button className="bg-[#ef4444] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[#dc2626] transition-colors shadow-sm">
+                  <button className="bg-[var(--danger)] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--danger-strong)] transition-colors shadow-sm">
                     {t('delete_account')}
                   </button>
                 </div>
@@ -424,7 +424,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                       : 'border-[var(--border)] hover:border-[var(--text-muted)]'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[#0f172a] mb-4 border border-[#334155] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-[var(--preview-dark-bg)] mb-4 border border-[var(--preview-dark-border)] flex items-center justify-center">
                     <Moon size={24} className="text-[var(--brand)]" />
                   </div>
                   <p className="font-bold text-[16px] text-left">{t('dark')}</p>
@@ -440,7 +440,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                       : 'border-[var(--border)] hover:border-[var(--text-muted)]'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[#f8fafc] mb-4 border border-[#e2e8f0] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-[var(--preview-light-bg)] mb-4 border border-[var(--preview-light-border)] flex items-center justify-center">
                     <Sun size={24} className="text-[var(--brand)]" />
                   </div>
                   <p className="font-bold text-[16px] text-left">{t('light')}</p>
@@ -491,7 +491,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-[var(--bg-tertiary)] p-5 rounded-2xl flex items-center justify-between border border-[var(--border)]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#8b5cf6] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--accent)] flex items-center justify-center">
                     <Puzzle size={22} className="text-white" />
                   </div>
                   <span className="font-bold text-[15px]">{t('coming_soon')}</span>
@@ -545,7 +545,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
           <div className="h-[1px] bg-[var(--border)] my-3 mx-2" />
           <button
             onClick={handleSignOut}
-            className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors flex items-center gap-3"
+            className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors flex items-center gap-3"
           >
             <LogOut size={20} />
             {t('logout')}

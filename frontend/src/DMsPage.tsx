@@ -151,7 +151,7 @@ export default function DMsPage() {
             >
               <Inbox size={24} />
               {pendingReceived.length > 0 && (
-                <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--bg-secondary)]" />
+                <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[var(--danger)] rounded-full border-2 border-[var(--bg-secondary)]" />
               )}
             </button>
 
@@ -197,7 +197,7 @@ export default function DMsPage() {
                                 acceptFriendRequest(f.id);
                                 if (pendingReceived.length === 1) setShowRequests(false);
                               }}
-                              className="w-8 h-8 rounded-lg bg-[#10b981] text-white flex items-center justify-center hover:bg-[#059669] transition-colors shadow-sm"
+                              className="w-8 h-8 rounded-lg bg-[var(--success)] text-white flex items-center justify-center hover:bg-[var(--success-strong)] transition-colors shadow-sm"
                               title={t('accept')}
                             >
                               <Check size={16} />
@@ -207,7 +207,7 @@ export default function DMsPage() {
                                 removeFriendship(f.id);
                                 if (pendingReceived.length === 1) setShowRequests(false);
                               }}
-                              className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[#ef4444] hover:text-white transition-colors border border-[var(--border)]"
+                              className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--danger)] hover:text-white transition-colors border border-[var(--border)]"
                               title={t('decline')}
                             >
                               <X size={16} />
@@ -285,7 +285,7 @@ export default function DMsPage() {
                       )}
                     </div>
                     <div
-                      className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[2.5px] border-[var(--bg-primary)] z-10 ${u.online ? 'bg-[#10b981]' : 'bg-[#9ca3af]'}`}
+                      className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[2.5px] border-[var(--bg-primary)] z-10 ${u.online ? 'bg-[var(--status-online)]' : 'bg-[var(--status-offline)]'}`}
                     />
                   </div>
 
@@ -314,7 +314,7 @@ export default function DMsPage() {
                         </span>
                       ) : lastMsg
                         ? lastMsg.body === '🚫 This message was deleted'
-                          ? <span className="text-[#ef4444]">{t('message_deleted')}</span>
+                          ? <span className="text-[var(--danger)]">{t('message_deleted')}</span>
                           : lastMsg.body.includes('chat-media')
                             ? t('attachment')
                             : lastMsg.body
@@ -335,7 +335,7 @@ export default function DMsPage() {
                           removeFriendship(rel.id);
                         }
                       }}
-                      className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"
+                      className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors"
                     >
                       <UserMinus size={22} />
                     </button>
@@ -436,7 +436,7 @@ export default function DMsPage() {
                             )}
                           </div>
                           <div
-                            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-tertiary)] z-10 ${u.online ? 'bg-[#10b981]' : 'bg-[#9ca3af]'}`}
+                            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-tertiary)] z-10 ${u.online ? 'bg-[var(--status-online)]' : 'bg-[var(--status-offline)]'}`}
                           />
                         </div>
                         <div>
@@ -452,7 +452,7 @@ export default function DMsPage() {
                             onClick={() => handleSendRequest(u.id)}
                             className={`px-5 py-2.5 text-sm font-bold rounded-xl transition-all shadow-sm ${
                               requestSent === u.id
-                                ? 'bg-[#10b981] text-white'
+                                ? 'bg-[var(--success)] text-white'
                                 : 'bg-[var(--brand)] text-white hover:bg-[var(--brand-hover)]'
                             }`}
                           >
@@ -462,7 +462,7 @@ export default function DMsPage() {
                           u.relationship.receiver_id === myUserId ? (
                             <button
                               onClick={() => acceptFriendRequest(u.relationship!.id)}
-                              className="px-5 py-2.5 bg-[#10b981] text-white text-sm font-bold rounded-xl hover:bg-[#059669] transition-colors shadow-sm"
+                              className="px-5 py-2.5 bg-[var(--success)] text-white text-sm font-bold rounded-xl hover:bg-[var(--success-strong)] transition-colors shadow-sm"
                             >
                               Accept
                             </button>

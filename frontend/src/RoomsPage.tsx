@@ -53,7 +53,7 @@ export default function RoomsPage() {
     <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-normal)]">
       {/* Header */}
       <div className="flex-none p-8 bg-[var(--bg-secondary)] border-b border-[var(--border)] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand)]/10 via-transparent to-[#8b5cf6]/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand)]/10 via-transparent to-[var(--accent)]/10 pointer-events-none" />
         <div className="relative z-10 flex flex-col items-center text-center">
           <h1 className="text-3xl font-black tracking-tight text-[var(--text-normal)]">
             {t('find_your_community')}
@@ -71,7 +71,7 @@ export default function RoomsPage() {
             {t('featured_communities')}
           </h2>
           {error && (
-            <div className="mb-4 p-3 bg-[var(--color-status-dnd)] text-white rounded-md text-sm">
+            <div className="mb-4 p-3 bg-[var(--danger)] text-white rounded-md text-sm">
               {error}
             </div>
           )}
@@ -113,7 +113,7 @@ export default function RoomsPage() {
                         <button
                           onClick={(e) => handleDeleteRoom(e, room.id, room.name)}
                           disabled={deletingId === room.id}
-                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[#ef4444] hover:text-white transition-all flex-shrink-0 opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--danger)] hover:text-white transition-all flex-shrink-0 opacity-0 group-hover:opacity-100 disabled:opacity-50"
                         >
                           {deletingId === room.id ? (
                             <Loader2 size={14} className="animate-spin" />
@@ -130,8 +130,8 @@ export default function RoomsPage() {
 
                     {joinedRooms.includes(room.name) && (
                       <div className="mt-2 flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#22c55e]" />
-                        <span className="text-[10px] font-bold text-[#22c55e] uppercase tracking-wider">{t('joined')}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--status-online)]" />
+                        <span className="text-[10px] font-bold text-[var(--status-online)] uppercase tracking-wider">{t('joined')}</span>
                       </div>
                     )}
                   </div>

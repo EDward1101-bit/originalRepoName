@@ -110,7 +110,7 @@ export default function BotsPage() {
     <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-normal)]">
       {/* Header */}
       <div className="flex-none p-6 bg-[var(--bg-secondary)] border-b border-[var(--border)] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand)] to-[#8b5cf6] opacity-20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand)] to-[var(--accent)] opacity-20 pointer-events-none" />
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[var(--brand)]/20 flex items-center justify-center">
@@ -183,17 +183,17 @@ export default function BotsPage() {
                           BOT
                         </span>
                         {bot.isBuiltin && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#10b981]/15 text-[#10b981] uppercase tracking-wide">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--success)]/15 text-[var(--success)] uppercase tracking-wide">
                             {t('official')}
                           </span>
                         )}
                         <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${
                           bot.isOnline
-                            ? 'bg-[#22c55e]/15 text-[#22c55e]'
+                            ? 'bg-[var(--status-online)]/15 text-[var(--status-online)]'
                             : 'bg-[var(--text-muted)]/10 text-[var(--text-muted)]'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
-                            bot.isOnline ? 'bg-[#22c55e] shadow-[0_0_4px_#22c55e]' : 'bg-[var(--text-muted)]'
+                            bot.isOnline ? 'bg-[var(--status-online)] shadow-[0_0_4px_var(--status-online)]' : 'bg-[var(--text-muted)]'
                           }`} />
                           {bot.isOnline ? t('online') : t('offline')}
                         </span>
@@ -213,7 +213,7 @@ export default function BotsPage() {
                         <button
                           onClick={(e) => { e.stopPropagation(); setBotToDelete(bot); }}
                           disabled={deletingBotId === bot.id}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-all opacity-0 group-hover:opacity-100"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-all opacity-0 group-hover:opacity-100"
                           title="Delete bot"
                         >
                           {deletingBotId === bot.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
@@ -248,8 +248,8 @@ export default function BotsPage() {
               <div className="flex-1 overflow-y-auto p-6">
                 {registeredResult ? (
                   <div className="flex flex-col gap-4">
-                    <div className="p-4 bg-[#10b981]/10 border border-[#10b981]/30 rounded-xl">
-                      <p className="text-[13px] font-bold text-[#10b981] mb-1">{t('bot_registered')}</p>
+                    <div className="p-4 bg-[var(--success)]/10 border border-[var(--success)]/30 rounded-xl">
+                      <p className="text-[13px] font-bold text-[var(--success)] mb-1">{t('bot_registered')}</p>
                       <p className="text-[12px] text-[var(--text-muted)] leading-relaxed">
                         {t('copy_secret_warning')}
                       </p>
@@ -345,7 +345,7 @@ export default function BotsPage() {
                       />
                     </div>
                     {registerError && (
-                      <p className="text-[12px] text-[#ef4444] bg-[#ef4444]/10 px-3 py-2 rounded-lg">
+                      <p className="text-[12px] text-[var(--danger)] bg-[var(--danger)]/10 px-3 py-2 rounded-lg">
                         {registerError}
                       </p>
                     )}
@@ -378,10 +378,10 @@ export default function BotsPage() {
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${
-                        selectedBot.isOnline ? 'text-[#22c55e]' : 'text-[var(--text-muted)]'
+                        selectedBot.isOnline ? 'text-[var(--status-online)]' : 'text-[var(--text-muted)]'
                       }`}>
                         <span className={`w-2 h-2 rounded-full ${
-                          selectedBot.isOnline ? 'bg-[#22c55e] shadow-[0_0_6px_#22c55e]' : 'bg-[var(--text-muted)]'
+                          selectedBot.isOnline ? 'bg-[var(--status-online)] shadow-[0_0_6px_var(--status-online)]' : 'bg-[var(--text-muted)]'
                         }`} />
                         {selectedBot.isOnline ? t('online') : t('offline')}
                       </span>
@@ -443,7 +443,7 @@ export default function BotsPage() {
                             disabled={isLoading}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold transition-all flex-shrink-0 disabled:opacity-50 ${
                               active
-                                ? 'bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444]/20'
+                                ? 'bg-[var(--danger)]/10 text-[var(--danger)] hover:bg-[var(--danger)]/20'
                                 : 'bg-[var(--brand)] text-white hover:bg-[var(--brand-hover)] shadow-sm'
                             }`}
                           >
@@ -478,7 +478,7 @@ export default function BotsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6">
-              <div className="w-12 h-12 rounded-full bg-[#ef4444]/10 flex items-center justify-center text-[#ef4444] mb-4">
+              <div className="w-12 h-12 rounded-full bg-[var(--danger)]/10 flex items-center justify-center text-[var(--danger)] mb-4">
                 <AlertTriangle size={24} />
               </div>
               <h3 className="text-xl font-bold mb-2 tracking-tight">{t('delete_bot')}</h3>
@@ -497,7 +497,7 @@ export default function BotsPage() {
               <button
                 onClick={confirmDeleteBot}
                 disabled={deletingBotId !== null}
-                className="px-5 py-2 rounded-xl text-[14px] font-medium bg-[#ef4444] text-white hover:bg-[#ef4444]/90 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                className="px-5 py-2 rounded-xl text-[14px] font-medium bg-[var(--danger)] text-white hover:bg-[var(--danger)]/90 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
               >
                 {deletingBotId !== null && <Loader2 size={16} className="animate-spin" />}
                 {t('delete')}
