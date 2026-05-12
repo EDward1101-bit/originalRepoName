@@ -13,15 +13,8 @@ from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/bots", tags=["bots"])
 
-# ── Built-in inline filters ───────────────────────────────────────────────────
-_SWEAR_PATTERN = re.compile(
-    r"\b(shit|fuck|crap|ass|damn|bitch|bastard|piss|cock|cunt|dick|prick|twat|wanker|bollocks)\b",
-    re.IGNORECASE,
-)
-
-BUILTIN_FILTERS: dict[str, Any] = {
-    "swear-filter-bot": lambda body: _SWEAR_PATTERN.sub("***", body),
-}
+# In-memory store for bot heartbeats: bot_id -> timestamp
+bot_heartbeats: dict[str, float] = {}
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -29,11 +22,6 @@ def _sign_payload(secret: str, payload: dict) -> str:
     msg = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode()
     digest = hmac.new(secret.encode(), msg, hashlib.sha256).hexdigest()
     return f"sha256={digest}"
-
-
-# In-memory store for bot heartbeats: bot_id -> timestamp
-bot_heartbeats: dict[str, float] = {}
-
 
 # ── Request / Response models ─────────────────────────────────────────────────
 class RegisterBotRequest(BaseModel):
@@ -204,15 +192,7 @@ async def process_dispatch(req: DispatchRequest):
 
     async with httpx.AsyncClient(timeout=2.0) as client:
         for bot in bots:
-            if bot.get("is_builtin"):
-                # Run built-in filter and edit immediately if changed
-                inline = BUILTIN_FILTERS.get(bot["id"])
-                if inline:
-                    filtered = inline(req.body)
-                    if filtered != req.body:
-                        # Update database directly
-                        supabase.table("room_messages").update({"body": filtered}).eq("id", req.message_id).execute()
-            elif bot.get("webhook_url"):
+            if bot.get("webhook_url"):
                 secret = bot.get("webhook_secret") or ""
                 signature = _sign_payload(secret, payload)
                 try:
