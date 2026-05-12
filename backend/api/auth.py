@@ -1,7 +1,10 @@
+import logging
 from typing import Any, cast
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -68,7 +71,8 @@ async def sync_user_to_prosody(request: SyncUserRequest) -> dict[str, Any]:
         await user_sync.sync_user_to_prosody(request.username, request.password)
         return {"synced": True, "username": request.username}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from None
+        logger.error("Failed to sync user %s to Prosody: %s", request.username, e)
+        raise HTTPException(status_code=400, detail="Failed to sync user account") from None
 
 
 @router.get("/users/{username}", response_model=dict[str, Any])
@@ -90,4 +94,5 @@ async def check_user_exists(username: str) -> dict[str, Any]:
 
         return {"exists": False}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from None
+        logger.error("Failed to look up user %s: %s", username, e)
+        raise HTTPException(status_code=500, detail="Internal server error") from None

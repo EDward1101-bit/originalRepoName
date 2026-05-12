@@ -189,7 +189,7 @@ class TestErrorHandlingIntegration:
                 # Should handle the failure gracefully
                 assert response.status_code == 400
                 data = response.json()
-                assert "Prosody unavailable" in data["detail"]
+                assert data["detail"] == "Failed to create user"
 
     @pytest.mark.asyncio
     async def test_partial_failure_recovery(self, async_client):

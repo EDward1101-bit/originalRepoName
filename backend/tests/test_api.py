@@ -93,7 +93,7 @@ class TestUserEndpoints:
 
         assert response.status_code == 400
         data = response.json()
-        assert "User already exists" in data["detail"]
+        assert data["detail"] == "Failed to create user"
 
     @patch('api.users.user_sync')
     def test_list_users_success(self, mock_user_sync, test_client):
@@ -120,7 +120,7 @@ class TestUserEndpoints:
 
         assert response.status_code == 500
         data = response.json()
-        assert "Database error" in data["detail"]
+        assert data["detail"] == "Internal server error"
 
     @patch('api.users.prosody_client')
     def test_get_user_success(self, mock_prosody_client, test_client):
@@ -268,7 +268,7 @@ class TestAuthEndpoints:
 
             assert response.status_code == 400
             data = response.json()
-            assert "Sync failed" in data["detail"]
+            assert data["detail"] == "Failed to sync user account"
 
     def test_check_user_exists_success(self, test_client):
         """Test successful user existence check."""
@@ -310,7 +310,7 @@ class TestAuthEndpoints:
 
             assert response.status_code == 500
             data = response.json()
-            assert "Database error" in data["detail"]
+            assert data["detail"] == "Internal server error"
 
 
 class TestAuthModels:
