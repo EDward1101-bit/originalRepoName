@@ -9,9 +9,10 @@ import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import MessageBody from './components/MessageBody';
 import ReactionBar from './components/ReactionBar';
+import PinnedMessageBanner from './components/PinnedMessageBanner';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
-import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot } from 'lucide-react';
+import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot, Pin } from 'lucide-react';
 
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
@@ -67,6 +68,22 @@ export default function RoomChat() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const handlePinRoomMessage = async (messageId: string, body: string) => {
+    if (!roomName || !user) return;
+    await supabase.from('pinned_room_messages').upsert({
+      message_id: messageId,
+      room_name: roomName,
+      body_preview: body.slice(0, 200),
+      pinned_by: user.id,
+    }, { onConflict: 'message_id' });
+    setActiveMenu(null);
+  };
+
+  const scrollToMessage = (messageId: string) => {
+    messageRefs.current[messageId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   const [showActiveUsers, setShowActiveUsers] = useState(false);
   const [showRoomInfo, setShowRoomInfo] = useState(false);
@@ -358,6 +375,14 @@ export default function RoomChat() {
         <div className="flex-1 flex min-h-0" onClick={() => setActiveMenu(null)}>
           {/* Messages Area */}
           <div className="flex-1 flex flex-col min-w-0">
+            {user && roomName && (
+              <PinnedMessageBanner
+                conversationKey={roomName}
+                messageType="room"
+                currentUserId={user.id}
+                onJumpToMessage={scrollToMessage}
+              />
+            )}
             <div
               ref={messagesContainerRef}
               className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5"
@@ -418,6 +443,7 @@ export default function RoomChat() {
                 return (
                   <div
                     key={msg.id}
+                    ref={(el) => { messageRefs.current[msg.id] = el; }}
                     className={`group flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-6 px-6 py-2 transition-colors relative ${!showHeader ? 'mt-[-16px]' : ''}`}
                   >
                     {showHeader ? (
@@ -488,6 +514,16 @@ export default function RoomChat() {
 
                         {activeMenu === msg.id && (
                           <div className="absolute right-0 top-9 z-50 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-md shadow-2xl py-2 min-w-[200px] overflow-hidden">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePinRoomMessage(msg.id, msg.body);
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] flex items-center gap-3"
+                            >
+                              <Pin size={18} />
+                              {t('pin')}
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

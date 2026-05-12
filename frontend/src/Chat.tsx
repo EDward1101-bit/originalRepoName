@@ -7,9 +7,10 @@ import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import MessageBody from './components/MessageBody';
 import ReactionBar from './components/ReactionBar';
+import PinnedMessageBanner from './components/PinnedMessageBanner';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
-import { Phone, Video, MessageSquare, MoreHorizontal, Edit2, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Star } from 'lucide-react';
+import { Phone, Video, MessageSquare, MoreHorizontal, Edit2, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Star, Pin } from 'lucide-react';
 
 export default function Chat() {
   const { username } = useParams<{ username: string }>();
@@ -19,6 +20,7 @@ export default function Chat() {
     getUserProfile,
     sendMessage,
     myUsername,
+    myUserId,
     deleteMessageForEveryone,
     deleteMessageForMe,
     editMessage,
@@ -41,6 +43,23 @@ export default function Chat() {
 
   const shouldStickToBottomRef = useRef(true);
   const initialScrollDoneRef = useRef(false);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const handlePinMessage = async (messageId: string, body: string) => {
+    if (!conversationKey || !myUserId) return;
+    await supabase.from('pinned_dm_messages').upsert({
+      message_id: messageId,
+      conversation_key: conversationKey,
+      body_preview: body.slice(0, 200),
+      pinned_by: myUserId,
+    }, { onConflict: 'message_id' });
+    setActiveMenu(null);
+  };
+
+  const scrollToMessage = (messageId: string) => {
+    const el = messageRefs.current[messageId];
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   const scrollToBottom = (mode: 'auto' | 'smooth' = 'auto') => {
     if (!messagesContainerRef.current) return;
@@ -76,6 +95,10 @@ export default function Chat() {
   const displayName = recipientProfile?.username || recipient;
   const avatarUrl = recipientProfile?.avatarUrl;
   const isOnline = recipientProfile?.online ?? false;
+
+  const conversationKey = myUserId && recipientProfile?.id
+    ? [myUserId, recipientProfile.id].sort().join(':')
+    : null;
 
   // Register this chat as the active view — suppresses notifications while open
   useEffect(() => {
@@ -292,6 +315,15 @@ export default function Chat() {
         </div>
       </header>
 
+      {conversationKey && user && (
+        <PinnedMessageBanner
+          conversationKey={conversationKey}
+          messageType="dm"
+          currentUserId={user.id}
+          onJumpToMessage={scrollToMessage}
+        />
+      )}
+
       {/* Message Feed */}
       <div
         ref={messagesContainerRef}
@@ -337,6 +369,7 @@ export default function Chat() {
             return (
               <div
                 key={msg.id}
+                ref={(el) => { messageRefs.current[msg.id] = el; }}
                 className={`group flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-6 px-6 py-2 transition-colors relative ${!showHeader ? 'mt-[-16px]' : ''}`}
               >
                 {showHeader ? (
@@ -443,6 +476,16 @@ export default function Chat() {
                             Edit Message
                           </button>
                         )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePinMessage(msg.id, msg.body);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] flex items-center gap-3"
+                        >
+                          <Pin size={18} />
+                          {t('pin')}
+                        </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
