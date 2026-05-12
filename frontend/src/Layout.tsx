@@ -227,6 +227,7 @@ export default function Layout({ children }: LayoutProps = {}) {
                   : 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/20'
               }`}
               title={status}
+              data-testid="connection-status"
             >
               <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[var(--brand)]' : 'bg-[var(--danger)]'}`} />
               {isConnected ? t('connected') : t('disconnected')}
@@ -543,7 +544,7 @@ function ChannelsColumn({
             <p className="text-[14px] font-bold text-[var(--text-normal)] truncate leading-tight">
               {user?.user_metadata?.display_name || myUsername}
             </p>
-            <p className="text-[12px] text-[var(--text-muted)] truncate leading-tight font-medium">
+            <p className="text-[12px] text-[var(--text-muted)] truncate leading-tight font-medium" data-testid="online-indicator">
               {status === 'Connected' ? t('online') : status}
             </p>
           </div>

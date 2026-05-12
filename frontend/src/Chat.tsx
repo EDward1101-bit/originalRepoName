@@ -337,6 +337,7 @@ export default function Chat() {
               <div
                 key={msg.id}
                 className={`group flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-6 px-6 py-2 transition-colors relative ${!showHeader ? 'mt-[-16px]' : ''}`}
+                data-testid="message-item"
               >
                 {showHeader ? (
                   <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm overflow-hidden">
@@ -361,7 +362,7 @@ export default function Chat() {
                       <span className="font-bold text-[15px] text-[var(--text-normal)]">
                         {senderName}
                       </span>
-                      <span className="text-[12px] text-[var(--text-muted)] font-medium">
+                      <span className="text-[12px] text-[var(--text-muted)] font-medium" data-testid="message-timestamp">
                         {formatMessageTimestamp(msg.time)}
                       </span>
                     </div>
@@ -470,7 +471,7 @@ export default function Chat() {
         )}
 
         {typingUsers[recipient] && (
-          <div className="flex items-center gap-3 px-2 py-1">
+          <div className="flex items-center gap-3 px-2 py-1" data-testid="typing-indicator">
             <div className="flex gap-1">
               <span
                 className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce"
@@ -496,7 +497,7 @@ export default function Chat() {
       {/* Composition Area */}
       <footer className="px-6 pb-6 pt-2 relative">
         {showEmojiPicker && (
-          <div className="absolute bottom-[80px] right-6 z-50 shadow-2xl rounded-2xl overflow-hidden border border-[var(--border)]">
+          <div className="absolute bottom-[80px] right-6 z-50 shadow-2xl rounded-2xl overflow-hidden border border-[var(--border)]" data-testid="emoji-picker">
             <EmojiPicker
               onEmojiClick={(emojiData) => setInput((prev) => prev + emojiData.emoji)}
               theme={'light' as any}
@@ -576,6 +577,7 @@ export default function Chat() {
             <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${showEmojiPicker ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)]'}`}
+              data-testid="emoji-button"
             >
               <Smile size={24} />
             </button>
