@@ -138,8 +138,8 @@ export default function Layout({ children }: LayoutProps = {}) {
   }, [location.pathname, clearUnread, clearRoomUnread]);
 
   return (
-    <div className="h-screen w-full bg-[var(--bg-secondary)] text-[var(--text-normal)] font-body p-3 antialiased" data-testid="chat-interface">
-      <div className="h-full w-full bg-[var(--bg-primary)] border border-[var(--border)] rounded-lg shadow-xl overflow-hidden flex">
+    <div className="h-screen w-full bg-(--bg-secondary) text-(--text-normal) font-body p-3 antialiased" data-testid="chat-interface">
+      <div className="h-full w-full bg-(--bg-primary) border border-(--border) rounded-lg shadow-xl overflow-hidden flex">
 
         {settingsOpen && (
           <SettingsModal onClose={() => setSettingsOpen(false)} myUsername={myUsername} />
@@ -196,16 +196,16 @@ export default function Layout({ children }: LayoutProps = {}) {
         </aside>
 
         {/* ── Main area ── */}
-        <div className="flex-1 flex flex-col min-w-0 h-full bg-[var(--bg-primary)] relative overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 h-full bg-(--bg-primary) relative overflow-hidden">
           {/* Top bar — mobile only */}
-          <div className="lg:hidden flex-none h-14 border-b border-[var(--border)] flex items-center px-4 gap-3 bg-[var(--bg-secondary)]">
+          <div className="lg:hidden flex-none h-14 border-b border-(--border) flex items-center px-4 gap-3 bg-(--bg-secondary)">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="w-10 h-10 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] transition-colors"
+              className="w-10 h-10 rounded-md flex items-center justify-center text-(--text-muted) hover:text-(--text-normal) hover:bg-(--bg-modifier-hover) transition-colors"
             >
               <Menu size={22} />
             </button>
-            <span className="text-[18px] font-bold text-[var(--text-normal)] tracking-tight">
+            <span className="text-[18px] font-bold text-(--text-normal) tracking-tight">
               {t('aether')}
             </span>
           </div>
@@ -214,22 +214,22 @@ export default function Layout({ children }: LayoutProps = {}) {
           <PushNotificationBar />
 
           {/* Breadcrumbs (desktop) */}
-          <div className="hidden lg:flex flex-none items-center justify-between px-6 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
+          <div className="hidden lg:flex flex-none items-center justify-between px-6 py-3 border-b border-(--border) bg-(--bg-primary)">
             <div className="flex items-center gap-2 min-w-0">
-                            <div className="text-[12px] font-medium text-[var(--text-muted)] truncate">
+                            <div className="text-[12px] font-medium text-(--text-muted) truncate">
                 {breadcrumbs.join(' / ')}
               </div>
             </div>
             <div
               className={`ml-4 inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
                 isConnected
-                  ? 'bg-[var(--brand)]/10 text-[var(--brand)] border-[var(--brand)]/20'
-                  : 'bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/20'
+                  ? 'bg-(--brand)/10 text-(--brand) border-(--brand)/20'
+                  : 'bg-(--danger)/10 text-(--danger) border-(--danger)/20'
               }`}
               title={status}
               data-testid="connection-status"
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[var(--brand)]' : 'bg-[var(--danger)]'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-(--brand)' : 'bg-(--danger)'}`} />
               {isConnected ? t('connected') : t('disconnected')}
             </div>
           </div>
@@ -248,50 +248,50 @@ export default function Layout({ children }: LayoutProps = {}) {
 
 function ServersColumn({ dmUnread, roomUnread }: { dmUnread: number, roomUnread: number }) {
   return (
-    <div className="w-[72px] bg-[var(--bg-secondary)] h-full flex flex-col items-center py-4 gap-3 flex-shrink-0 border-r border-[var(--border)]">
+    <div className="w-[72px] bg-(--bg-secondary) h-full flex flex-col items-center py-4 gap-3 shrink-0 border-r border-(--border)">
       <div className="relative group">
         <NavLink
           to="/dms"
-          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)] ${isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : ''}`}
+          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-(--text-normal) hover:text-white shadow-sm bg-(--bg-secondary) hover:bg-(--brand-hover) ${isActive ? '!rounded-[14px] bg-(--brand) text-white' : ''}`}
         >
           <MessageSquare size={22} />
         </NavLink>
         {dmUnread > 0 && (
-          <div className="absolute -top-2 -right-2 bg-[var(--danger)] text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[var(--bg-tertiary)]">
+          <div className="absolute -top-2 -right-2 bg-(--danger) text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-(--bg-tertiary)">
             {dmUnread > 99 ? '99+' : dmUnread}
           </div>
         )}
       </div>
 
-      <div className="w-6 h-[2px] bg-[var(--bg-modifier-active)] rounded-full my-1 opacity-50" />
+      <div className="w-6 h-[2px] bg-(--bg-modifier-active) rounded-full my-1 opacity-50" />
 
       <div className="relative group">
         <NavLink
           to="/rooms"
-          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)] ${isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : ''}`}
+          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-(--text-normal) hover:text-white shadow-sm bg-(--bg-secondary) hover:bg-(--brand-hover) ${isActive ? '!rounded-[14px] bg-(--brand) text-white' : ''}`}
         >
           <Server size={22} />
         </NavLink>
         {roomUnread > 0 && (
-          <div className="absolute -top-2 -right-2 bg-[var(--danger)] text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-[var(--bg-tertiary)]">
+          <div className="absolute -top-2 -right-2 bg-(--danger) text-white text-[10px] font-bold px-1.5 min-w-[20px] h-5 rounded-full flex items-center justify-center shadow-lg border-2 border-(--bg-tertiary)">
             {roomUnread > 99 ? '99+' : roomUnread}
           </div>
         )}
       </div>
 
-      <div className="w-6 h-[2px] bg-[var(--bg-modifier-active)] rounded-full my-1 opacity-50" />
+      <div className="w-6 h-[2px] bg-(--bg-modifier-active) rounded-full my-1 opacity-50" />
 
       <div className="relative group">
         <NavLink
           to="/bots"
-          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-[var(--text-normal)] hover:text-white shadow-sm bg-[var(--bg-secondary)] hover:bg-[var(--brand-hover)] ${isActive ? '!rounded-[14px] bg-[var(--brand)] text-white' : ''}`}
+          className={({ isActive }) => `w-12 h-12 rounded-[20px] transition-all duration-300 flex items-center justify-center text-(--text-normal) hover:text-white shadow-sm bg-(--bg-secondary) hover:bg-(--brand-hover) ${isActive ? '!rounded-[14px] bg-(--brand) text-white' : ''}`}
         >
           <Bot size={22} />
         </NavLink>
       </div>
 
       {/* Add new server button */}
-      <button className="w-12 h-12 rounded-lg transition-all duration-300 flex items-center justify-center text-[var(--brand)] hover:text-white mt-auto mb-2 border border-dashed border-[var(--brand)]/50 hover:bg-[var(--brand)] hover:border-transparent">
+      <button className="w-12 h-12 rounded-lg transition-all duration-300 flex items-center justify-center text-(--brand) hover:text-white mt-auto mb-2 border border-dashed border-(--brand)/50 hover:bg-(--brand) hover:border-transparent">
         <Plus size={24} />
       </button>
     </div>
@@ -332,10 +332,10 @@ function ChannelsColumn({
   setSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>
 }) {
   return (
-    <div className="w-64 bg-[var(--bg-primary)] h-full flex flex-col flex-shrink-0 border-r border-[var(--border)] overflow-hidden">
+    <div className="w-64 bg-(--bg-primary) h-full flex flex-col shrink-0 border-r border-(--border) overflow-hidden">
       {/* Header Area */}
-      <div className="h-14 flex-shrink-0 border-b border-[var(--border)] flex items-center px-4">
-        <h2 className="font-bold text-[16px] tracking-tight text-[var(--text-normal)]">{t('aether')}</h2>
+      <div className="h-14 shrink-0 border-b border-(--border) flex items-center px-4">
+        <h2 className="font-bold text-[16px] tracking-tight text-(--text-normal)">{t('aether')}</h2>
       </div>
 
       {/* Favorites or Joined Rooms based on current route */}
@@ -346,13 +346,13 @@ function ChannelsColumn({
             <>
               {/* ── Rooms You Are In ── */}
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                <p className="text-[10px] font-bold text-(--text-muted) uppercase tracking-wider">
                   {t('rooms_you_are_in')}
                 </p>
               </div>
               {joinedRooms.length === 0 ? (
                 <div className="py-3 text-center">
-                  <p className="text-[12px] text-[var(--text-muted)] italic">{t('no_rooms_joined')}</p>
+                  <p className="text-[12px] text-(--text-muted) italic">{t('no_rooms_joined')}</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-0.5 mb-1.5">
@@ -365,13 +365,13 @@ function ChannelsColumn({
                       <NavLink
                         key={roomName}
                         to={`/rooms/${roomName}`}
-                        className={({ isActive }) => `flex items-center gap-2 px-2 py-1 rounded-md transition-all group text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] ${isActive ? 'bg-[var(--brand)]/15 text-[var(--brand)]' : ''}`}
+                        className={({ isActive }) => `flex items-center gap-2 px-2 py-1 rounded-md transition-all group text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal) ${isActive ? 'bg-(--brand)/15 text-(--brand)' : ''}`}
                       >
-                        <div className="w-4 h-4 rounded flex items-center justify-center bg-[var(--bg-secondary)] flex-shrink-0">
+                        <div className="w-4 h-4 rounded flex items-center justify-center bg-(--bg-secondary) shrink-0">
                           <Hash size={10} />
                         </div>
-                        <span className={`text-[12px] truncate flex-1 px-1.5 py-0.5 rounded bg-[var(--bg-secondary)]/50 ${
-                          roomUnread > 0 ? 'font-bold text-[var(--text-normal)]' : 'font-medium'
+                        <span className={`text-[12px] truncate flex-1 px-1.5 py-0.5 rounded bg-(--bg-secondary)/50 ${
+                          roomUnread > 0 ? 'font-bold text-(--text-normal)' : 'font-medium'
                         }`}>
                           {roomName}
                         </span>
@@ -379,16 +379,16 @@ function ChannelsColumn({
                           <div className="relative group/owner ml-auto mr-1 flex items-center justify-center">
                             <ShieldCheck 
                               size={12} 
-                              className="text-[var(--success)] opacity-80 hover:opacity-100 transition-opacity cursor-help" 
+                              className="text-(--success) opacity-80 hover:opacity-100 transition-opacity cursor-help" 
                             />
-                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] text-[10px] font-bold rounded-md opacity-0 group-hover/owner:opacity-100 transition-all pointer-events-none z-[100] shadow-2xl whitespace-nowrap translate-x-1 group-hover/owner:translate-x-0">
+                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 px-2 py-1 bg-(--bg-tertiary) border border-(--border) text-(--text-normal) text-[10px] font-bold rounded-md opacity-0 group-hover/owner:opacity-100 transition-all pointer-events-none z-[100] shadow-2xl whitespace-nowrap translate-x-1 group-hover/owner:translate-x-0">
                               {t('you_created_room')}
-                              <div className="absolute left-full top-1/2 -translate-y-1/2 border-[4px] border-transparent border-l-[var(--bg-tertiary)]" />
+                              <div className="absolute left-full top-1/2 -translate-y-1/2 border-[4px] border-transparent border-l-(--bg-tertiary)" />
                             </div>
                           </div>
                         )}
                         {roomUnread > 0 && (
-                          <span className="min-w-[16px] h-4 bg-[var(--brand)] text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 flex-shrink-0">
+                          <span className="min-w-[16px] h-4 bg-(--brand) text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 shrink-0">
                             {roomUnread > 99 ? '99+' : roomUnread}
                           </span>
                         )}
@@ -402,12 +402,12 @@ function ChannelsColumn({
               <div className="mb-4">
                 <NavLink
                   to="/rooms/explore"
-                  className={({ isActive }) => `flex items-center gap-2 px-2 py-1 rounded-md transition-all text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] ${isActive ? 'bg-[var(--brand)]/15 text-[var(--brand)]' : ''}`}
+                  className={({ isActive }) => `flex items-center gap-2 px-2 py-1 rounded-md transition-all text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal) ${isActive ? 'bg-(--brand)/15 text-(--brand)' : ''}`}
                 >
-                  <div className="w-4 h-4 rounded flex items-center justify-center bg-[var(--bg-secondary)] flex-shrink-0">
+                  <div className="w-4 h-4 rounded flex items-center justify-center bg-(--bg-secondary) shrink-0">
                     <Compass size={10} />
                   </div>
-                  <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded bg-[var(--bg-secondary)]">{t('explore_servers')}</span>
+                  <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded bg-(--bg-secondary)">{t('explore_servers')}</span>
                 </NavLink>
               </div>
             </>
@@ -415,7 +415,7 @@ function ChannelsColumn({
             // Show favorites in DMs section
             <>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                <p className="text-[11px] font-bold text-(--text-muted) uppercase tracking-wider">
                   {t('favorites')}
                 </p>
                 {favorites.length > 0 && (
@@ -427,7 +427,7 @@ function ChannelsColumn({
                       );
                       setFavorites([]);
                     }}
-                    className="text-[10px] text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors"
+                    className="text-[10px] text-(--text-muted) hover:text-(--danger) transition-colors"
                     title={t('clear_all')}
                   >
                     Clear
@@ -439,11 +439,11 @@ function ChannelsColumn({
                 if (dmFavorites.length === 0) {
                   return (
                     <div className="px-3 py-6 text-center">
-                      <Star size={24} className="text-[var(--text-muted)] mx-auto mb-2 opacity-40" />
-                      <p className="text-[13px] text-[var(--text-muted)] italic">
+                      <Star size={24} className="text-(--text-muted) mx-auto mb-2 opacity-40" />
+                      <p className="text-[13px] text-(--text-muted) italic">
                         {t('pin_favorite_chats')}
                       </p>
-                      <p className="text-[11px] text-[var(--text-muted)] opacity-60 mt-1">
+                      <p className="text-[11px] text-(--text-muted) opacity-60 mt-1">
                         {t('click_star_conversation')}
                       </p>
                     </div>
@@ -455,14 +455,14 @@ function ChannelsColumn({
                       <div key={fav.id} className="group flex items-center gap-2">
                         <NavLink
                           to={`/dms/${fav.name}`}
-                          className={({ isActive }) => `flex-1 flex items-center gap-3 px-3 py-2 rounded-md text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-all ${isActive ? 'bg-[var(--bg-modifier-selected)] text-[var(--brand)]' : ''}`}
+                          className={({ isActive }) => `flex-1 flex items-center gap-3 px-3 py-2 rounded-md text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal) transition-all ${isActive ? 'bg-(--bg-modifier-selected) text-(--brand)' : ''}`}
                         >
                           <MessageSquare size={16} />
                           <span className="font-medium text-[14px] truncate">{fav.name}</span>
                         </NavLink>
                         <button
                           onClick={() => removeFavorite(fav.id)}
-                          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-all"
+                          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded flex items-center justify-center text-(--text-muted) hover:text-(--danger) hover:bg-(--danger)/10 transition-all"
                           title={t('remove')}
                         >
                           <X size={14} />
@@ -478,47 +478,47 @@ function ChannelsColumn({
       </div>
 
       {/* Quick Stats */}
-      <div className="px-4 py-2 border-t border-[var(--border)]">
-        <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+      <div className="px-4 py-2 border-t border-(--border)">
+        <p className="text-[9px] font-bold text-(--text-muted) uppercase tracking-wider mb-2">
           {t('your_stats')}
         </p>
         <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-md border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
+          <div className="flex items-center justify-between px-2 py-1.5 bg-(--bg-secondary)/30 rounded-md border border-(--border)/10 hover:bg-(--bg-secondary)/60 transition-colors">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+              <div className="w-5 h-5 rounded-md bg-(--brand)/10 flex items-center justify-center text-(--brand)">
                 <Users size={12} />
               </div>
-              <span className="text-[11px] font-semibold text-[var(--text-muted)]">{t('friends')}</span>
+              <span className="text-[11px] font-semibold text-(--text-muted)">{t('friends')}</span>
             </div>
-            <span className="text-[12px] font-bold text-[var(--text-normal)]">{acceptedFriendsCount}</span>
+            <span className="text-[12px] font-bold text-(--text-normal)">{acceptedFriendsCount}</span>
           </div>
 
-          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-md border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
+          <div className="flex items-center justify-between px-2 py-1.5 bg-(--bg-secondary)/30 rounded-md border border-(--border)/10 hover:bg-(--bg-secondary)/60 transition-colors">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md bg-[var(--success)]/10 flex items-center justify-center text-[var(--success)]">
+              <div className="w-5 h-5 rounded-md bg-(--success)/10 flex items-center justify-center text-(--success)">
                 <TrendingUp size={12} />
               </div>
-              <span className="text-[11px] font-semibold text-[var(--text-muted)]">{t('friends')} {t('online')}</span>
+              <span className="text-[11px] font-semibold text-(--text-muted)">{t('friends')} {t('online')}</span>
             </div>
-            <span className="text-[12px] font-bold text-[var(--text-normal)]">{onlineFriendsCount}</span>
+            <span className="text-[12px] font-bold text-(--text-normal)">{onlineFriendsCount}</span>
           </div>
 
-          <div className="flex items-center justify-between px-2 py-1.5 bg-[var(--bg-secondary)]/30 rounded-md border border-[var(--border)]/10 hover:bg-[var(--bg-secondary)]/60 transition-colors">
+          <div className="flex items-center justify-between px-2 py-1.5 bg-(--bg-secondary)/30 rounded-md border border-(--border)/10 hover:bg-(--bg-secondary)/60 transition-colors">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md bg-[var(--warning)]/10 flex items-center justify-center text-[var(--warning)]">
+              <div className="w-5 h-5 rounded-md bg-(--warning)/10 flex items-center justify-center text-(--warning)">
                 <Server size={12} />
               </div>
-              <span className="text-[11px] font-semibold text-[var(--text-muted)]">{t('rooms')}</span>
+              <span className="text-[11px] font-semibold text-(--text-muted)">{t('rooms')}</span>
             </div>
-            <span className="text-[12px] font-bold text-[var(--text-normal)]">{joinedRooms.length}</span>
+            <span className="text-[12px] font-bold text-(--text-normal)">{joinedRooms.length}</span>
           </div>
         </div>
       </div>
 
       {/* User Area */}
-      <div className="p-3 bg-[var(--bg-secondary)] border-t border-[var(--border)] flex flex-col gap-2">
-        <div className="flex items-center gap-3 p-2 bg-[var(--bg-primary)] rounded-md border border-[var(--border)]">
-          <div className="w-10 h-10 rounded-full flex-shrink-0 relative">
+      <div className="p-3 bg-(--bg-secondary) border-t border-(--border) flex flex-col gap-2">
+        <div className="flex items-center gap-3 p-2 bg-(--bg-primary) rounded-md border border-(--border)">
+          <div className="w-10 h-10 rounded-full shrink-0 relative">
             <div className="w-full h-full rounded-full shadow-inner overflow-hidden">
               {user?.user_metadata?.avatar_url || localStorage.getItem('aether_avatar') ? (
                 <img
@@ -527,7 +527,7 @@ function ChannelsColumn({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-[var(--brand)] text-white flex items-center justify-center text-sm font-bold">
+                <div className="w-full h-full bg-(--brand) text-white flex items-center justify-center text-sm font-bold">
                   {user?.user_metadata?.display_name?.[0]?.toUpperCase() ||
                     myUsername?.[0]?.toUpperCase() ||
                     user?.email?.[0]?.toUpperCase() ||
@@ -537,29 +537,29 @@ function ChannelsColumn({
             </div>
             {/* Status dot - positioned on top of the avatar */}
             <div
-              className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-primary)] z-10 ${isConnected ? 'bg-[var(--status-online)]' : 'bg-[var(--status-dnd)]'}`}
+              className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-(--bg-primary) z-10 ${isConnected ? 'bg-(--status-online)' : 'bg-(--status-dnd)'}`}
             />
           </div>
           <div className="flex-1 min-w-0" data-testid="user-status">
-            <p className="text-[14px] font-bold text-[var(--text-normal)] truncate leading-tight">
+            <p className="text-[14px] font-bold text-(--text-normal) truncate leading-tight">
               {user?.user_metadata?.display_name || myUsername}
             </p>
-            <p className="text-[12px] text-[var(--text-muted)] truncate leading-tight font-medium" data-testid="online-indicator">
+            <p className="text-[12px] text-(--text-muted) truncate leading-tight font-medium" data-testid="online-indicator">
               {status === 'Connected' ? t('online') : status}
             </p>
           </div>
         </div>
 
         <div className="flex items-center justify-between px-1">
-          <button className="w-8 h-8 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors">
+          <button className="w-8 h-8 rounded-md flex items-center justify-center text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal) transition-colors">
             <Mic size={16} />
           </button>
-          <button className="w-8 h-8 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors">
+          <button className="w-8 h-8 rounded-md flex items-center justify-center text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal) transition-colors">
             <Headphones size={16} />
           </button>
           <button
             onClick={() => setSettingsOpen(true)}
-            className="w-8 h-8 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
+            className="w-8 h-8 rounded-md flex items-center justify-center text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal) transition-colors"
             data-testid="settings-button"
           >
             <Settings size={16} />

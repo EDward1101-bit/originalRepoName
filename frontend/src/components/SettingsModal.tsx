@@ -184,15 +184,15 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
     switch (activeTab) {
       case 'General':
         return (
-          <div className="max-w-2xl text-[var(--text-normal)]">
+          <div className="max-w-2xl text-(--text-normal)">
             <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('general')}</h2>
-            <p className="text-[var(--text-muted)] text-[15px] mb-8">
+            <p className="text-(--text-muted) text-[15px] mb-8">
               {t('general_subtitle')}
             </p>
 
             {/* Profile Picture */}
             <div className="mb-8">
-              <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
+              <h3 className="text-[13px] font-bold text-(--text-muted) mb-4 uppercase tracking-wide">
                 {t('profile_picture')}
               </h3>
               <div className="flex items-center gap-6">
@@ -201,10 +201,10 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                     <img
                       src={avatarUrl}
                       alt="Avatar"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-[var(--border)] shadow-md"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-(--border) shadow-md"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-3xl font-bold border-2 border-[var(--border)] shadow-md">
+                    <div className="w-20 h-20 rounded-full bg-(--brand) text-white flex items-center justify-center text-3xl font-bold border-2 border-(--border) shadow-md">
                       {user?.user_metadata?.display_name?.[0]?.toUpperCase() || myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
                     </div>
                   )}
@@ -227,7 +227,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   <button
                     onClick={() => avatarInputRef.current?.click()}
                     disabled={isUploadingAvatar}
-                    className="bg-[var(--brand)] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors shadow-sm disabled:opacity-50"
+                    className="bg-(--brand) text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-(--brand-hover) transition-colors shadow-sm disabled:opacity-50"
                   >
                     {isUploadingAvatar ? 'Uploading...' : t('change_avatar')}
                   </button>
@@ -246,7 +246,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                           console.error('Failed to sync avatar removal to DB:', err);
                         }
                       }}
-                      className="ml-3 text-[14px] text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors font-medium"
+                      className="ml-3 text-[14px] text-(--text-muted) hover:text-(--danger) transition-colors font-medium"
                     >
                       {t('remove')}
                     </button>
@@ -257,7 +257,7 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
             {/* Language */}
             <div className="mb-8">
-              <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
+              <h3 className="text-[13px] font-bold text-(--text-muted) mb-4 uppercase tracking-wide">
                 {t('language')}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -267,8 +267,8 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                     onClick={() => handleLanguageChange(lang.code)}
                     className={`px-4 py-3 rounded-xl text-[14px] font-medium border transition-all ${
                       language === lang.code
-                        ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-sm'
-                        : 'bg-[var(--bg-tertiary)] text-[var(--text-normal)] border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)]'
+                        ? 'bg-(--brand) text-white border-(--brand) shadow-sm'
+                        : 'bg-(--bg-tertiary) text-(--text-normal) border-(--border) hover:border-(--brand) hover:text-(--brand)'
                     }`}
                   >
                     {lang.label}
@@ -279,12 +279,12 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
             {/* Display Name Change */}
             <div className="mb-8">
-              <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
+              <h3 className="text-[13px] font-bold text-(--text-muted) mb-4 uppercase tracking-wide">
                 {t('display_name')}
               </h3>
-              <p className="text-[14px] text-[var(--text-muted)] mb-3">
+              <p className="text-[14px] text-(--text-muted) mb-3">
                 {t('current')}:{' '}
-                <span className="font-bold text-[var(--text-normal)]">
+                <span className="font-bold text-(--text-normal)">
                   {user?.user_metadata?.display_name || myUsername}
                 </span>
               </p>
@@ -294,19 +294,19 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
                   placeholder={`${t('enter_new')} ${t('display_name').toLowerCase()}`}
-                  className="flex-1 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] outline-none focus:border-[var(--brand)] transition-colors"
+                  className="flex-1 bg-(--bg-tertiary) border border-(--border) rounded-xl px-4 py-3 text-(--text-normal) placeholder:text-(--text-muted) text-[15px] outline-none focus:border-(--brand) transition-colors"
                 />
                 <button
                   onClick={handleChangeUsername}
                   disabled={isChangingUsername || !newUsername.trim()}
-                  className="bg-[var(--brand)] text-white px-6 py-3 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors disabled:opacity-50 shadow-sm"
+                  className="bg-(--brand) text-white px-6 py-3 rounded-xl font-bold text-[14px] hover:bg-(--brand-hover) transition-colors disabled:opacity-50 shadow-sm"
                 >
                   {isChangingUsername ? 'Saving...' : t('save')}
                 </button>
               </div>
               {usernameMsg && (
                 <p
-                  className={`mt-2 text-[13px] font-medium ${usernameMsg.includes('Error') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
+                  className={`mt-2 text-[13px] font-medium ${usernameMsg.includes('Error') ? 'text-(--danger)' : 'text-(--success)'}`}
                 >
                   {usernameMsg}
                 </p>
@@ -317,14 +317,14 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
       case 'My Account':
         return (
-          <div className="max-w-2xl text-[var(--text-normal)]">
+          <div className="max-w-2xl text-(--text-normal)">
             <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('account')}</h2>
-            <p className="text-[var(--text-muted)] text-[15px] mb-8">
+            <p className="text-(--text-muted) text-[15px] mb-8">
               {t('account_subtitle')}
             </p>
 
             {/* Account Info Card */}
-            <div className="bg-[var(--bg-tertiary)] rounded-2xl p-6 flex gap-5 items-center mb-8 border border-[var(--border)]">
+            <div className="bg-(--bg-tertiary) rounded-2xl p-6 flex gap-5 items-center mb-8 border border-(--border)">
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -332,19 +332,19 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   className="w-16 h-16 rounded-full object-cover shadow-md"
                 />
               ) : (
-                <div className="w-16 h-16 bg-[var(--brand)] rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                <div className="w-16 h-16 bg-(--brand) rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md">
                   {user?.user_metadata?.display_name?.[0]?.toUpperCase() || myUsername?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
                 </div>
               )}
               <div className="flex-1">
                 <div className="text-[18px] font-bold">{myUsername}</div>
-                <div className="text-[14px] text-[var(--text-muted)]">{user?.email}</div>
+                <div className="text-[14px] text-(--text-muted)">{user?.email}</div>
               </div>
             </div>
 
             {/* Change Password */}
             <div className="mb-8">
-              <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
+              <h3 className="text-[13px] font-bold text-(--text-muted) mb-4 uppercase tracking-wide">
                 {t('update_password')}
               </h3>
               <div className="flex flex-col gap-3">
@@ -353,26 +353,26 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder={t('new_password') + ' (min. 6 characters)'}
-                  className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] outline-none focus:border-[var(--brand)] transition-colors"
+                  className="bg-(--bg-tertiary) border border-(--border) rounded-xl px-4 py-3 text-(--text-normal) placeholder:text-(--text-muted) text-[15px] outline-none focus:border-(--brand) transition-colors"
                 />
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder={t('confirm_password')}
-                  className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] outline-none focus:border-[var(--brand)] transition-colors"
+                  className="bg-(--bg-tertiary) border border-(--border) rounded-xl px-4 py-3 text-(--text-normal) placeholder:text-(--text-muted) text-[15px] outline-none focus:border-(--brand) transition-colors"
                 />
                 <div className="flex items-center gap-3 mt-1">
                   <button
                     onClick={handleChangePassword}
                     disabled={isChangingPassword || !newPassword}
-                    className="bg-[var(--brand)] text-white px-6 py-3 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors disabled:opacity-50 shadow-sm"
+                    className="bg-(--brand) text-white px-6 py-3 rounded-xl font-bold text-[14px] hover:bg-(--brand-hover) transition-colors disabled:opacity-50 shadow-sm"
                   >
                     {isChangingPassword ? 'Updating...' : t('update_password')}
                   </button>
                   {passwordMsg && (
                     <p
-                      className={`text-[13px] font-medium ${passwordMsg.includes('Error') ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
+                      className={`text-[13px] font-medium ${passwordMsg.includes('Error') ? 'text-(--danger)' : 'text-(--success)'}`}
                     >
                       {passwordMsg}
                     </p>
@@ -383,18 +383,18 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
             {/* Danger Zone */}
             <div>
-              <h3 className="text-[13px] font-bold text-[var(--danger)] mb-4 uppercase tracking-wide">
+              <h3 className="text-[13px] font-bold text-(--danger) mb-4 uppercase tracking-wide">
                 {t('danger_zone')}
               </h3>
-              <div className="bg-[var(--danger)]/10 border border-[var(--danger)]/30 rounded-2xl p-5">
+              <div className="bg-(--danger)/10 border border-(--danger)/30 rounded-2xl p-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-bold text-[15px]">{t('delete_account')}</p>
-                    <p className="text-[13px] text-[var(--text-muted)]">
+                    <p className="text-[13px] text-(--text-muted)">
                       {t('delete_account_desc')}
                     </p>
                   </div>
-                  <button className="bg-[var(--danger)] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--danger-strong)] transition-colors shadow-sm">
+                  <button className="bg-(--danger) text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-(--danger-strong) transition-colors shadow-sm">
                     {t('delete_account')}
                   </button>
                 </div>
@@ -405,14 +405,14 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
       case 'Appearance':
         return (
-          <div className="max-w-2xl text-[var(--text-normal)]">
+          <div className="max-w-2xl text-(--text-normal)">
             <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('appearance')}</h2>
-            <p className="text-[var(--text-muted)] text-[15px] mb-8">
+            <p className="text-(--text-muted) text-[15px] mb-8">
               {t('appearance_subtitle')}
             </p>
 
             <div className="mb-8">
-              <h3 className="text-[13px] font-bold text-[var(--text-muted)] mb-4 uppercase tracking-wide">
+              <h3 className="text-[13px] font-bold text-(--text-muted) mb-4 uppercase tracking-wide">
                 {t('theme')}
               </h3>
               <div className="flex gap-4">
@@ -420,15 +420,15 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   onClick={() => handleThemeChange('dark')}
                   className={`flex-1 p-6 rounded-2xl border-2 transition-all ${
                     theme === 'dark'
-                      ? 'border-[var(--brand)] bg-[var(--brand)]/10 shadow-md'
-                      : 'border-[var(--border)] hover:border-[var(--text-muted)]'
+                      ? 'border-(--brand) bg-(--brand)/10 shadow-md'
+                      : 'border-(--border) hover:border-(--text-muted)'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[var(--preview-dark-bg)] mb-4 border border-[var(--preview-dark-border)] flex items-center justify-center">
-                    <Moon size={24} className="text-[var(--brand)]" />
+                  <div className="w-12 h-12 rounded-xl bg-(--preview-dark-bg) mb-4 border border-(--preview-dark-border) flex items-center justify-center">
+                    <Moon size={24} className="text-(--brand)" />
                   </div>
                   <p className="font-bold text-[16px] text-left">{t('dark')}</p>
-                  <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
+                  <p className="text-[13px] text-(--text-muted) text-left mt-1">
                     {t('easy_on_eyes')}
                   </p>
                 </button>
@@ -436,15 +436,15 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   onClick={() => handleThemeChange('light')}
                   className={`flex-1 p-6 rounded-2xl border-2 transition-all ${
                     theme === 'light'
-                      ? 'border-[var(--brand)] bg-[var(--brand)]/10 shadow-md'
-                      : 'border-[var(--border)] hover:border-[var(--text-muted)]'
+                      ? 'border-(--brand) bg-(--brand)/10 shadow-md'
+                      : 'border-(--border) hover:border-(--text-muted)'
                   }`}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[var(--preview-light-bg)] mb-4 border border-[var(--preview-light-border)] flex items-center justify-center">
-                    <Sun size={24} className="text-[var(--brand)]" />
+                  <div className="w-12 h-12 rounded-xl bg-(--preview-light-bg) mb-4 border border-(--preview-light-border) flex items-center justify-center">
+                    <Sun size={24} className="text-(--brand)" />
                   </div>
                   <p className="font-bold text-[16px] text-left">{t('light')}</p>
-                  <p className="text-[13px] text-[var(--text-muted)] text-left mt-1">
+                  <p className="text-[13px] text-(--text-muted) text-left mt-1">
                     {t('clean_and_bright')}
                   </p>
                 </button>
@@ -455,25 +455,25 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
       case 'Voice & Video':
         return (
-          <div className="max-w-2xl text-[var(--text-normal)]">
+          <div className="max-w-2xl text-(--text-normal)">
             <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('voice_video')}</h2>
-            <p className="text-[var(--text-muted)] text-[15px] mb-8">
+            <p className="text-(--text-muted) text-[15px] mb-8">
               {t('select_your_input_and_output_devices')}
             </p>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-[13px] font-bold text-[var(--text-muted)] uppercase mb-3 tracking-wide">
+                <label className="block text-[13px] font-bold text-(--text-muted) uppercase mb-3 tracking-wide">
                   {t('input_device')}
                 </label>
-                <select className="w-full bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] rounded-xl px-4 py-3 outline-none focus:border-[var(--brand)] transition-colors">
+                <select className="w-full bg-(--bg-tertiary) border border-(--border) text-(--text-normal) rounded-xl px-4 py-3 outline-none focus:border-(--brand) transition-colors">
                   <option>Default</option>
                 </select>
               </div>
               <div>
-                <label className="block text-[13px] font-bold text-[var(--text-muted)] uppercase mb-3 tracking-wide">
+                <label className="block text-[13px] font-bold text-(--text-muted) uppercase mb-3 tracking-wide">
                   Output Device
                 </label>
-                <select className="w-full bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-normal)] rounded-xl px-4 py-3 outline-none focus:border-[var(--brand)] transition-colors">
+                <select className="w-full bg-(--bg-tertiary) border border-(--border) text-(--text-normal) rounded-xl px-4 py-3 outline-none focus:border-(--brand) transition-colors">
                   <option>Default</option>
                 </select>
               </div>
@@ -483,20 +483,20 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
       case 'Integrations':
         return (
-          <div className="max-w-2xl text-[var(--text-normal)]">
+          <div className="max-w-2xl text-(--text-normal)">
             <h2 className="text-2xl font-bold mb-2 tracking-tight">{t('integrations')}</h2>
-            <p className="text-[var(--text-muted)] text-[15px] mb-8">
+            <p className="text-(--text-muted) text-[15px] mb-8">
               {t('integrations_subtitle')}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-[var(--bg-tertiary)] p-5 rounded-2xl flex items-center justify-between border border-[var(--border)]">
+              <div className="bg-(--bg-tertiary) p-5 rounded-2xl flex items-center justify-between border border-(--border)">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[var(--accent)] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-(--accent) flex items-center justify-center">
                     <Puzzle size={22} className="text-white" />
                   </div>
                   <span className="font-bold text-[15px]">{t('coming_soon')}</span>
                 </div>
-                <button className="text-[var(--brand)] text-[14px] font-bold opacity-50 cursor-not-allowed">
+                <button className="text-(--brand) text-[14px] font-bold opacity-50 cursor-not-allowed">
                   {t('connect')}
                 </button>
               </div>
@@ -506,25 +506,25 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
 
       default:
         return (
-          <div className="text-[var(--text-normal)]">
+          <div className="text-(--text-normal)">
             <h2 className="text-2xl font-bold mb-4 tracking-tight">{activeTab}</h2>
-            <p className="text-[var(--text-muted)]">{t('under_construction')}</p>
+            <p className="text-(--text-muted)">{t('under_construction')}</p>
           </div>
         );
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex bg-[var(--bg-primary)]">
+    <div className="fixed inset-0 z-[100] flex bg-(--bg-primary)">
       {/* Sidebar */}
-      <div className="w-[30%] bg-[var(--bg-secondary)] flex justify-end border-r border-[var(--border)]">
+      <div className="w-[30%] bg-(--bg-secondary) flex justify-end border-r border-(--border)">
         <div className="w-64 py-14 px-4 flex flex-col gap-1">
           {tabs.map((tab, idx) => {
             const isNewCategory = idx === 0 || tabs[idx - 1].category !== tab.category;
             return (
               <div key={tab.name}>
                 {isNewCategory && (
-                  <div className="text-[11px] font-bold text-[var(--text-muted)] mb-2 mt-6 px-3 uppercase tracking-widest">
+                  <div className="text-[11px] font-bold text-(--text-muted) mb-2 mt-6 px-3 uppercase tracking-widest">
                     {tab.category}
                   </div>
                 )}
@@ -532,8 +532,8 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   onClick={() => setActiveTab(tab.name)}
                   className={`w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium transition-all flex items-center gap-3 ${
                     activeTab === tab.name
-                      ? 'bg-[var(--brand)]/10 text-[var(--brand)]'
-                      : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
+                      ? 'bg-(--brand)/10 text-(--brand)'
+                      : 'text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal)'
                   }`}
                 >
                   <tab.Icon size={20} />
@@ -542,10 +542,10 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
               </div>
             );
           })}
-          <div className="h-[1px] bg-[var(--border)] my-3 mx-2" />
+          <div className="h-[1px] bg-(--border) my-3 mx-2" />
           <button
             onClick={handleSignOut}
-            className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors flex items-center gap-3"
+            className="w-full text-left px-3 py-2.5 rounded-xl text-[14px] font-medium text-(--danger) hover:bg-(--danger)/10 transition-colors flex items-center gap-3"
             data-testid="logout-button"
           >
             <LogOut size={20} />
@@ -555,18 +555,18 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 bg-[var(--bg-primary)] relative">
+      <div className="flex-1 bg-(--bg-primary) relative">
         <div className="py-14 px-10 h-full overflow-y-auto">{renderContent()}</div>
 
         {/* Close Button */}
         <div className="absolute top-14 right-10 flex flex-col items-center gap-1">
           <button
             onClick={onClose}
-            className="w-10 h-10 border-2 border-[var(--text-muted)] rounded-full flex items-center justify-center text-[var(--text-muted)] hover:border-[var(--text-normal)] hover:text-[var(--text-normal)] transition-colors"
+            className="w-10 h-10 border-2 border-(--text-muted) rounded-full flex items-center justify-center text-(--text-muted) hover:border-(--text-normal) hover:text-(--text-normal) transition-colors"
           >
             <X size={20} />
           </button>
-          <span className="text-[11px] font-bold text-[var(--text-muted)] tracking-wide">ESC</span>
+          <span className="text-[11px] font-bold text-(--text-muted) tracking-wide">ESC</span>
         </div>
       </div>
     </div>

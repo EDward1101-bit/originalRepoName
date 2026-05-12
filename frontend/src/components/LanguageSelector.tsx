@@ -11,11 +11,11 @@ export default function LanguageSelector() {
 
   return (
     <div className="flex items-center gap-3">
-      <Globe size={16} className="text-[var(--text-muted)]" />
+      <Globe size={16} className="text-(--text-muted)" />
       <select
         value={language}
         onChange={(e) => setLanguage(e.target.value as 'en' | 'ro')}
-        className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-md px-3 py-1.5 text-[var(--text-normal)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand)]/20 focus:border-[var(--brand)]"
+        className="bg-(--bg-secondary) border border-(--border) rounded-md px-3 py-1.5 text-(--text-normal) text-sm focus:outline-none focus:ring-2 focus:ring-(--brand)/20 focus:border-(--brand)"
       >
         {languages.map((lang) => (
           <option key={lang.code} value={lang.code}>

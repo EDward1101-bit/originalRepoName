@@ -14,7 +14,7 @@ export default function MediaViewer({ url }: MediaViewerProps) {
   return (
     <>
       {/* Inline Media */}
-      <div className="mt-2 max-w-sm rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--bg-tertiary)] shadow-sm">
+      <div className="mt-2 max-w-sm rounded-xl overflow-hidden border border-(--border) bg-(--bg-tertiary) shadow-sm">
         {isVideo ? (
           <video src={url} controls className="w-full max-h-[300px] object-contain bg-black" />
         ) : (

@@ -59,6 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+    }).catch((err) => {
+      console.error('[Auth] getSession error:', err);
+      clearTimeout(timeout);
+      setLoading(false);
     });
 
     const {

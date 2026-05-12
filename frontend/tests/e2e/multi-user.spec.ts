@@ -15,6 +15,7 @@ test.describe('Multi-User Chat Scenarios', () => {
     await page1.locator('[data-testid="password-input"]').fill('password123');
     await page1.locator('[data-testid="submit-button"]').click();
     await expect(page1.locator('[data-testid="chat-interface"]')).toBeVisible({ timeout: 20000 });
+    await page1.locator('text=general').first().click();
     
     // User 2 login
     await page2.goto('/');
@@ -23,6 +24,7 @@ test.describe('Multi-User Chat Scenarios', () => {
     await page2.locator('[data-testid="password-input"]').fill('password123');
     await page2.locator('[data-testid="submit-button"]').click();
     await expect(page2.locator('[data-testid="chat-interface"]')).toBeVisible({ timeout: 20000 });
+    await page2.locator('text=general').first().click();
     
     // Note: In a real app, users would need to navigate to the same chat room or DM.
     // Assuming they are placed in a shared state or we skip the exact navigation for this skeleton:
@@ -63,6 +65,7 @@ test.describe('Multi-User Chat Scenarios', () => {
       await page.locator('[data-testid="password-input"]').fill(password);
       await page.locator('[data-testid="submit-button"]').click();
       await expect(page.locator('[data-testid="chat-interface"]')).toBeVisible({ timeout: 20000 });
+      await page.locator('text=general').first().click();
     }
     
     // User 1 starts typing
@@ -96,6 +99,7 @@ test.describe('Multi-User Chat Scenarios', () => {
       await page.locator('[data-testid="password-input"]').fill(password);
       await page.locator('[data-testid="submit-button"]').click();
       await expect(page.locator('[data-testid="chat-interface"]')).toBeVisible({ timeout: 20000 });
+      await page.locator('text=general').first().click();
     }
     
     // Both users send messages simultaneously

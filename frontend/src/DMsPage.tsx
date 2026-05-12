@@ -129,11 +129,11 @@ export default function DMsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[var(--bg-primary)] text-[var(--text-normal)]">
+    <div className="flex flex-col h-full bg-(--bg-primary) text-(--text-normal)">
       {/* Header */}
-      <header className="h-16 flex items-center px-6 border-b border-[var(--border)] shrink-0 z-10 shadow-sm bg-[var(--bg-secondary)]/50 backdrop-blur-sm">
+      <header className="h-16 flex items-center px-6 border-b border-(--border) shrink-0 z-10 shadow-sm bg-(--bg-secondary)/50 backdrop-blur-sm">
         <div className="flex items-center gap-4 flex-1">
-          <MessageSquare size={28} className="text-[var(--brand)]" />
+          <MessageSquare size={28} className="text-(--brand)" />
           <h1 className="text-[18px] font-bold tracking-tight">{t('messages')}</h1>
         </div>
 
@@ -144,50 +144,50 @@ export default function DMsPage() {
               onClick={() => setShowRequests(!showRequests)}
               className={`relative flex items-center justify-center w-10 h-10 rounded-xl transition-colors ${
                 showRequests || pendingReceived.length > 0
-                  ? 'text-[var(--brand)] bg-[var(--brand)]/10 hover:bg-[var(--brand)]/20'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)]'
+                  ? 'text-(--brand) bg-(--brand)/10 hover:bg-(--brand)/20'
+                  : 'text-(--text-muted) hover:text-(--text-normal) hover:bg-(--bg-modifier-hover)'
               }`}
               title={t('friend_requests')}
             >
               <Inbox size={24} />
               {pendingReceived.length > 0 && (
-                <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[var(--danger)] rounded-full border-2 border-[var(--bg-secondary)]" />
+                <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-(--danger) rounded-full border-2 border-(--bg-secondary)" />
               )}
             </button>
 
             {showRequests && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowRequests(false)} />
-                <div className="absolute right-0 top-14 w-80 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden">
-                  <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-tertiary)] flex justify-between items-center">
-                    <h3 className="font-bold text-[15px] text-[var(--text-normal)]">
+                <div className="absolute right-0 top-14 w-80 bg-(--bg-secondary) border border-(--border) rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden">
+                  <div className="px-4 py-3 border-b border-(--border) bg-(--bg-tertiary) flex justify-between items-center">
+                    <h3 className="font-bold text-[15px] text-(--text-normal)">
                       {t('friend_requests')}
                     </h3>
-                    <span className="bg-[var(--brand)] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-(--brand) text-white text-xs font-bold px-2 py-0.5 rounded-full">
                       {pendingReceived.length}
                     </span>
                   </div>
 
                   <div className="max-h-[300px] overflow-y-auto">
                     {pendingReceived.length === 0 ? (
-                      <div className="p-6 flex flex-col items-center justify-center text-[var(--text-muted)] text-center">
-                        <Inbox size={40} className="mb-2 opacity-50 text-[var(--brand)]" />
+                      <div className="p-6 flex flex-col items-center justify-center text-(--text-muted) text-center">
+                        <Inbox size={40} className="mb-2 opacity-50 text-(--brand)" />
                         <p className="text-sm font-medium">{t('no_pending_requests')}</p>
                       </div>
                     ) : (
                       pendingReceived.map((f: Friendship) => (
                         <div
                           key={f.id}
-                          className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]/50 hover:bg-[var(--bg-modifier-hover)] transition-colors last:border-0"
+                          className="flex items-center gap-3 px-4 py-3 border-b border-(--border)/50 hover:bg-(--bg-modifier-hover) transition-colors last:border-0"
                         >
-                          <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-[15px] shadow-sm">
+                          <div className="w-10 h-10 shrink-0 rounded-full bg-(--brand) text-white flex items-center justify-center font-bold text-[15px] shadow-sm">
                             {allUsers.find((u) => u.id === f.requester_id)?.username?.[0]?.toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="text-[14px] font-bold text-[var(--text-normal)] truncate block">
+                            <span className="text-[14px] font-bold text-(--text-normal) truncate block">
                               {allUsers.find((u) => u.id === f.requester_id)?.username ?? f.requester_id}
                             </span>
-                            <span className="text-[12px] text-[var(--text-muted)]">
+                            <span className="text-[12px] text-(--text-muted)">
                               {t('wants_to_be_friends')}
                             </span>
                           </div>
@@ -197,7 +197,7 @@ export default function DMsPage() {
                                 acceptFriendRequest(f.id);
                                 if (pendingReceived.length === 1) setShowRequests(false);
                               }}
-                              className="w-8 h-8 rounded-lg bg-[var(--success)] text-white flex items-center justify-center hover:bg-[var(--success-strong)] transition-colors shadow-sm"
+                              className="w-8 h-8 rounded-lg bg-(--success) text-white flex items-center justify-center hover:bg-(--success-strong) transition-colors shadow-sm"
                               title={t('accept')}
                             >
                               <Check size={16} />
@@ -207,7 +207,7 @@ export default function DMsPage() {
                                 removeFriendship(f.id);
                                 if (pendingReceived.length === 1) setShowRequests(false);
                               }}
-                              className="w-8 h-8 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--danger)] hover:text-white transition-colors border border-[var(--border)]"
+                              className="w-8 h-8 rounded-lg bg-(--bg-tertiary) text-(--text-muted) flex items-center justify-center hover:bg-(--danger) hover:text-white transition-colors border border-(--border)"
                               title={t('decline')}
                             >
                               <X size={16} />
@@ -224,7 +224,7 @@ export default function DMsPage() {
 
           <button
             onClick={() => setShowAddFriend(true)}
-            className="flex items-center gap-2 bg-[var(--brand)] text-white px-4 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
+            className="flex items-center gap-2 bg-(--brand) text-white px-4 py-2.5 rounded-xl font-bold text-[14px] hover:bg-(--brand-hover) transition-colors shadow-sm"
           >
             <UserPlus size={20} />
             {t('add_friend')}
@@ -235,11 +235,11 @@ export default function DMsPage() {
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
         {sortedFriends.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
-            <div className="w-24 h-24 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-6 shadow-inner border border-[var(--border)]">
-              <Users size={48} className="text-[var(--brand)]" />
+          <div className="flex-1 flex flex-col items-center justify-center py-20 text-(--text-muted)">
+            <div className="w-24 h-24 bg-(--bg-secondary) rounded-full flex items-center justify-center mb-6 shadow-inner border border-(--border)">
+              <Users size={48} className="text-(--brand)" />
             </div>
-            <h2 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
+            <h2 className="text-2xl font-bold text-(--text-normal) mb-2 tracking-tight">
               {t('no_conversations')}
             </h2>
             <p className="text-[15px] mb-6">
@@ -247,7 +247,7 @@ export default function DMsPage() {
             </p>
             <button
               onClick={() => setShowAddFriend(true)}
-              className="bg-[var(--brand)] text-white px-6 py-3 rounded-xl font-bold hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
+              className="bg-(--brand) text-white px-6 py-3 rounded-xl font-bold hover:bg-(--brand-hover) transition-colors shadow-sm"
             >
               {t('add_first_friend')}
             </button>
@@ -264,48 +264,48 @@ export default function DMsPage() {
                 <div
                   key={u.id}
                   onClick={() => navigate(`/dms/${u.xmppUsername}`)}
-                  className={`flex items-center gap-4 px-6 py-4 cursor-pointer transition-all border-b border-[var(--border)]/30 ${
+                  className={`flex items-center gap-4 px-6 py-4 cursor-pointer transition-all border-b border-(--border)/30 ${
                     hasUnread
-                      ? 'bg-[var(--brand)]/[0.06] hover:bg-[var(--brand)]/[0.10]'
-                      : 'hover:bg-[var(--bg-modifier-hover)]'
+                      ? 'bg-(--brand)/[0.06] hover:bg-(--brand)/[0.10]'
+                      : 'hover:bg-(--bg-modifier-hover)'
                   }`}
                 >
-                  <div className="relative flex-shrink-0 w-12 h-12">
+                  <div className="relative shrink-0 w-12 h-12">
                     <div className="w-full h-full rounded-full overflow-hidden shadow-sm">
                       {u.avatarUrl ? (
                         <img
                           src={u.avatarUrl}
                           alt={`${u.username}'s avatar`}
-                          className="w-full h-full object-cover bg-[var(--bg-tertiary)]"
+                          className="w-full h-full object-cover bg-(--bg-tertiary)"
                         />
                       ) : (
-                        <div className="w-full h-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-lg">
+                        <div className="w-full h-full bg-(--brand) text-white flex items-center justify-center font-bold text-lg">
                           {u.username[0].toUpperCase()}
                         </div>
                       )}
                     </div>
                     <div
-                      className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[2.5px] border-[var(--bg-primary)] z-10 ${u.online ? 'bg-[var(--status-online)]' : 'bg-[var(--status-offline)]'}`}
+                      className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-[2.5px] border-(--bg-primary) z-10 ${u.online ? 'bg-(--status-online)' : 'bg-(--status-offline)'}`}
                     />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className={`font-bold text-[16px] ${hasUnread ? 'text-[var(--text-normal)]' : 'text-[var(--text-normal)]'}`}>
+                      <span className={`font-bold text-[16px] ${hasUnread ? 'text-(--text-normal)' : 'text-(--text-normal)'}`}>
                         {u.username}
                       </span>
                       {lastMsg && (
-                        <span className="text-[12px] text-[var(--text-muted)] font-medium flex-shrink-0 ml-2">
+                        <span className="text-[12px] text-(--text-muted) font-medium shrink-0 ml-2">
                           {formatMessageTimestamp(lastMsg.time)}
                         </span>
                       )}
                     </div>
                     <p className={`text-[14px] truncate ${
                       typingUsers[u.xmppUsername]
-                        ? 'text-[var(--brand)] font-medium italic'
+                        ? 'text-(--brand) font-medium italic'
                         : hasUnread
-                          ? 'text-[var(--text-normal)] font-semibold'
-                          : 'text-[var(--text-muted)]'
+                          ? 'text-(--text-normal) font-semibold'
+                          : 'text-(--text-muted)'
                     }`}>
                       {typingUsers[u.xmppUsername] ? (
                         <span className="flex items-center gap-1">
@@ -314,7 +314,7 @@ export default function DMsPage() {
                         </span>
                       ) : lastMsg
                         ? lastMsg.body === '🚫 This message was deleted'
-                          ? <span className="text-[var(--danger)]">{t('message_deleted')}</span>
+                          ? <span className="text-(--danger)">{t('message_deleted')}</span>
                           : lastMsg.body.includes('chat-media')
                             ? t('attachment')
                             : lastMsg.body
@@ -322,9 +322,9 @@ export default function DMsPage() {
                     </p>
                   </div>
 
-                  <div className="flex gap-2 flex-shrink-0 items-center">
+                  <div className="flex gap-2 shrink-0 items-center">
                     {hasUnread && (
-                      <div className="min-w-[22px] h-[22px] bg-[var(--brand)] text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 shadow-sm">
+                      <div className="min-w-[22px] h-[22px] bg-(--brand) text-white text-[11px] font-bold rounded-full flex items-center justify-center px-1.5 shadow-sm">
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </div>
                     )}
@@ -335,7 +335,7 @@ export default function DMsPage() {
                           removeFriendship(rel.id);
                         }
                       }}
-                      className="w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-colors"
+                      className="w-10 h-10 rounded-xl bg-(--bg-tertiary) flex items-center justify-center text-(--text-muted) hover:text-(--danger) hover:bg-(--danger)/10 transition-colors"
                     >
                       <UserMinus size={22} />
                     </button>
@@ -357,16 +357,16 @@ export default function DMsPage() {
           }}
         >
           <div
-            className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden"
+            className="bg-(--bg-secondary) border border-(--border) rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-[var(--border)]">
+            <div className="flex items-center justify-between p-6 border-b border-(--border)">
               <div>
                 <h2 className="text-[20px] font-bold tracking-tight">
                   {t('add_friend')}
                 </h2>
-                <p className="text-[14px] text-[var(--text-muted)] mt-1">
+                <p className="text-[14px] text-(--text-muted) mt-1">
                   {t('search_for_users')}
                 </p>
               </div>
@@ -375,7 +375,7 @@ export default function DMsPage() {
                   setShowAddFriend(false);
                   setSearchQuery('');
                 }}
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal) transition-colors"
               >
                 <X size={20} />
               </button>
@@ -383,15 +383,15 @@ export default function DMsPage() {
 
             {/* Search Input */}
             <div className="px-6 py-4">
-              <div className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-[var(--brand)] transition-colors">
-                <Search size={22} className="text-[var(--text-muted)]" />
+              <div className="bg-(--bg-tertiary) border border-(--border) rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-(--brand) transition-colors">
+                <Search size={22} className="text-(--text-muted)" />
                 <input
                   type="text"
                   placeholder={t('search_users')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  className="flex-1 bg-transparent border-none outline-none text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px]"
+                  className="flex-1 bg-transparent border-none outline-none text-(--text-normal) placeholder:text-(--text-muted) text-[15px]"
                 />
               </div>
             </div>
@@ -399,17 +399,17 @@ export default function DMsPage() {
             {/* Search Results */}
             <div className="flex-1 overflow-y-auto px-6 pb-6">
               {!searchQuery.trim() ? (
-                <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)]">
+                <div className="flex flex-col items-center justify-center py-12 text-(--text-muted)">
                   <Search size={60} className="mb-4 opacity-30" />
                   <p className="text-[15px]">Start typing to search for users</p>
                 </div>
               ) : isSearching ? (
-                <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)]">
+                <div className="flex flex-col items-center justify-center py-12 text-(--text-muted)">
                   <Loader2 size={60} className="mb-4 opacity-30 animate-spin" />
                   <p className="text-[15px]">Searching...</p>
                 </div>
               ) : searchResults.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-[var(--text-muted)]">
+                <div className="flex flex-col items-center justify-center py-12 text-(--text-muted)">
                   <Search size={60} className="mb-4 opacity-30" />
                   <p className="text-[15px]">No users found matching &quot;{searchQuery}&quot;</p>
                 </div>
@@ -418,30 +418,30 @@ export default function DMsPage() {
                   {searchResults.map((u: any) => (
                     <div
                       key={u.id}
-                      className="flex items-center justify-between p-4 rounded-xl bg-[var(--bg-tertiary)]/50 border border-[var(--border)]/50 hover:bg-[var(--bg-modifier-hover)] transition-colors relative"
+                      className="flex items-center justify-between p-4 rounded-xl bg-(--bg-tertiary)/50 border border-(--border)/50 hover:bg-(--bg-modifier-hover) transition-colors relative"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="relative flex-shrink-0 w-12 h-12">
+                        <div className="relative shrink-0 w-12 h-12">
                           <div className="w-full h-full rounded-full overflow-hidden shadow-sm">
                             {u.avatarUrl ? (
                               <img
                                 src={u.avatarUrl}
                                 alt={`${u.username}'s avatar`}
-                                className="w-full h-full object-cover bg-[var(--bg-tertiary)]"
+                                className="w-full h-full object-cover bg-(--bg-tertiary)"
                               />
                             ) : (
-                              <div className="w-full h-full bg-[var(--brand)] flex items-center justify-center font-bold text-white text-lg">
+                              <div className="w-full h-full bg-(--brand) flex items-center justify-center font-bold text-white text-lg">
                                 {u.username[0].toUpperCase()}
                               </div>
                             )}
                           </div>
                           <div
-                            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-[var(--bg-tertiary)] z-10 ${u.online ? 'bg-[var(--status-online)]' : 'bg-[var(--status-offline)]'}`}
+                            className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[2.5px] border-(--bg-tertiary) z-10 ${u.online ? 'bg-(--status-online)' : 'bg-(--status-offline)'}`}
                           />
                         </div>
                         <div>
                           <span className="font-bold text-[16px] block">{u.username}</span>
-                          <span className="text-[13px] text-[var(--text-muted)]">
+                          <span className="text-[13px] text-(--text-muted)">
                             {u.online ? 'Online' : 'Offline'}
                           </span>
                         </div>
@@ -452,8 +452,8 @@ export default function DMsPage() {
                             onClick={() => handleSendRequest(u.id)}
                             className={`px-5 py-2.5 text-sm font-bold rounded-xl transition-all shadow-sm ${
                               requestSent === u.id
-                                ? 'bg-[var(--success)] text-white'
-                                : 'bg-[var(--brand)] text-white hover:bg-[var(--brand-hover)]'
+                                ? 'bg-(--success) text-white'
+                                : 'bg-(--brand) text-white hover:bg-(--brand-hover)'
                             }`}
                           >
                             {requestSent === u.id ? 'Sent!' : 'Add Friend'}
@@ -462,17 +462,17 @@ export default function DMsPage() {
                           u.relationship.receiver_id === myUserId ? (
                             <button
                               onClick={() => acceptFriendRequest(u.relationship!.id)}
-                              className="px-5 py-2.5 bg-[var(--success)] text-white text-sm font-bold rounded-xl hover:bg-[var(--success-strong)] transition-colors shadow-sm"
+                              className="px-5 py-2.5 bg-(--success) text-white text-sm font-bold rounded-xl hover:bg-(--success-strong) transition-colors shadow-sm"
                             >
                               Accept
                             </button>
                           ) : (
-                            <span className="px-5 py-2.5 bg-[var(--bg-modifier-active)] text-[var(--text-muted)] text-sm font-bold rounded-xl inline-block">
+                            <span className="px-5 py-2.5 bg-(--bg-modifier-active) text-(--text-muted) text-sm font-bold rounded-xl inline-block">
                               Pending
                             </span>
                           )
                         ) : (
-                          <span className="px-5 py-2.5 text-[var(--text-muted)] text-sm font-bold border border-[var(--border)] rounded-xl inline-block">
+                          <span className="px-5 py-2.5 text-(--text-muted) text-sm font-bold border border-(--border) rounded-xl inline-block">
                             Friends ✓
                           </span>
                         )}

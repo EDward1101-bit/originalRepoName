@@ -237,12 +237,12 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[var(--bg-primary)]">
+    <div className="flex flex-col h-full bg-(--bg-primary)">
       {/* Chat Header */}
-      <header className="h-16 flex items-center px-6 border-b border-[var(--border)] flex-shrink-0 z-10 shadow-sm bg-[var(--bg-secondary)]/50 backdrop-blur-sm">
+      <header className="h-16 flex items-center px-6 border-b border-(--border) shrink-0 z-10 shadow-sm bg-(--bg-secondary)/50 backdrop-blur-sm">
                 <div className="flex items-center gap-4">
           <div className="relative w-10 h-10">
-            <div className="w-full h-full rounded-full bg-[var(--brand)] text-white flex items-center justify-center font-bold text-lg shadow-inner overflow-hidden">
+            <div className="w-full h-full rounded-full bg-(--brand) text-white flex items-center justify-center font-bold text-lg shadow-inner overflow-hidden">
               {avatarUrl ? (
                 <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
               ) : (
@@ -250,14 +250,14 @@ export default function Chat() {
               )}
             </div>
             <div
-              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--bg-secondary)] z-10 ${isOnline ? 'bg-[var(--status-online)]' : 'bg-[var(--status-offline)]'}`}
+              className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-(--bg-secondary) z-10 ${isOnline ? 'bg-(--status-online)' : 'bg-(--status-offline)'}`}
             />
           </div>
           <div>
-            <h1 className="text-[16px] font-bold text-[var(--text-normal)] tracking-tight">
+            <h1 className="text-[16px] font-bold text-(--text-normal) tracking-tight">
               {displayName}
             </h1>
-            <p className="text-[13px] text-[var(--text-muted)] font-medium">
+            <p className="text-[13px] text-(--text-muted) font-medium">
               {isOnline ? t('online') : t('offline')}
             </p>
           </div>
@@ -268,21 +268,21 @@ export default function Chat() {
             onClick={toggleFavorite}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
               isFavorite
-                ? 'bg-[var(--warning)]/10 text-[var(--warning)]'
-                : 'text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)]'
+                ? 'bg-(--warning)/10 text-(--warning)'
+                : 'text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal)'
             }`}
             title={isFavorite ? t('remove_from_favorites') : t('add_to_favorites')}
           >
             <Star size={20} fill={favoriteId ? 'var(--warning)' : 'none'} />
           </button>
           <button
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal) transition-colors"
             title={t('start_voice_call')}
           >
             <Phone size={24} />
           </button>
           <button
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-normal)] transition-colors"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-(--text-muted) hover:bg-(--bg-modifier-hover) hover:text-(--text-normal) transition-colors"
             title={t('start_video_call')}
           >
             <Video size={24} />
@@ -304,11 +304,11 @@ export default function Chat() {
         }}
       >
         {filteredMessages.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] opacity-80">
-            <div className="w-24 h-24 bg-[var(--bg-secondary)] rounded-full flex items-center justify-center mb-6 shadow-inner border border-[var(--border)]">
-              <MessageSquare size={48} className="text-[var(--brand)]" />
+          <div className="flex-1 flex flex-col items-center justify-center text-(--text-muted) opacity-80">
+            <div className="w-24 h-24 bg-(--bg-secondary) rounded-full flex items-center justify-center mb-6 shadow-inner border border-(--border)">
+              <MessageSquare size={48} className="text-(--brand)" />
             </div>
-            <h2 className="text-2xl font-bold text-[var(--text-normal)] mb-2 tracking-tight">
+            <h2 className="text-2xl font-bold text-(--text-normal) mb-2 tracking-tight">
               {t('say_hello')} {recipient}!
             </h2>
             <p className="text-[15px]">{t('beginning_of_dm')}</p>
@@ -336,11 +336,11 @@ export default function Chat() {
             return (
               <div
                 key={msg.id}
-                className={`group flex gap-4 hover:bg-[var(--bg-modifier-hover)] -mx-6 px-6 py-2 transition-colors relative ${!showHeader ? 'mt-[-16px]' : ''}`}
+                className={`group flex gap-4 hover:bg-(--bg-modifier-hover) -mx-6 px-6 py-2 transition-colors relative ${!showHeader ? '-mt-4' : ''}`}
                 data-testid="message-item"
               >
                 {showHeader ? (
-                  <div className="w-10 h-10 shrink-0 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm overflow-hidden">
+                  <div className="w-10 h-10 shrink-0 rounded-full bg-(--brand) flex items-center justify-center text-white font-bold text-sm mt-0.5 shadow-sm overflow-hidden">
                     {senderAvatar ? (
                       <img
                         src={senderAvatar}
@@ -359,10 +359,10 @@ export default function Chat() {
                 <div className="flex flex-col min-w-0 w-full">
                   {showHeader && (
                     <div className="flex items-baseline gap-2 mb-1">
-                      <span className="font-bold text-[15px] text-[var(--text-normal)]">
+                      <span className="font-bold text-[15px] text-(--text-normal)">
                         {senderName}
                       </span>
-                      <span className="text-[12px] text-[var(--text-muted)] font-medium" data-testid="message-timestamp">
+                      <span className="text-[12px] text-(--text-muted) font-medium" data-testid="message-timestamp">
                         {formatMessageTimestamp(msg.time)}
                       </span>
                     </div>
@@ -378,23 +378,23 @@ export default function Chat() {
                           if (e.key === 'Enter') handleSaveEdit();
                           if (e.key === 'Escape') handleCancelEdit();
                         }}
-                        className="bg-[var(--bg-secondary)] border border-[var(--brand)] rounded-xl px-4 py-2 text-[var(--text-normal)] text-[15px] outline-none"
+                        className="bg-(--bg-secondary) border border-(--brand) rounded-xl px-4 py-2 text-(--text-normal) text-[15px] outline-none"
                         autoFocus
                       />
                       <div className="flex gap-2 text-[13px]">
                         <button
                           onClick={handleSaveEdit}
-                          className="text-[var(--brand)] font-medium hover:underline"
+                          className="text-(--brand) font-medium hover:underline"
                         >
                           {t('save_changes')}
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          className="text-[var(--text-muted)] hover:underline"
+                          className="text-(--text-muted) hover:underline"
                         >
                           {t('discard_changes')}
                         </button>
-                        <span className="text-[var(--text-muted)]">
+                        <span className="text-(--text-muted)">
                           (press Enter to save, Esc to cancel)
                         </span>
                       </div>
@@ -403,7 +403,7 @@ export default function Chat() {
                     <MediaViewer url={msg.body} />
                   ) : (
                     <div
-                      className={`text-[15px] whitespace-pre-wrap break-words leading-[1.4rem] ${isDeleted ? 'text-[var(--text-muted)] italic' : 'text-[var(--text-normal)]'}`}
+                      className={`text-[15px] whitespace-pre-wrap wrap-break-word leading-[1.4rem] ${isDeleted ? 'text-(--text-muted) italic' : 'text-(--text-normal)'}`}
                     >
                       {messageBodyToRender}
                     </div>
@@ -418,20 +418,20 @@ export default function Chat() {
                         e.stopPropagation();
                         setActiveMenu(activeMenu === msg.id ? null : msg.id);
                       }}
-                      className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-normal)] shadow-sm"
+                      className="w-8 h-8 rounded-lg bg-(--bg-secondary) border border-(--border) flex items-center justify-center text-(--text-muted) hover:text-(--text-normal) shadow-sm"
                     >
                       <MoreHorizontal size={18} />
                     </button>
 
                     {activeMenu === msg.id && (
-                      <div className="absolute right-0 top-9 z-50 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl shadow-2xl py-2 min-w-[200px] overflow-hidden">
+                      <div className="absolute right-0 top-9 z-50 bg-(--bg-tertiary) border border-(--border) rounded-xl shadow-2xl py-2 min-w-50 overflow-hidden">
                         {canEdit && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleStartEdit(msg.id, msg.body);
                             }}
-                            className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] flex items-center gap-3"
+                            className="w-full text-left px-4 py-2.5 text-[14px] text-(--text-normal) hover:bg-(--bg-modifier-hover) flex items-center gap-3"
                           >
                             <Edit2 size={18} />
                             Edit Message
@@ -443,7 +443,7 @@ export default function Chat() {
                             deleteMessageForMe(msg.id);
                             setActiveMenu(null);
                           }}
-                          className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--text-muted)] hover:bg-[var(--bg-modifier-hover)] flex items-center gap-3"
+                          className="w-full text-left px-4 py-2.5 text-[14px] text-(--text-muted) hover:bg-(--bg-modifier-hover) flex items-center gap-3"
                         >
                           <EyeOff size={18} />
                           Delete for Me
@@ -455,7 +455,7 @@ export default function Chat() {
                               deleteMessageForEveryone(msg.id);
                               setActiveMenu(null);
                             }}
-                            className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--danger)] hover:bg-[var(--danger)]/10 flex items-center gap-3"
+                            className="w-full text-left px-4 py-2.5 text-[14px] text-(--danger) hover:bg-(--danger)/10 flex items-center gap-3"
                           >
                             <Trash2 size={18} />
                             Delete for Everyone
@@ -474,19 +474,19 @@ export default function Chat() {
           <div className="flex items-center gap-3 px-2 py-1" data-testid="typing-indicator">
             <div className="flex gap-1">
               <span
-                className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce"
+                className="w-1.5 h-1.5 bg-(--text-muted) rounded-full animate-bounce"
                 style={{ animationDelay: '0ms' }}
               ></span>
               <span
-                className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce"
+                className="w-1.5 h-1.5 bg-(--text-muted) rounded-full animate-bounce"
                 style={{ animationDelay: '150ms' }}
               ></span>
               <span
-                className="w-1.5 h-1.5 bg-[var(--text-muted)] rounded-full animate-bounce"
+                className="w-1.5 h-1.5 bg-(--text-muted) rounded-full animate-bounce"
                 style={{ animationDelay: '300ms' }}
               ></span>
             </div>
-            <span className="text-[12px] text-[var(--text-muted)] font-medium">
+            <span className="text-[12px] text-(--text-muted) font-medium">
               {recipientProfile?.username || recipient} {t('typing')}
             </span>
           </div>
@@ -497,7 +497,7 @@ export default function Chat() {
       {/* Composition Area */}
       <footer className="px-6 pb-6 pt-2 relative">
         {showEmojiPicker && (
-          <div className="absolute bottom-[80px] right-6 z-50 shadow-2xl rounded-2xl overflow-hidden border border-[var(--border)]" data-testid="emoji-picker">
+          <div className="absolute bottom-[80px] right-6 z-50 shadow-2xl rounded-2xl overflow-hidden border border-(--border)" data-testid="emoji-picker">
             <EmojiPicker
               onEmojiClick={(emojiData) => setInput((prev) => prev + emojiData.emoji)}
               theme={'light' as any}
@@ -508,11 +508,11 @@ export default function Chat() {
 
         {/* Staged Files Preview */}
         {stagedFiles.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-3 p-3 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl">
+          <div className="mb-3 flex flex-wrap gap-3 p-3 bg-(--bg-secondary) border border-(--border) rounded-2xl">
             {stagedFiles.map((file, index) => (
               <div
                 key={`${file.name}-${index}`}
-                className="relative group/staged w-20 h-20 rounded-xl overflow-hidden border border-[var(--border)] bg-[var(--bg-tertiary)] flex items-center justify-center"
+                className="relative group/staged w-20 h-20 rounded-xl overflow-hidden border border-(--border) bg-(--bg-tertiary) flex items-center justify-center"
               >
                 {file.type.startsWith('image/') ? (
                   <img
@@ -521,13 +521,13 @@ export default function Chat() {
                     className="w-full h-full object-cover"
                   />
                 ) : file.type.startsWith('video/') ? (
-                  <Image size={32} className="text-[var(--text-muted)]" />
+                  <Image size={32} className="text-(--text-muted)" />
                 ) : (
-                  <FileText size={32} className="text-[var(--text-muted)]" />
+                  <FileText size={32} className="text-(--text-muted)" />
                 )}
                 <button
                   onClick={() => removeStagedFile(index)}
-                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[var(--danger)] text-white flex items-center justify-center opacity-0 group-hover/staged:opacity-100 transition-opacity shadow-md"
+                  className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-(--danger) text-white flex items-center justify-center opacity-0 group-hover/staged:opacity-100 transition-opacity shadow-md"
                 >
                   <X size={14} />
                 </button>
@@ -539,7 +539,7 @@ export default function Chat() {
           </div>
         )}
 
-        <div className="flex items-center gap-3 bg-[var(--bg-secondary)] border border-[var(--border)]/50 rounded-2xl p-2 shadow-sm focus-within:border-[var(--brand)]/50 focus-within:ring-1 focus-within:ring-[var(--brand)]/20 transition-all">
+        <div className="flex items-center gap-3 bg-(--bg-secondary) border border-(--border)/50 rounded-2xl p-2 shadow-sm focus-within:border-(--brand)/50 focus-within:ring-1 focus-within:ring-(--brand)/20 transition-all">
           <input
             type="file"
             ref={fileInputRef}
@@ -551,13 +551,13 @@ export default function Chat() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className={`w-10 h-10 rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-muted)] flex items-center justify-center hover:bg-[var(--brand)] hover:text-white transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-10 h-10 rounded-xl bg-(--bg-tertiary) text-(--text-muted) flex items-center justify-center hover:bg-(--brand) hover:text-white transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isUploading ? <Loader2 size={22} className="animate-spin" /> : <Plus size={22} />}
           </button>
 
           <input
-            className="flex-1 bg-transparent border-none outline-none text-[var(--text-normal)] placeholder:text-[var(--text-muted)] text-[15px] px-2"
+            className="flex-1 bg-transparent border-none outline-none text-(--text-normal) placeholder:text-(--text-muted) text-[15px] px-2"
             placeholder={t('message_placeholder') + recipient}
             type="text"
             value={input}
@@ -570,13 +570,13 @@ export default function Chat() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)] transition-colors"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-(--text-muted) hover:bg-(--bg-tertiary) hover:text-(--brand) transition-colors"
             >
               <Image size={24} />
             </button>
             <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${showEmojiPicker ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--brand)]'}`}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${showEmojiPicker ? 'bg-(--brand) text-white' : 'text-(--text-muted) hover:bg-(--bg-tertiary) hover:text-(--brand)'}`}
               data-testid="emoji-button"
             >
               <Smile size={24} />
@@ -585,7 +585,7 @@ export default function Chat() {
               <button
                 onClick={handleSend}
                 disabled={isUploading}
-                className="w-10 h-10 rounded-xl bg-[var(--brand)] text-white flex items-center justify-center hover:bg-[var(--brand-hover)] transition-colors shadow-sm"
+                className="w-10 h-10 rounded-xl bg-(--brand) text-white flex items-center justify-center hover:bg-(--brand-hover) transition-colors shadow-sm"
                 data-testid="send-button"
               >
                 <Send size={22} />

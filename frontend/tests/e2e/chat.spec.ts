@@ -14,6 +14,39 @@ test.describe('Chat Functionality', () => {
     
     // Wait for chat interface to load
     await expect(page.locator('[data-testid="chat-interface"]')).toBeVisible({ timeout: 20000 });
+
+    // Navigate into a room chat (join one if needed)
+    await page.goto('/rooms');
+
+    const roomLink = page.locator(
+      'a[href^="/rooms/"]:not([href="/rooms"]):not([href="/rooms/explore"])'
+    );
+
+    if ((await roomLink.count()) > 0) {
+      await roomLink.first().click();
+    } else {
+      await page.goto('/rooms/explore');
+      const roomCard = page.locator('[data-testid="room-card"]');
+      if ((await roomCard.count()) === 0) {
+        const roomName = `e2e_${Date.now()}`;
+        await page.locator('[data-testid="create-room-name"]').fill(roomName);
+        await page.locator('[data-testid="create-room-submit"]').click();
+        await expect(page.locator('[data-testid="room-card"]').first()).toBeVisible({ timeout: 20000 });
+      }
+      await page.locator('[data-testid="room-card"]').first().click();
+    }
+
+    await page.waitForURL(/\/rooms\/(?!explore$).+/, { timeout: 20000 });
+
+    const joinButton = page.locator('[data-testid="join-room-button"]');
+    const roomReady = page.locator('[data-testid="message-input"], [data-testid="join-room-button"]');
+    await expect(roomReady).toBeVisible({ timeout: 20000 });
+
+    if ((await joinButton.count()) > 0) {
+      await joinButton.first().click();
+    }
+
+    await expect(page.locator('[data-testid="message-input"]')).toBeVisible({ timeout: 20000 });
   });
 
   test('should show chat interface elements', async ({ page }) => {
@@ -21,6 +54,7 @@ test.describe('Chat Functionality', () => {
     // Check main chat elements
     await expect(page.locator('[data-testid="message-list"]')).toBeVisible();
     await expect(page.locator('[data-testid="message-input"]')).toBeVisible();
+    await page.locator('[data-testid="message-input"]').fill('Ready');
     await expect(page.locator('[data-testid="send-button"]')).toBeVisible();
     await expect(page.locator('[data-testid="user-status"]')).toBeVisible();
   });
@@ -80,20 +114,21 @@ test.describe('Chat Functionality', () => {
 
   test('should prevent sending empty messages', async ({ page }) => {
     // Find initial message count
-    const initialCount = await page.locator('[data-testid="message-item"]').count();
-    
-    // Try to send empty message
-    await page.locator('[data-testid="send-button"]').click();
-    
+    const messageItems = page.locator('[data-testid="message-item"]');
+    const initialCount = await messageItems.count();
+
+    // Try to send whitespace-only message
+    await page.locator('[data-testid="message-input"]').fill('   ');
+    await page.locator('[data-testid="message-input"]').press('Enter');
+
     // Should not show new empty message in chat
-    const newCount = await page.locator('[data-testid="message-item"]').count();
-    expect(newCount).toBe(initialCount);
+    await expect(messageItems).toHaveCount(initialCount);
   });
 
   test('should handle emoji picker', async ({ page }) => {
     // Open emoji picker
     await page.locator('[data-testid="emoji-button"]').click();
-    
+
     // Check emoji picker is visible
     await expect(page.locator('[data-testid="emoji-picker"]')).toBeVisible();
   });

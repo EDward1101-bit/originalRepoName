@@ -141,15 +141,15 @@ export default function PushNotificationBar() {
             >
               {/* Progress bar */}
               <div
-                className="absolute bottom-0 left-0 h-[2px] bg-[var(--brand)] rounded-full"
+                className="absolute bottom-0 left-0 h-[2px] bg-(--brand) rounded-full"
                 style={{
                   animation: `pushNotifProgress ${DISMISS_AFTER_MS}ms linear forwards`,
                 }}
               />
 
               {/* Avatar */}
-              <div className="relative flex-shrink-0 w-10 h-10">
-                <div className="w-full h-full rounded-full overflow-hidden bg-[var(--brand)] flex items-center justify-center text-white font-bold text-lg shadow-md">
+              <div className="relative shrink-0 w-10 h-10">
+                <div className="w-full h-full rounded-full overflow-hidden bg-(--brand) flex items-center justify-center text-white font-bold text-lg shadow-md">
                   {notif.senderAvatar ? (
                     <img
                       src={notif.senderAvatar}
@@ -161,7 +161,7 @@ export default function PushNotificationBar() {
                   )}
                 </div>
                 {/* Small message icon badge */}
-                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[var(--brand)] flex items-center justify-center border-[2px] border-[var(--overlay-border)]">
+                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-(--brand) flex items-center justify-center border-[2px] border-(--overlay-border)">
                   <MessageSquare size={9} className="text-white" />
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function PushNotificationBar() {
                   <span className="text-[13px] font-bold text-white truncate">
                     {notif.senderDisplayName}
                   </span>
-                  <span className="text-[11px] text-white/40 font-medium flex-shrink-0">
+                  <span className="text-[11px] text-white/40 font-medium shrink-0">
                     {t('sent_you_message')}
                   </span>
                 </div>
@@ -182,10 +182,10 @@ export default function PushNotificationBar() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <div className="flex items-center gap-1 shrink-0">
                 <button
                   onClick={() => dismiss(notif.id)}
-                  className="text-[12px] font-bold text-[var(--brand)] bg-[var(--brand)]/15 hover:bg-[var(--brand)]/25 px-3 py-1.5 rounded-lg transition-colors"
+                  className="text-[12px] font-bold text-(--brand) bg-(--brand)/15 hover:bg-(--brand)/25 px-3 py-1.5 rounded-lg transition-colors"
                 >
                   {t('reply')}
                 </button>

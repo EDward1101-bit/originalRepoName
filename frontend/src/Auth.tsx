@@ -101,10 +101,11 @@ export default function Auth() {
           // Self-heal: Ensure public.users has the email populated
           await supabase.from('users').update({ email }).eq('id', authData.user.id);
         }
+        // Persist password so the app can proceed even if sync is slow or fails.
+        savePassword(password);
         const localpart = email.split('@')[0];
         const synced = await syncUserToProsody(localpart, password);
         if (synced) {
-          savePassword(password);
           setMessage('Logged in successfully!');
         } else {
           setMessage('Logged in but sync failed.');
@@ -121,10 +122,10 @@ export default function Auth() {
     return (
       <div className="h-screen w-full bg-transparent flex items-center justify-center p-6 transition-all duration-500">
         <div className="flex flex-col items-center justify-center gap-4 animate-pulse">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--brand)] text-white flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 rounded-2xl bg-(--brand) text-white flex items-center justify-center shadow-lg">
             <div className="w-5 h-5 rounded-full border-2 border-white/80 border-t-transparent animate-spin" />
           </div>
-          <p className="text-[14px] font-medium text-[var(--text-muted)] tracking-wide">
+          <p className="text-[14px] font-medium text-(--text-muted) tracking-wide">
             Connecting to Aether...
           </p>
         </div>
@@ -135,28 +136,28 @@ export default function Auth() {
   // Forgot Password form
   if (isForgotPassword) {
     return (
-      <div className="h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center p-4">
-        <div className="w-full max-w-[440px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-8 shadow-lg">
+      <div className="h-screen w-full bg-(--bg-primary) flex items-center justify-center p-4">
+        <div className="w-full max-w-[440px] bg-(--bg-secondary) border border-(--border) rounded-2xl p-8 shadow-lg">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-[var(--brand)] mx-auto mb-4 flex items-center justify-center shadow-lg">
+            <div className="w-16 h-16 rounded-2xl bg-(--brand) mx-auto mb-4 flex items-center justify-center shadow-lg">
               <Lock size={32} className="text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-[var(--text-normal)] tracking-tight">Reset Password</h1>
-            <p className="text-[var(--text-muted)] text-[15px] mt-2">
+            <h1 className="text-2xl font-bold text-(--text-normal) tracking-tight">Reset Password</h1>
+            <p className="text-(--text-muted) text-[15px] mt-2">
               Enter your email and we&apos;ll send you a reset link.
             </p>
           </div>
 
           <form onSubmit={handleForgotPassword} className="flex flex-col gap-5">
             <div>
-              <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
+              <label className="block text-[12px] font-bold uppercase tracking-widest text-(--text-muted) mb-2">
                 Email Address
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
+                className="w-full bg-(--input-bg) border border-(--border) outline-none text-(--text-normal) text-[15px] px-4 py-3 rounded-xl focus:border-(--brand) transition-colors"
                 required
                 placeholder="you@example.com"
               />
@@ -165,7 +166,7 @@ export default function Auth() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[var(--brand)] text-white font-bold text-[15px] py-3 rounded-xl hover:bg-[var(--brand-hover)] transition-colors disabled:opacity-50 shadow-sm"
+              className="w-full bg-(--brand) text-white font-bold text-[15px] py-3 rounded-xl hover:bg-(--brand-hover) transition-colors disabled:opacity-50 shadow-sm"
             >
               {loading ? 'Sending...' : 'Send Reset Link'}
             </button>
@@ -177,7 +178,7 @@ export default function Auth() {
                 setIsForgotPassword(false);
                 setMessage('');
               }}
-              className="text-[var(--brand)] text-[14px] font-medium hover:underline"
+              className="text-(--brand) text-[14px] font-medium hover:underline"
             >
               ← Back to Login
             </button>
@@ -185,7 +186,7 @@ export default function Auth() {
 
           {message && (
             <p
-              className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
+              className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-(--danger)' : 'text-(--success)'}`}
             >
               {message}
             </p>
@@ -196,30 +197,30 @@ export default function Auth() {
   }
 
   return (
-    <div className="h-screen w-full bg-[var(--bg-primary)] flex items-center justify-center p-4">
-      <div className="w-full max-w-[440px] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-2xl p-8 shadow-lg">
+    <div className="h-screen w-full bg-(--bg-primary) flex items-center justify-center p-4">
+      <div className="w-full max-w-[440px] bg-(--bg-secondary) border border-(--border) rounded-2xl p-8 shadow-lg">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-[var(--brand)] mx-auto mb-4 flex items-center justify-center shadow-lg">
+          <div className="w-16 h-16 rounded-2xl bg-(--brand) mx-auto mb-4 flex items-center justify-center shadow-lg">
             {isSignUp ? <UserPlus size={32} className="text-white" /> : <Hand size={32} className="text-white" />}
           </div>
-          <h1 className="text-2xl font-bold text-[var(--text-normal)] tracking-tight">
+          <h1 className="text-2xl font-bold text-(--text-normal) tracking-tight">
             {isSignUp ? t('register') : t('welcome')}
           </h1>
-          <p className="text-[var(--text-muted)] text-[15px] mt-2">
+          <p className="text-(--text-muted) text-[15px] mt-2">
             {isSignUp ? 'Set up your Aether identity' : 'Sign in to continue chatting'}
           </p>
         </div>
 
         <form onSubmit={handleAuth} className="flex flex-col gap-5" data-testid="auth-form">
           <div>
-            <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-              Email <span className="text-[var(--danger)]">*</span>
+            <label className="block text-[12px] font-bold uppercase tracking-widest text-(--text-muted) mb-2">
+              Email <span className="text-(--danger)">*</span>
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
+              className="w-full bg-(--input-bg) border border-(--border) outline-none text-(--text-normal) text-[15px] px-4 py-3 rounded-xl focus:border-(--brand) transition-colors"
               required
               placeholder="you@example.com"
               data-testid="email-input"
@@ -228,14 +229,14 @@ export default function Auth() {
 
           {isSignUp && (
             <div>
-              <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-                Username <span className="text-[var(--danger)]">*</span>
+              <label className="block text-[12px] font-bold uppercase tracking-widest text-(--text-muted) mb-2">
+                Username <span className="text-(--danger)">*</span>
               </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
+                className="w-full bg-(--input-bg) border border-(--border) outline-none text-(--text-normal) text-[15px] px-4 py-3 rounded-xl focus:border-(--brand) transition-colors"
                 required
                 placeholder="Choose a username"
                 data-testid="username-input"
@@ -244,14 +245,14 @@ export default function Auth() {
           )}
 
           <div>
-            <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
-              Password <span className="text-[var(--danger)]">*</span>
+            <label className="block text-[12px] font-bold uppercase tracking-widest text-(--text-muted) mb-2">
+              Password <span className="text-(--danger)">*</span>
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
+              className="w-full bg-(--input-bg) border border-(--border) outline-none text-(--text-normal) text-[15px] px-4 py-3 rounded-xl focus:border-(--brand) transition-colors"
               required
               placeholder="••••••••"
               data-testid="password-input"
@@ -263,7 +264,7 @@ export default function Auth() {
                   setIsForgotPassword(true);
                   setMessage('');
                 }}
-                className="text-[var(--brand)] text-[13px] font-medium mt-2 block hover:underline"
+                className="text-(--brand) text-[13px] font-medium mt-2 block hover:underline"
               >
                 {t('forgot_password')}
               </button>
@@ -273,7 +274,7 @@ export default function Auth() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[var(--brand)] text-white font-bold text-[15px] py-3.5 rounded-xl hover:bg-[var(--brand-hover)] transition-colors mt-1 disabled:opacity-50 shadow-sm"
+            className="w-full bg-(--brand) text-white font-bold text-[15px] py-3.5 rounded-xl hover:bg-(--brand-hover) transition-colors mt-1 disabled:opacity-50 shadow-sm"
             data-testid="submit-button"
           >
             {loading ? '...' : isSignUp ? t('register') : t('sign_in')}
@@ -281,7 +282,7 @@ export default function Auth() {
         </form>
 
         <div className="mt-5 text-[14px] text-center">
-          <span className="text-[var(--text-muted)]">
+          <span className="text-(--text-muted)">
             {isSignUp ? t('have_account') + ' ' : t('no_account') + ' '}
           </span>
           <button
@@ -289,7 +290,7 @@ export default function Auth() {
               setIsSignUp(!isSignUp);
               setMessage('');
             }}
-            className="text-[var(--brand)] font-medium hover:underline"
+            className="text-(--brand) font-medium hover:underline"
           >
             {isSignUp ? t('sign_in') : t('register')}
           </button>
@@ -297,7 +298,7 @@ export default function Auth() {
 
         {message && (
           <p
-            className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-[var(--danger)]' : 'text-[var(--success)]'}`}
+            className={`mt-4 text-sm text-center font-medium ${isErrorMessage(message) ? 'text-(--danger)' : 'text-(--success)'}`}
             data-testid="auth-error"
           >
             {message}
