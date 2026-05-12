@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
 import { useTranslation } from '../LanguageContext';
 import { supabase } from '../supabase';
+import { API_URL } from '../config';
 import { Language } from '../i18n';
 import { Settings, User, Palette, Mic, Puzzle, LogOut, X, Camera, Loader2, Moon, Sun } from 'lucide-react';
 
@@ -41,6 +42,9 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
   const [passwordMsg, setPasswordMsg] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
+  // Account deletion
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
   const tabs = [
     { name: 'General', label: t('general'), Icon: Settings, category: t('user_settings') },
     { name: 'My Account', label: t('account'), Icon: User, category: t('user_settings') },
@@ -52,6 +56,29 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
   const handleSignOut = async () => {
     await signOut();
     window.location.href = '/';
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete your account "${myUsername}"?\n\nThis will permanently remove your XMPP account. This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setIsDeletingAccount(true);
+    try {
+      // Delete XMPP account from Prosody
+      if (myUsername) {
+        await fetch(`${API_URL}/api/users/${encodeURIComponent(myUsername)}`, {
+          method: 'DELETE',
+        });
+      }
+      // Sign out of Supabase and clear all local state
+      await signOut();
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Failed to delete account:', err);
+      setIsDeletingAccount(false);
+    }
   };
 
   const handleThemeChange = (newTheme: 'dark' | 'light') => {
@@ -394,8 +421,12 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                       {t('delete_account_desc')}
                     </p>
                   </div>
-                  <button className="bg-[var(--danger)] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--danger-strong)] transition-colors shadow-sm">
-                    {t('delete_account')}
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={isDeletingAccount}
+                    className="bg-[var(--danger)] text-white px-5 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[var(--danger-strong)] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDeletingAccount ? <Loader2 size={16} className="animate-spin" /> : t('delete_account')}
                   </button>
                 </div>
               </div>
