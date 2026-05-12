@@ -7,6 +7,7 @@ import { useBotContext } from './BotContext';
 import { useMucContext } from './MucContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
+import MessageBody from './components/MessageBody';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
 import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot } from 'lucide-react';
@@ -459,11 +460,7 @@ export default function RoomChat() {
                       {isMediaUrl(msg.body) ? (
                         <MediaViewer url={msg.body} />
                       ) : (
-                        <div
-                          className={`text-[15px] whitespace-pre-wrap break-words leading-[1.4rem] ${isDeleted ? 'text-[var(--text-muted)] italic' : 'text-[var(--text-normal)]'}`}
-                        >
-                          {messageBodyToRender}
-                        </div>
+                        <MessageBody body={messageBodyToRender} isDeleted={isDeleted} />
                       )}
                     </div>
 
