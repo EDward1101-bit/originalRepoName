@@ -209,7 +209,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const boshUrl = `${window.location.origin}/http-bind`;
 
-    console.log('[XMPP] Initializing client for:', fullJid);
+    if (import.meta.env.DEV) console.log('[XMPP] Initializing client for:', fullJid);
     let client: Agent | null = null;
     try {
       client = createClient({

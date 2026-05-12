@@ -668,7 +668,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
   };
 
   const joinRoom = async (roomName: string) => {
-    console.log(`[MUC] Attempting to join room: ${roomName}, XMPP status: ${status}`);
+    if (import.meta.env.DEV) console.log(`[MUC] Attempting to join room: ${roomName}, XMPP status: ${status}`);
     if (!client) {
       console.error('[MUC] Cannot join: client is null');
       return;
@@ -686,23 +686,23 @@ export function MucProvider({ children }: { children: ReactNode }) {
       // Join the MUC via XMPP (send presence)
       sendMucJoin(roomName, myUsername);
 
-      console.log(`[MUC] Presence sent. Updating local state.`);
+      if (import.meta.env.DEV) console.log(`[MUC] Presence sent. Updating local state.`);
       const nextRooms = new Set(joinedRoomsRef.current);
       nextRooms.add(roomName);
       persistJoinedRooms(nextRooms);
 
       await publishSystemMessage(roomName, myUsername, 'available');
 
-      console.log(`[MUC] Loading room history from Supabase...`);
+      if (import.meta.env.DEV) console.log(`[MUC] Loading room history from Supabase...`);
       await loadRoomHistory(roomName);
-      console.log(`[MUC] Join process complete for ${roomName}`);
+      if (import.meta.env.DEV) console.log(`[MUC] Join process complete for ${roomName}`);
     } catch (err) {
       console.error('[MUC] Error during joinRoom:', err);
     }
   };
 
   const leaveRoom = (roomName: string) => {
-    console.log(`[MUC] Attempting to leave room: ${roomName}`);
+    if (import.meta.env.DEV) console.log(`[MUC] Attempting to leave room: ${roomName}`);
     if (!client || !myUsername) return;
 
     // Leave the MUC via XMPP

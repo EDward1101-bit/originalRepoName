@@ -15,10 +15,7 @@ const RoomChat = React.lazy(() => import('./RoomChat'));
 const RoomsRedirect = React.lazy(() => import('./RoomsRedirect'));
 const BotsPage = React.lazy(() => import('./BotsPage'));
 
-console.log('[App] Starting...');
-
 function AuthenticatedRoutes() {
-  console.log('[App] Rendering AuthenticatedRoutes');
   return (
     <ChatProvider>
       <BotProvider>
@@ -47,8 +44,6 @@ function AuthenticatedRoutes() {
 function App() {
   const { user, password, loading } = useAuth();
   const { t } = useTranslation();
-
-  console.log('[App] Auth state:', { user: !!user, hasPassword: !!password, loading });
 
   if (loading) {
     return (
@@ -89,7 +84,6 @@ function App() {
   }
 
   if (!user || !password) {
-    console.log('[App] No user/password, rendering Auth');
     return <Auth />;
   }
 
