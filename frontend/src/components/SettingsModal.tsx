@@ -527,7 +527,10 @@ export default function SettingsModal({ onClose, myUsername }: SettingsModalProp
                   </div>
                   <span className="font-bold text-[15px]">{t('coming_soon')}</span>
                 </div>
-                <button className="text-[var(--brand)] text-[14px] font-bold opacity-50 cursor-not-allowed">
+                <button
+                  disabled
+                  className="text-[var(--brand)] text-[14px] font-bold opacity-50 cursor-not-allowed"
+                >
                   {t('connect')}
                 </button>
               </div>
