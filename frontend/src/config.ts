@@ -1,6 +1,6 @@
-const globalHostname = window.location.hostname || 'localhost';
+const globalHostname = window.location.hostname || import.meta.env.VITE_SERVER_HOSTNAME || 'localhost';
 const DEFAULT_HTTP_API_URL = `http://${globalHostname}:8000`;
-const DEFAULT_XMPP_DOMAIN = 'localhost';
+const DEFAULT_XMPP_DOMAIN = globalHostname;
 
 // Use the global hostname if the env variable is set to localhost, to allow local network access
 export const API_URL = import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('localhost') ? import.meta.env.VITE_API_URL : DEFAULT_HTTP_API_URL;

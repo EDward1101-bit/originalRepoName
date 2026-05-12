@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from api.auth import AuthVerifyRequest, AuthVerifyResponse, SyncUserRequest
+from config import settings
 
 
 class TestHealthEndpoints:
@@ -321,11 +322,11 @@ class TestAuthModels:
         request = AuthVerifyRequest(
             username="testuser",
             password="password123",
-            host="localhost"
+            host=settings.server_hostname
         )
         assert request.username == "testuser"
         assert request.password == "password123"
-        assert request.host == "localhost"
+        assert request.host == settings.server_hostname
 
     def test_auth_verify_request_default_host(self):
         """Test AuthVerifyRequest with default host."""
@@ -333,7 +334,7 @@ class TestAuthModels:
             username="testuser",
             password="password123"
         )
-        assert request.host == "localhost"
+        assert request.host == settings.server_hostname
 
     def test_auth_verify_response_valid(self):
         """Test valid AuthVerifyResponse creation."""

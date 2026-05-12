@@ -5,7 +5,8 @@ import crypto from 'crypto';
 const BOT_SECRET = process.env.BOT_SECRET || '82ad1c725ac496865d6e024f385e6f28d6a1effdb7954da39ff344eb8b3bbdb4';
 // Use port 4001 to avoid conflicting with the example bot on 4000
 const PORT = parseInt(process.env.PORT || '4001', 10);
-const API_URL = process.env.API_URL || 'http://localhost:8000';
+const SERVER_HOSTNAME = process.env.SERVER_HOSTNAME || 'localhost';
+const API_URL = process.env.API_URL || `http://${SERVER_HOSTNAME}:8000`;
 
 /**
  * Verify the X-Aether-Signature header against the request body.
@@ -147,8 +148,8 @@ async function sendHeartbeat() {
 }
 
 app.listen(PORT, () => {
-  console.log(`[AndreiFilterBot] Bot running on http://localhost:${PORT}`);
-  console.log(`[AndreiFilterBot] Webhook endpoint: POST http://localhost:${PORT}/webhook`);
+  console.log(`[AndreiFilterBot] Bot running on http://${SERVER_HOSTNAME}:${PORT}`);
+  console.log(`[AndreiFilterBot] Webhook endpoint: POST http://${SERVER_HOSTNAME}:${PORT}/webhook`);
 
   // Send initial heartbeat immediately, then every 30 seconds
   sendHeartbeat();

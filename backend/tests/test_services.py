@@ -8,6 +8,7 @@ from services.prosody import ProsodyClient
 from services.supabase import get_service_client, get_supabase_client
 from services.supabase import settings as supabase_settings
 from services.user_sync import UserCreate, UserSync
+from config import settings
 
 
 class TestProsodyClient:
@@ -165,7 +166,7 @@ class TestProsodyClient:
             assert result is True
             mock_post.assert_called_once_with(
                 "http://test-prosody:5280/auth",
-                json={"username": "testuser", "host": "localhost"},
+                json={"username": "testuser", "host": settings.server_hostname},
             )
 
     @pytest.mark.asyncio
@@ -254,7 +255,7 @@ class TestUserSync:
                 # Check that default email was used
                 mock_supabase.auth.admin.create_user.assert_called_once()
                 call_args = mock_supabase.auth.admin.create_user.call_args[0][0]
-                assert call_args["email"] == "testuser@localhost"
+                assert call_args["email"] == f"testuser@{settings.server_hostname}"
 
     @pytest.mark.asyncio
     async def test_create_user_supabase_failure(self, sample_user_create):
@@ -450,9 +451,9 @@ class TestOnlineUsersService:
 
         with patch('services.get_online_users.ClientXMPP.__init__', autospec=True, side_effect=init_stub) as mock_init:
             with patch('services.get_online_users.ClientXMPP.add_event_handler') as mock_handler:
-                client = OnlineUserClient("user@localhost", "password", "localhost")
+                client = OnlineUserClient(f"user@{settings.server_hostname}", "password", settings.server_hostname)
 
-        mock_init.assert_called_once_with(client, "user@localhost", "password")
+        mock_init.assert_called_once_with(client, f"user@{settings.server_hostname}", "password")
         mock_handler.assert_called_once_with("session_start", client.session_start)
-        assert client.server == "localhost"
+        assert client.server == settings.server_hostname
         assert client.online_users == []

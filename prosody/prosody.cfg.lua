@@ -10,7 +10,11 @@ modules_enabled = {
     "bosh";
 }
 
+local hostname = os.getenv("SERVER_HOSTNAME") or "localhost"
+print("mama mea:" .. hostname)
+
 -- Enable debug logging for BOSH
+
 log_levels = {
     ["mod_bosh"] = "debug";
 }
@@ -25,19 +29,19 @@ bosh_max_wait = 5
 https_ports = { }
 http_ports = { 5280 } 
 http_interfaces = { "*" }
-http_default_host = "localhost"
+http_default_host = hostname
 
 authentication = "internal_plain" 
-admins = { "admin@localhost" }
+admins = { "admin@" .. hostname }
 
-VirtualHost "localhost"
+VirtualHost(hostname)
     authentication = "internal_plain"
     c2s_require_encryption = false
     allow_unencrypted_plain_auth = true
 
 -- 3. MUC Component
-Component "conference.localhost" "muc"
-    name = "Localhost Chatrooms"
+Component ("conference." .. hostname) "muc"
+    name = "Chatrooms"
     restrict_room_creation = false
     modules_enabled = {
         "muc_mam",

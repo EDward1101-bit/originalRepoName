@@ -6,6 +6,8 @@ from pydantic import BaseModel
 from services.prosody import prosody_client
 from services.supabase import get_supabase_client
 
+from config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,7 +25,7 @@ class UserSync:
         prosody_response = await prosody_client.create_user(user.username, user.password)
 
         auth_data: dict[str, str] = {
-            "email": user.email or f"{user.username}@localhost",
+            "email": user.email or f"{user.username}@{settings.server_hostname}",
             "password": user.password,
         }
 

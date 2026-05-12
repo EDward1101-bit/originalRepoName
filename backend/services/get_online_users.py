@@ -1,6 +1,7 @@
 from typing import Any
 
 from slixmpp import ClientXMPP
+from config import settings
 
 
 class OnlineUserClient(ClientXMPP):
@@ -20,7 +21,7 @@ class OnlineUserClient(ClientXMPP):
         pass
 
 
-async def get_online_users_xmpp(server: str = "localhost", port: int = 5222) -> list[Any]:
+async def get_online_users_xmpp(server: str = settings.server_hostname, port: int = 5222) -> list[Any]:
     # This is a simplified version
     # In a real implementation, you'd need to properly query the server
     return []

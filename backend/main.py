@@ -1,21 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from api import bots_router, health_router, users_router
 from api.auth import router as auth_router
+from config import settings
 
-
-class Settings(BaseSettings):
-    supabase_url: str = ""
-    supabase_anon_key: str = ""
-    prosody_url: str = "http://prosody:5280"
-    environment: str = "development"
-
-    model_config = SettingsConfigDict(env_file=".env", extra="allow")
-
-
-settings = Settings()
 
 app = FastAPI(
     title="XMPP Chat API",

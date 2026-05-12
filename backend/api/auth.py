@@ -2,6 +2,7 @@ from typing import Any, cast
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from config import settings
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -9,7 +10,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 class AuthVerifyRequest(BaseModel):
     username: str
     password: str
-    host: str = "localhost"
+    host: str = settings.server_hostname
 
 
 class AuthVerifyResponse(BaseModel):

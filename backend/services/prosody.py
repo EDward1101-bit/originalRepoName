@@ -1,6 +1,7 @@
 from typing import Any
 
 import httpx
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,6 +9,7 @@ class ProsodySettings(BaseSettings):
     prosody_url: str = "http://prosody:5280"
     prosody_admin_user: str = "admin"
     prosody_admin_password: str | None = None
+    server_hostname: str = Field(alias="SERVER_HOSTNAME")
 
     model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
@@ -61,7 +63,7 @@ class ProsodyClient:
         try:
             response = await self.client.post(
                 f"{self.base_url}/auth",
-                json={"username": username, "host": "localhost"},
+                json={"username": username, "host": settings.server_hostname},
             )
             if response.status_code == 200:
                 data: dict[str, Any] = response.json()

@@ -19,7 +19,7 @@ services:
       - ./prosody/prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro
       - ./prosody/modules/mod_admin_net.lua:/usr/lib/prosody/modules/mod_admin_net.lua:ro
     environment:
-      - PROSODY_HOST=localhost
+      - .env
     restart: unless-stopped
     networks:
       - xmpp-network
@@ -32,7 +32,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - ./backend/.env
+      - ./.env
     volumes:
       - ./backend:/app
     depends_on:
@@ -50,7 +50,7 @@ services:
     ports:
       - "5173:5173"
     env_file:
-      - ./frontend/.env
+      - ./.env
     environment:
       - PROSODY_URL=http://prosody:5280
     volumes:
