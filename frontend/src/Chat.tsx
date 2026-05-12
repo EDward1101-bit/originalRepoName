@@ -423,13 +423,15 @@ export default function Chat() {
 
                     {activeMenu === msg.id && (
                       <div className="absolute right-0 top-9 z-50 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-xl shadow-2xl py-2 min-w-[200px] overflow-hidden">
-                        {canEdit && (
+                        {isSent && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleStartEdit(msg.id, msg.body);
+                              if (canEdit) handleStartEdit(msg.id, msg.body);
                             }}
-                            className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] flex items-center gap-3"
+                            disabled={!canEdit}
+                            title={canEdit ? undefined : 'Messages can only be edited within 15 minutes of sending'}
+                            className="w-full text-left px-4 py-2.5 text-[14px] text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)] flex items-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <Edit2 size={18} />
                             Edit Message
