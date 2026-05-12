@@ -6,6 +6,7 @@ import { useTranslation } from './LanguageContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import MessageBody from './components/MessageBody';
+import ReactionBar from './components/ReactionBar';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
 import { Phone, Video, MessageSquare, MoreHorizontal, Edit2, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Star } from 'lucide-react';
@@ -402,6 +403,14 @@ export default function Chat() {
                     <MediaViewer url={msg.body} />
                   ) : (
                     <MessageBody body={messageBodyToRender} isDeleted={isDeleted} />
+                  )}
+
+                  {!isDeleted && user && (
+                    <ReactionBar
+                      messageId={msg.id}
+                      messageType="dm"
+                      currentUserId={user.id}
+                    />
                   )}
                 </div>
 

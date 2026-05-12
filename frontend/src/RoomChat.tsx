@@ -8,6 +8,7 @@ import { useMucContext } from './MucContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import MessageBody from './components/MessageBody';
+import ReactionBar from './components/ReactionBar';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
 import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot } from 'lucide-react';
@@ -461,6 +462,14 @@ export default function RoomChat() {
                         <MediaViewer url={msg.body} />
                       ) : (
                         <MessageBody body={messageBodyToRender} isDeleted={isDeleted} />
+                      )}
+
+                      {!isDeleted && user && (
+                        <ReactionBar
+                          messageId={msg.id}
+                          messageType="room"
+                          currentUserId={user.id}
+                        />
                       )}
                     </div>
 
