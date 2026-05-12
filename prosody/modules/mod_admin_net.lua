@@ -22,7 +22,20 @@ local function handle_request(event)
         return { status = 200, headers = { ["Content-Type"] = "application/json" }, body = '{"status":"ok"}' };
     end
 
-    -- 2. List Users
+    -- 2. Auth Check
+    if path == "auth" and request.method == "POST" then
+        local data = json.decode(request.body);
+        if not data or not data.username then
+            return { status = 400, body = '{"error":"Username required"}' };
+        end
+        local host = data.host or module.host;
+        if usermanager.user_exists(data.username, host) then
+            return { status = 200, headers = { ["Content-Type"] = "application/json" }, body = '{"exists":true}' };
+        end
+        return { status = 200, headers = { ["Content-Type"] = "application/json" }, body = '{"exists":false}' };
+    end
+
+    -- 3. List Users
     if path == "users" and request.method == "GET" then
         local users = {};
         local host = module.host;
@@ -58,6 +71,24 @@ local function handle_request(event)
             if ok then return { status = 201, body = '{"created":true}' }; end
             return { status = 409, body = json.encode({error = err or "Conflict"}) };
         end
+
+        if request.method == "DELETE" then
+            local ok = usermanager.delete_user(username, host);
+            if ok then return { status = 200, body = '{"deleted":true}' }; end
+            return { status = 404, body = '{"error":"User not found or could not be deleted"}' };
+        end
+    end
+
+    if request.method == "OPTIONS" then
+        return { 
+            status = 200, 
+            headers = { 
+                ["Access-Control-Allow-Origin"] = "*",
+                ["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS",
+                ["Access-Control-Allow-Headers"] = "Content-Type"
+            }, 
+            body = "" 
+        };
     end
 
     return { status = 404, body = '{"error":"Not found", "path_tried":"'..path..'"}' };

@@ -18,8 +18,8 @@ services:
       - prosody-data:/var/lib/prosody
       - ./prosody/prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro
       - ./prosody/modules/mod_admin_net.lua:/usr/lib/prosody/modules/mod_admin_net.lua:ro
-    environment:
-      - .env
+    env_file:
+      - ./.env
     restart: unless-stopped
     networks:
       - xmpp-network
