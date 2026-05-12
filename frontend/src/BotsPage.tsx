@@ -40,11 +40,6 @@ export default function BotsPage() {
   const [registeredResult, setRegisteredResult] = useState<RegisteredBot | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const getLocalizedDescription = (desc: string) => {
-    if (desc === 'Automatically censors profanity in messages before they are sent. All room members see clean, filtered text.') return t('swear_shield_desc');
-    if (desc === 'Says pong!') return t('ping_bot_desc');
-    return desc;
-  };
 
   const myRooms = availableRooms.filter((r) => r.created_by === myUsername);
 
@@ -199,7 +194,7 @@ export default function BotsPage() {
                         </span>
                       </div>
                       <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
-                        {getLocalizedDescription(bot.description)}
+                        {bot.description}
                       </p>
                       {bot.webhookUrl && (
                         <p className="text-[11px] text-[var(--text-muted)] opacity-50 mt-1 flex items-center gap-1">
@@ -392,7 +387,7 @@ export default function BotsPage() {
                   </div>
                 </div>
                 <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
-                  {getLocalizedDescription(selectedBot.description)}
+                  {selectedBot.description}
                 </p>
               </div>
 
