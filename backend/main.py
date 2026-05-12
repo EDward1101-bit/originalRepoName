@@ -11,11 +11,16 @@ class Settings(BaseSettings):
     supabase_anon_key: str = ""
     prosody_url: str = "http://prosody:5280"
     environment: str = "development"
+    # Comma-separated list of allowed frontend origins.
+    # Override in production: ALLOWED_ORIGINS=https://yourdomain.com
+    allowed_origins: str = "http://localhost:5173,http://localhost:4173"
 
     model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
 
 settings = Settings()
+
+allowed_origins = [o.strip() for o in settings.allowed_origins.split(",") if o.strip()]
 
 app = FastAPI(
     title="XMPP Chat API",
@@ -25,10 +30,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Aether-Secret", "X-Aether-Signature"],
 )
 
 app.include_router(health_router)
