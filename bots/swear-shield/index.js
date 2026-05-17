@@ -79,7 +79,7 @@ app.post('/webhook', async (req, res) => {
 
   try {
     // Prompting Ollama to filter the message
-    const prompt = `You are a chat filter bot. Filter the following message to remove any profanity or highly offensive language. Replace profane words with '***'. If the message is clean, return it exactly as is. Keep in mind we want an EXTREMELY family friendly environment. Return ONLY the final message text, nothing else. THIS IS VERY IMPORTANT. Return ONLY THE FINAL TEXT! Do not put "Message: " before it.\n\nMessage: ${body}`;
+    const prompt = `You are a strict chat filter bot. Your task is to identify and censor EVERY SINGLE PROFANE OR OFFENSIVE WORD in the provided message. Replace EACH profane word with '*', based on the letter count of the word. If there are multiple swear words, you MUST replace all of them. If the message is completely clean, return it exactly as is. We enforce an EXTREMELY family-friendly environment. Return ONLY the final filtered message text. DO NOT add any line breaks or newlines unless they are in the original message. Do not add explanations, and do not put "Message: " before it.\n\nMessage: ${body}`;
 
     const ollamaRes = await fetch(`${OLLAMA_URL}/api/generate`, {
       method: 'POST',
@@ -106,7 +106,12 @@ app.post('/webhook', async (req, res) => {
     filtered = filtered.replace(/^(Message|Filtered Message|Output|Result):\s*/i, '').trim();
 
     // 3. Remove any potential quotes or leading/trailing noise
-    const cleaned = filtered.replace(/^"|"$/g, '').trim();
+    let cleaned = filtered.replace(/^"|"$/g, '').trim();
+
+    // 4. Ensure no newlines are added if the original message had none
+    if (!body.includes('\n') && cleaned.includes('\n')) {
+      cleaned = cleaned.replace(/\n+/g, ' ');
+    }
 
     if (cleaned !== body && cleaned.length > 0) {
       console.log(`[SwearShield] Profanity detected. Original: "${body}" -> Filtered: "${cleaned}"`);
