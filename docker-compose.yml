@@ -89,6 +89,26 @@ services:
     networks:
       - xmpp-network
 
+  swear-shield:
+    build:
+      context: ./bots/swear-shield
+      dockerfile: Dockerfile
+    container_name: xmpp-chat-swear-shield
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+      - API_URL=http://backend:8000
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=qwen2.5:7b
+      - BOT_SECRET=f3259af28fcd26fef3b520f62ab2203183b5e284b9df78454234fea1f06c55dd
+    depends_on:
+      - backend
+      - ollama
+    restart: unless-stopped
+    networks:
+      - xmpp-network
+
   ollama:
     image: ollama/ollama:latest
     container_name: xmpp-chat-ollama
