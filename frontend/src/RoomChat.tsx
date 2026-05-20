@@ -143,6 +143,27 @@ export default function RoomChat() {
   const room = availableRooms.find((r) => r.name === roomName);
   const isJoined = roomName ? joinedRooms.includes(roomName) : false;
 
+  const handleUserContextMenu = useCallback(
+    (e: React.MouseEvent, nickname: string) => {
+      if (!isRoomAdmin(room, myUsername)) return; // Only admins can manage
+      if (nickname === myUsername) return; // Can't manage self
+      e.preventDefault();
+
+      // Adjust positioning so the context menu doesn't overflow the viewport
+      const menuWidth = 180;
+      const menuHeight = 110;
+      const posX = e.clientX + menuWidth > window.innerWidth ? window.innerWidth - menuWidth - 10 : e.clientX;
+      const posY = e.clientY + menuHeight > window.innerHeight ? window.innerHeight - menuHeight - 10 : e.clientY;
+
+      setContextMenu({
+        x: Math.max(10, posX),
+        y: Math.max(10, posY),
+        targetUsername: nickname,
+      });
+    },
+    [room, myUsername]
+  );
+
   // Register this room as active — suppresses unread increments while viewing
   useEffect(() => {
     if (!roomName) return;
@@ -281,13 +302,31 @@ export default function RoomChat() {
 
     const allUnique = Array.from(new Set([myUsername, ...active, ...creator, ...senders]));
     
-    // Find all usernames that have been kicked in this room
-    const kickedUsers = new Set(
-      messages
-        .filter((m) => m.sender === 'System' && m.body.startsWith('KICKED:'))
-        .map((m) => m.body.split(':')[1]?.toLowerCase())
-        .filter(Boolean)
-    );
+    // Find all usernames that have been kicked and not since rejoined/entered the room
+    const kickedUsers = new Set<string>();
+    const userStatus: Record<string, 'kicked' | 'entered' | 'left'> = {};
+    messages.forEach((m) => {
+      if (m.sender === 'System') {
+        if (m.body.startsWith('KICKED:')) {
+          const target = m.body.split(':')[1]?.toLowerCase();
+          if (target) {
+            userStatus[target] = 'kicked';
+          }
+        } else {
+          const match = m.body.match(/^(.*) has (entered|left) the room\.$/);
+          if (match) {
+            const nickname = match[1].toLowerCase();
+            const action = match[2];
+            userStatus[nickname] = action as 'entered' | 'left';
+          }
+        }
+      }
+    });
+    Object.entries(userStatus).forEach(([user, status]) => {
+      if (status === 'kicked') {
+        kickedUsers.add(user);
+      }
+    });
 
     // Filter out bots, and kicked users who are not currently active in the room
     const filtered = allUnique.filter((nickname) => {
@@ -756,10 +795,7 @@ export default function RoomChat() {
                     {t('active_now')}
                   </span>
                   <span className="ml-1 bg-[var(--brand)] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
-                    {(() => {
-                      const active = roomActiveUsers[roomName || ''] || [];
-                      return Array.from(new Set([myUsername, ...active])).length;
-                    })()}
+                    {onlineUsers.length}
                   </span>
                 </div>
               </div>
@@ -786,16 +822,7 @@ export default function RoomChat() {
                             return (
                               <div
                                 key={nickname}
-                                onContextMenu={(e) => {
-                                  if (!isRoomAdmin(room, myUsername)) return; // Only admins can manage
-                                  if (nickname === myUsername) return; // Can't manage self
-                                  e.preventDefault();
-                                  setContextMenu({
-                                    x: e.clientX,
-                                    y: e.clientY,
-                                    targetUsername: nickname,
-                                  });
-                                }}
+                                onContextMenu={(e) => handleUserContextMenu(e, nickname)}
                                 className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[var(--bg-modifier-hover)] transition-all cursor-pointer select-none"
                               >
                                 <div className="relative">
@@ -848,16 +875,7 @@ export default function RoomChat() {
                             return (
                               <div
                                 key={nickname}
-                                onContextMenu={(e) => {
-                                  if (!isRoomAdmin(room, myUsername)) return; // Only admins can manage
-                                  if (nickname === myUsername) return; // Can't manage self
-                                  e.preventDefault();
-                                  setContextMenu({
-                                    x: e.clientX,
-                                    y: e.clientY,
-                                    targetUsername: nickname,
-                                  });
-                                }}
+                                onContextMenu={(e) => handleUserContextMenu(e, nickname)}
                                 className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[var(--bg-modifier-hover)] transition-all cursor-pointer select-none opacity-55"
                               >
                                 <div className="relative">
@@ -1047,7 +1065,7 @@ export default function RoomChat() {
             top: `${contextMenu.y}px`,
             left: `${contextMenu.x}px`,
           }}
-          className="z-[9999] bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-md shadow-2xl py-1.5 min-w-[160px] animate-in fade-in zoom-in-95 duration-100"
+          className="z-[9999] bg-[var(--bg-tertiary)] border border-[var(--border)]/60 rounded-lg shadow-2xl p-1 min-w-[180px] animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-0.5"
           onClick={(e) => e.stopPropagation()}
         >
           {(() => {
@@ -1056,14 +1074,14 @@ export default function RoomChat() {
 
             if (isTargetCreator) {
               return (
-                <div className="px-4 py-2 text-[12px] text-[var(--text-muted)] italic">
+                <div className="px-3 py-2 text-[12px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                   Room Creator
                 </div>
               );
             }
 
             return (
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-0.5">
                 <button
                   onClick={async () => {
                     let nextAdmins = Array.isArray(room.admins) ? [...room.admins] : [];
@@ -1083,7 +1101,7 @@ export default function RoomChat() {
                     }
                     setContextMenu(null);
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-[14px] flex items-center gap-3 transition-colors ${
+                  className={`w-full text-left px-3 py-2 text-[13px] font-semibold rounded-md flex items-center gap-2.5 transition-colors cursor-pointer select-none ${
                     isTargetAdmin 
                       ? 'text-[var(--danger)] hover:bg-[var(--danger)]/10' 
                       : 'text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)]'
@@ -1102,7 +1120,7 @@ export default function RoomChat() {
                   )}
                 </button>
 
-                <div className="h-[1px] bg-[var(--border)] my-1" />
+                <div className="h-[1px] bg-[var(--border)] my-0.5 opacity-60 mx-1" />
 
                 <button
                   onClick={async () => {
@@ -1114,7 +1132,7 @@ export default function RoomChat() {
                     }
                     setContextMenu(null);
                   }}
-                  className="w-full text-left px-4 py-2.5 text-[14px] flex items-center gap-3 transition-colors text-[var(--danger)] hover:bg-[var(--danger)]/10"
+                  className="w-full text-left px-3 py-2 text-[13px] font-semibold rounded-md flex items-center gap-2.5 transition-colors cursor-pointer select-none text-[var(--danger)] hover:bg-[var(--danger)]/10"
                 >
                   <UserMinus size={16} />
                   Kick from Room
