@@ -4,12 +4,12 @@ import { useAuth } from './AuthContext';
 import { useChatContext } from './ChatContext';
 import { useTranslation } from './LanguageContext';
 import { useBotContext } from './BotContext';
-import { useMucContext } from './MucContext';
+import { useMucContext, isRoomAdmin } from './MucContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
-import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot } from 'lucide-react';
+import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot, Shield, Crown, UserMinus } from 'lucide-react';
 
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
@@ -28,6 +28,8 @@ export default function RoomChat() {
     deleteRoomMessageForMe,
     clearRoomUnread,
     setCurrentRoom,
+    setRoomAdmins,
+    kickUser,
   } = useMucContext();
   const { user } = useAuth();
   const { myUsername, status, getUserProfile } = useChatContext();
@@ -46,6 +48,14 @@ export default function RoomChat() {
 
   const formatSystemMessage = useCallback(
     (body: string) => {
+      if (body.startsWith('KICKED:')) {
+        const parts = body.split(':');
+        const target = parts[1];
+        const kicker = parts[2];
+        const displayNameTarget = resolveDisplayName(target);
+        const displayNameKicker = resolveDisplayName(kicker);
+        return `${displayNameTarget} has been kicked from the room by ${displayNameKicker}.`;
+      }
       const match = body.match(/^(.*) has (entered|left) the room\.$/);
       if (!match) return body;
       const nickname = match[1];
@@ -62,6 +72,11 @@ export default function RoomChat() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    targetUsername: string;
+  } | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -103,6 +118,16 @@ export default function RoomChat() {
     };
   }, [handleMouseMove, stopResizing]);
 
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      setContextMenu(null);
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+    };
+  }, []);
+
   const shouldStickToBottomRef = useRef(true);
   const initialScrollDoneRef = useRef(false);
 
@@ -117,6 +142,27 @@ export default function RoomChat() {
 
   const room = availableRooms.find((r) => r.name === roomName);
   const isJoined = roomName ? joinedRooms.includes(roomName) : false;
+
+  const handleUserContextMenu = useCallback(
+    (e: React.MouseEvent, nickname: string) => {
+      if (!isRoomAdmin(room, myUsername)) return; // Only admins can manage
+      if (nickname === myUsername) return; // Can't manage self
+      e.preventDefault();
+
+      // Adjust positioning so the context menu doesn't overflow the viewport
+      const menuWidth = 180;
+      const menuHeight = 110;
+      const posX = e.clientX + menuWidth > window.innerWidth ? window.innerWidth - menuWidth - 10 : e.clientX;
+      const posY = e.clientY + menuHeight > window.innerHeight ? window.innerHeight - menuHeight - 10 : e.clientY;
+
+      setContextMenu({
+        x: Math.max(10, posX),
+        y: Math.max(10, posY),
+        targetUsername: nickname,
+      });
+    },
+    [room, myUsername]
+  );
 
   // Register this room as active — suppresses unread increments while viewing
   useEffect(() => {
@@ -246,10 +292,75 @@ export default function RoomChat() {
 
   const activeUsers = useMemo(() => {
     if (!roomName || !isJoined) return [];
-    const others = roomActiveUsers[roomName] || [];
-    // Include current user at the top
-    return [myUsername, ...others.filter((u) => u !== myUsername)];
-  }, [roomName, isJoined, roomActiveUsers, myUsername]);
+    const active = roomActiveUsers[roomName] || [];
+    const creator = room ? [room.created_by] : [];
+    const messages = roomMessages[roomName] || [];
+    const senders = messages
+      .filter((m) => m.type !== 'system')
+      .map((m) => m.sender)
+      .filter(Boolean);
+
+    const allUnique = Array.from(new Set([myUsername, ...active, ...creator, ...senders]));
+    
+    // Find all usernames that have been kicked and not since rejoined/entered the room
+    const kickedUsers = new Set<string>();
+    const userStatus: Record<string, 'kicked' | 'entered' | 'left'> = {};
+    messages.forEach((m) => {
+      if (m.sender === 'System') {
+        if (m.body.startsWith('KICKED:')) {
+          const target = m.body.split(':')[1]?.toLowerCase();
+          if (target) {
+            userStatus[target] = 'kicked';
+          }
+        } else {
+          const match = m.body.match(/^(.*) has (entered|left) the room\.$/);
+          if (match) {
+            const nickname = match[1].toLowerCase();
+            const action = match[2];
+            userStatus[nickname] = action as 'entered' | 'left';
+          }
+        }
+      }
+    });
+    Object.entries(userStatus).forEach(([user, status]) => {
+      if (status === 'kicked') {
+        kickedUsers.add(user);
+      }
+    });
+
+    // Filter out bots, and kicked users who are not currently active in the room
+    const filtered = allUnique.filter((nickname) => {
+      const isBot = allBots.some((bot) => bot.name.toLowerCase() === nickname.toLowerCase());
+      const isActiveInRoom = active.some((u) => u.toLowerCase() === nickname.toLowerCase());
+      const isKicked = kickedUsers.has(nickname.toLowerCase()) && !isActiveInRoom;
+      return !isBot && !isKicked;
+    });
+
+    return filtered.sort((a, b) => a.localeCompare(b));
+  }, [roomName, isJoined, roomActiveUsers, myUsername, room, roomMessages, allBots]);
+
+  const onlineUsers = useMemo(() => {
+    const active = roomActiveUsers[roomName || ''] || [];
+    return activeUsers.filter((nickname) => {
+      const profile = getUserProfile(nickname) || getUserProfile(nickname.toLowerCase());
+      const isActiveInRoom = active.some((u) => u.toLowerCase() === nickname.toLowerCase());
+      return nickname.toLowerCase() === myUsername.toLowerCase()
+        ? isConnected
+        : (isActiveInRoom || !!profile?.online);
+    });
+  }, [activeUsers, getUserProfile, myUsername, isConnected, roomActiveUsers, roomName]);
+
+  const offlineUsers = useMemo(() => {
+    const active = roomActiveUsers[roomName || ''] || [];
+    return activeUsers.filter((nickname) => {
+      const profile = getUserProfile(nickname) || getUserProfile(nickname.toLowerCase());
+      const isActiveInRoom = active.some((u) => u.toLowerCase() === nickname.toLowerCase());
+      const isOnline = nickname.toLowerCase() === myUsername.toLowerCase()
+        ? isConnected
+        : (isActiveInRoom || !!profile?.online);
+      return !isOnline;
+    });
+  }, [activeUsers, getUserProfile, myUsername, isConnected, roomActiveUsers, roomName]);
 
   if (!roomName) return null;
 
@@ -684,53 +795,123 @@ export default function RoomChat() {
                     {t('active_now')}
                   </span>
                   <span className="ml-1 bg-[var(--brand)] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
-                    {activeUsers.length}
+                    {onlineUsers.length}
                   </span>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-3">
+              <div className="flex-1 overflow-y-auto p-3 space-y-4">
                 {activeUsers.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-[13px] text-[var(--text-muted)] italic">{t('no_active_users')}</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-1">
-                    {activeUsers.map((nickname) => {
-                      const profile = getUserProfile(nickname);
-                      const displayName = profile?.username || nickname;
-                      const avatarUrl = profile?.avatarUrl;
-                      const isOnline = nickname === myUsername ? isConnected : profile?.online;
-
-                      return (
-                        <div
-                          key={nickname}
-                          className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[var(--bg-modifier-hover)] transition-colors"
-                        >
-                          <div className="relative">
-                            <div className="w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                              {avatarUrl ? (
-                                <img
-                                  src={avatarUrl}
-                                  alt={displayName}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                displayName?.[0]?.toUpperCase() || '?'
-                              )}
-                            </div>
-                            <div
-                              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] ${
-                                isOnline ? 'bg-[var(--status-online)]' : 'bg-[var(--status-dnd)]'
-                              }`}
-                            />
-                          </div>
-                          <span className="text-[14px] font-medium text-[var(--text-normal)] truncate">
-                            {displayName} {nickname === myUsername && <span className="text-[11px] font-medium text-[var(--text-muted)] ml-1">(You)</span>}
+                  <>
+                    {/* Online Users */}
+                    {onlineUsers.length > 0 && (
+                      <div>
+                        <div className="px-2 mb-1.5 flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                            Online — {onlineUsers.length}
                           </span>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="flex flex-col gap-1">
+                          {onlineUsers.map((nickname) => {
+                            const profile = getUserProfile(nickname) || getUserProfile(nickname.toLowerCase());
+                            const displayName = profile?.username || nickname;
+                            const avatarUrl = profile?.avatarUrl;
+                            return (
+                              <div
+                                key={nickname}
+                                onContextMenu={(e) => handleUserContextMenu(e, nickname)}
+                                className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[var(--bg-modifier-hover)] transition-all cursor-pointer select-none"
+                              >
+                                <div className="relative">
+                                  <div className="w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                                    {avatarUrl ? (
+                                      <img
+                                        src={avatarUrl}
+                                        alt={displayName}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      displayName?.[0]?.toUpperCase() || '?'
+                                    )}
+                                  </div>
+                                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] bg-[var(--status-online)]" />
+                                </div>
+                                <span className="text-[14px] font-medium text-[var(--text-normal)] truncate flex items-center gap-1.5 flex-1 min-w-0">
+                                  <span className="truncate">{displayName}</span>
+                                  {nickname === room.created_by ? (
+                                    <span title="Room Creator" className="flex items-center shrink-0">
+                                      <Crown size={14} className="text-amber-500 fill-amber-500/10" />
+                                    </span>
+                                  ) : isRoomAdmin(room, nickname) ? (
+                                    <span title="Room Admin" className="flex items-center shrink-0">
+                                      <Shield size={14} className="text-blue-500 fill-blue-500/10" />
+                                    </span>
+                                  ) : null}
+                                  {nickname === myUsername && <span className="text-[11px] font-medium text-[var(--text-muted)] shrink-0">(You)</span>}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Offline Users */}
+                    {offlineUsers.length > 0 && (
+                      <div>
+                        <div className="px-2 mt-2 mb-1.5 flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                            Offline — {offlineUsers.length}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {offlineUsers.map((nickname) => {
+                            const profile = getUserProfile(nickname) || getUserProfile(nickname.toLowerCase());
+                            const displayName = profile?.username || nickname;
+                            const avatarUrl = profile?.avatarUrl;
+                            return (
+                              <div
+                                key={nickname}
+                                onContextMenu={(e) => handleUserContextMenu(e, nickname)}
+                                className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[var(--bg-modifier-hover)] transition-all cursor-pointer select-none opacity-55"
+                              >
+                                <div className="relative">
+                                  <div className="w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                                    {avatarUrl ? (
+                                      <img
+                                        src={avatarUrl}
+                                        alt={displayName}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      displayName?.[0]?.toUpperCase() || '?'
+                                    )}
+                                  </div>
+                                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] bg-gray-500" />
+                                </div>
+                                <span className="text-[14px] font-medium text-[var(--text-normal)] truncate flex items-center gap-1.5 flex-1 min-w-0">
+                                  <span className="truncate">{displayName}</span>
+                                  {nickname === room.created_by ? (
+                                    <span title="Room Creator" className="flex items-center shrink-0">
+                                      <Crown size={14} className="text-amber-500 fill-amber-500/10" />
+                                    </span>
+                                  ) : isRoomAdmin(room, nickname) ? (
+                                    <span title="Room Admin" className="flex items-center shrink-0">
+                                      <Shield size={14} className="text-blue-500 fill-blue-500/10" />
+                                    </span>
+                                  ) : null}
+                                  {nickname === myUsername && <span className="text-[11px] font-medium text-[var(--text-muted)] shrink-0">(You)</span>}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
 
 
@@ -873,6 +1054,92 @@ export default function RoomChat() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Custom Sidebar Context Menu ── */}
+      {contextMenu && (
+        <div
+          style={{
+            position: 'fixed',
+            top: `${contextMenu.y}px`,
+            left: `${contextMenu.x}px`,
+          }}
+          className="z-[9999] bg-[var(--bg-tertiary)] border border-[var(--border)]/60 rounded-lg shadow-2xl p-1 min-w-[180px] animate-in fade-in zoom-in-95 duration-100 flex flex-col gap-0.5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {(() => {
+            const isTargetAdmin = isRoomAdmin(room, contextMenu.targetUsername);
+            const isTargetCreator = room.created_by === contextMenu.targetUsername;
+
+            if (isTargetCreator) {
+              return (
+                <div className="px-3 py-2 text-[12px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
+                  Room Creator
+                </div>
+              );
+            }
+
+            return (
+              <div className="flex flex-col gap-0.5">
+                <button
+                  onClick={async () => {
+                    let nextAdmins = Array.isArray(room.admins) ? [...room.admins] : [];
+                    if (isTargetAdmin) {
+                      // Remove admin
+                      nextAdmins = nextAdmins.filter((u) => u !== contextMenu.targetUsername);
+                    } else {
+                      // Add admin
+                      if (!nextAdmins.includes(contextMenu.targetUsername)) {
+                        nextAdmins.push(contextMenu.targetUsername);
+                      }
+                    }
+                    try {
+                      await setRoomAdmins(room.id, nextAdmins);
+                    } catch (err) {
+                      console.error('Failed to update admin status:', err);
+                    }
+                    setContextMenu(null);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-[13px] font-semibold rounded-md flex items-center gap-2.5 transition-colors cursor-pointer select-none ${
+                    isTargetAdmin 
+                      ? 'text-[var(--danger)] hover:bg-[var(--danger)]/10' 
+                      : 'text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)]'
+                  }`}
+                >
+                  {isTargetAdmin ? (
+                    <>
+                      <Lock size={16} />
+                      Remove Admin
+                    </>
+                  ) : (
+                    <>
+                      <Star size={16} className="text-amber-500 fill-amber-500/20" />
+                      Make Admin
+                    </>
+                  )}
+                </button>
+
+                <div className="h-[1px] bg-[var(--border)] my-0.5 opacity-60 mx-1" />
+
+                <button
+                  onClick={async () => {
+                    if (!roomName) return;
+                    try {
+                      await kickUser(roomName, contextMenu.targetUsername);
+                    } catch (err) {
+                      console.error('Failed to kick user:', err);
+                    }
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-2 text-[13px] font-semibold rounded-md flex items-center gap-2.5 transition-colors cursor-pointer select-none text-[var(--danger)] hover:bg-[var(--danger)]/10"
+                >
+                  <UserMinus size={16} />
+                  Kick from Room
+                </button>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMucContext } from './MucContext';
 import { useChatContext } from './ChatContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from './LanguageContext';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, Info } from 'lucide-react';
 
 export default function RoomsPage() {
   const { availableRooms, joinedRooms, createRoom, deleteRoom } = useMucContext();
@@ -16,6 +16,15 @@ export default function RoomsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [kickedRoom, setKickedRoom] = useState<string | null>(null);
+
+  useEffect(() => {
+    const alertRoom = sessionStorage.getItem('kicked_room_alert');
+    if (alertRoom) {
+      setKickedRoom(alertRoom);
+      sessionStorage.removeItem('kicked_room_alert');
+    }
+  }, []);
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,6 +199,32 @@ export default function RoomsPage() {
           </form>
         </div>
       </div>
+
+      {kickedRoom && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[var(--bg-tertiary)] border border-[var(--border)] w-full max-w-md p-6 rounded-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-[var(--danger)] mb-4">
+              <div className="w-10 h-10 rounded-full bg-[var(--danger)]/10 flex items-center justify-center shrink-0">
+                <Info size={22} />
+              </div>
+              <h3 className="text-lg font-bold text-[var(--text-normal)]">Kicked from Room</h3>
+            </div>
+            
+            <p className="text-[14px] text-[var(--text-muted)] leading-relaxed mb-6">
+              You have been kicked from <span className="font-bold text-[var(--text-normal)]">#{kickedRoom}</span> by a room admin.
+            </p>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setKickedRoom(null)}
+                className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white font-bold px-5 py-2 rounded-md transition-all shadow-sm"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
