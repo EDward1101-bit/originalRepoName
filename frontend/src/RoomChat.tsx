@@ -4,12 +4,12 @@ import { useAuth } from './AuthContext';
 import { useChatContext } from './ChatContext';
 import { useTranslation } from './LanguageContext';
 import { useBotContext } from './BotContext';
-import { useMucContext } from './MucContext';
+import { useMucContext, isRoomAdmin } from './MucContext';
 import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
-import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot } from 'lucide-react';
+import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot, Shield, Crown } from 'lucide-react';
 
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
@@ -28,6 +28,7 @@ export default function RoomChat() {
     deleteRoomMessageForMe,
     clearRoomUnread,
     setCurrentRoom,
+    setRoomAdmins,
   } = useMucContext();
   const { user } = useAuth();
   const { myUsername, status, getUserProfile } = useChatContext();
@@ -62,6 +63,11 @@ export default function RoomChat() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    targetUsername: string;
+  } | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -102,6 +108,16 @@ export default function RoomChat() {
       document.removeEventListener('mouseup', stopResizing);
     };
   }, [handleMouseMove, stopResizing]);
+
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      setContextMenu(null);
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+    };
+  }, []);
 
   const shouldStickToBottomRef = useRef(true);
   const initialScrollDoneRef = useRef(false);
@@ -246,10 +262,42 @@ export default function RoomChat() {
 
   const activeUsers = useMemo(() => {
     if (!roomName || !isJoined) return [];
-    const others = roomActiveUsers[roomName] || [];
-    // Include current user at the top
-    return [myUsername, ...others.filter((u) => u !== myUsername)];
-  }, [roomName, isJoined, roomActiveUsers, myUsername]);
+    const active = roomActiveUsers[roomName] || [];
+    const creator = room ? [room.created_by] : [];
+    const messages = roomMessages[roomName] || [];
+    const senders = messages
+      .filter((m) => m.type !== 'system')
+      .map((m) => m.sender)
+      .filter(Boolean);
+
+    const allUnique = Array.from(new Set([myUsername, ...active, ...creator, ...senders]));
+    
+    // Filter out bots to avoid listing them in the human users sections
+    const filtered = allUnique.filter(
+      (nickname) => !allBots.some((bot) => bot.name.toLowerCase() === nickname.toLowerCase())
+    );
+
+    return filtered.sort((a, b) => a.localeCompare(b));
+  }, [roomName, isJoined, roomActiveUsers, myUsername, room, roomMessages, allBots]);
+
+  const onlineUsers = useMemo(() => {
+    return activeUsers.filter((nickname) => {
+      const profile = getUserProfile(nickname) || getUserProfile(nickname.toLowerCase());
+      return nickname.toLowerCase() === myUsername.toLowerCase()
+        ? isConnected
+        : !!profile?.online;
+    });
+  }, [activeUsers, getUserProfile, myUsername, isConnected]);
+
+  const offlineUsers = useMemo(() => {
+    return activeUsers.filter((nickname) => {
+      const profile = getUserProfile(nickname) || getUserProfile(nickname.toLowerCase());
+      const isOnline = nickname.toLowerCase() === myUsername.toLowerCase()
+        ? isConnected
+        : !!profile?.online;
+      return !isOnline;
+    });
+  }, [activeUsers, getUserProfile, myUsername, isConnected]);
 
   if (!roomName) return null;
 
@@ -684,53 +732,144 @@ export default function RoomChat() {
                     {t('active_now')}
                   </span>
                   <span className="ml-1 bg-[var(--brand)] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
-                    {activeUsers.length}
+                    {(() => {
+                      const active = roomActiveUsers[roomName || ''] || [];
+                      return Array.from(new Set([myUsername, ...active])).length;
+                    })()}
                   </span>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-3">
+              <div className="flex-1 overflow-y-auto p-3 space-y-4">
                 {activeUsers.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-[13px] text-[var(--text-muted)] italic">{t('no_active_users')}</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-1">
-                    {activeUsers.map((nickname) => {
-                      const profile = getUserProfile(nickname);
-                      const displayName = profile?.username || nickname;
-                      const avatarUrl = profile?.avatarUrl;
-                      const isOnline = nickname === myUsername ? isConnected : profile?.online;
-
-                      return (
-                        <div
-                          key={nickname}
-                          className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[var(--bg-modifier-hover)] transition-colors"
-                        >
-                          <div className="relative">
-                            <div className="w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                              {avatarUrl ? (
-                                <img
-                                  src={avatarUrl}
-                                  alt={displayName}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                displayName?.[0]?.toUpperCase() || '?'
-                              )}
-                            </div>
-                            <div
-                              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] ${
-                                isOnline ? 'bg-[var(--status-online)]' : 'bg-[var(--status-dnd)]'
-                              }`}
-                            />
-                          </div>
-                          <span className="text-[14px] font-medium text-[var(--text-normal)] truncate">
-                            {displayName} {nickname === myUsername && <span className="text-[11px] font-medium text-[var(--text-muted)] ml-1">(You)</span>}
+                  <>
+                    {/* Online Users */}
+                    {onlineUsers.length > 0 && (
+                      <div>
+                        <div className="px-2 mb-1.5 flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                            Online — {onlineUsers.length}
                           </span>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="flex flex-col gap-1">
+                          {onlineUsers.map((nickname) => {
+                            const profile = getUserProfile(nickname) || getUserProfile(nickname.toLowerCase());
+                            const displayName = profile?.username || nickname;
+                            const avatarUrl = profile?.avatarUrl;
+                            return (
+                              <div
+                                key={nickname}
+                                onContextMenu={(e) => {
+                                  if (!isRoomAdmin(room, myUsername)) return; // Only admins can manage
+                                  if (nickname === myUsername) return; // Can't manage self
+                                  e.preventDefault();
+                                  setContextMenu({
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                    targetUsername: nickname,
+                                  });
+                                }}
+                                className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[var(--bg-modifier-hover)] transition-all cursor-pointer select-none"
+                              >
+                                <div className="relative">
+                                  <div className="w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                                    {avatarUrl ? (
+                                      <img
+                                        src={avatarUrl}
+                                        alt={displayName}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      displayName?.[0]?.toUpperCase() || '?'
+                                    )}
+                                  </div>
+                                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] bg-[var(--status-online)]" />
+                                </div>
+                                <span className="text-[14px] font-medium text-[var(--text-normal)] truncate flex items-center gap-1.5 flex-1 min-w-0">
+                                  <span className="truncate">{displayName}</span>
+                                  {nickname === room.created_by ? (
+                                    <span title="Room Creator" className="flex items-center shrink-0">
+                                      <Crown size={14} className="text-amber-500 fill-amber-500/10" />
+                                    </span>
+                                  ) : isRoomAdmin(room, nickname) ? (
+                                    <span title="Room Admin" className="flex items-center shrink-0">
+                                      <Shield size={14} className="text-blue-500 fill-blue-500/10" />
+                                    </span>
+                                  ) : null}
+                                  {nickname === myUsername && <span className="text-[11px] font-medium text-[var(--text-muted)] shrink-0">(You)</span>}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Offline Users */}
+                    {offlineUsers.length > 0 && (
+                      <div>
+                        <div className="px-2 mt-2 mb-1.5 flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                            Offline — {offlineUsers.length}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {offlineUsers.map((nickname) => {
+                            const profile = getUserProfile(nickname) || getUserProfile(nickname.toLowerCase());
+                            const displayName = profile?.username || nickname;
+                            const avatarUrl = profile?.avatarUrl;
+                            return (
+                              <div
+                                key={nickname}
+                                onContextMenu={(e) => {
+                                  if (!isRoomAdmin(room, myUsername)) return; // Only admins can manage
+                                  if (nickname === myUsername) return; // Can't manage self
+                                  e.preventDefault();
+                                  setContextMenu({
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                    targetUsername: nickname,
+                                  });
+                                }}
+                                className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[var(--bg-modifier-hover)] transition-all cursor-pointer select-none opacity-55"
+                              >
+                                <div className="relative">
+                                  <div className="w-9 h-9 rounded-full bg-[var(--brand)] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                                    {avatarUrl ? (
+                                      <img
+                                        src={avatarUrl}
+                                        alt={displayName}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      displayName?.[0]?.toUpperCase() || '?'
+                                    )}
+                                  </div>
+                                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[2px] border-[var(--bg-secondary)] bg-gray-500" />
+                                </div>
+                                <span className="text-[14px] font-medium text-[var(--text-normal)] truncate flex items-center gap-1.5 flex-1 min-w-0">
+                                  <span className="truncate">{displayName}</span>
+                                  {nickname === room.created_by ? (
+                                    <span title="Room Creator" className="flex items-center shrink-0">
+                                      <Crown size={14} className="text-amber-500 fill-amber-500/10" />
+                                    </span>
+                                  ) : isRoomAdmin(room, nickname) ? (
+                                    <span title="Room Admin" className="flex items-center shrink-0">
+                                      <Shield size={14} className="text-blue-500 fill-blue-500/10" />
+                                    </span>
+                                  ) : null}
+                                  {nickname === myUsername && <span className="text-[11px] font-medium text-[var(--text-muted)] shrink-0">(You)</span>}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
 
 
@@ -873,6 +1012,72 @@ export default function RoomChat() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Custom Sidebar Context Menu ── */}
+      {contextMenu && (
+        <div
+          style={{
+            position: 'fixed',
+            top: `${contextMenu.y}px`,
+            left: `${contextMenu.x}px`,
+          }}
+          className="z-[9999] bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-md shadow-2xl py-1.5 min-w-[160px] animate-in fade-in zoom-in-95 duration-100"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {(() => {
+            const isTargetAdmin = isRoomAdmin(room, contextMenu.targetUsername);
+            const isTargetCreator = room.created_by === contextMenu.targetUsername;
+
+            if (isTargetCreator) {
+              return (
+                <div className="px-4 py-2 text-[12px] text-[var(--text-muted)] italic">
+                  Room Creator
+                </div>
+              );
+            }
+
+            return (
+              <button
+                onClick={async () => {
+                  let nextAdmins = Array.isArray(room.admins) ? [...room.admins] : [];
+                  if (isTargetAdmin) {
+                    // Remove admin
+                    nextAdmins = nextAdmins.filter((u) => u !== contextMenu.targetUsername);
+                  } else {
+                    // Add admin
+                    if (!nextAdmins.includes(contextMenu.targetUsername)) {
+                      nextAdmins.push(contextMenu.targetUsername);
+                    }
+                  }
+                  try {
+                    await setRoomAdmins(room.id, nextAdmins);
+                  } catch (err) {
+                    console.error('Failed to update admin status:', err);
+                  }
+                  setContextMenu(null);
+                }}
+                className={`w-full text-left px-4 py-2.5 text-[14px] flex items-center gap-3 transition-colors ${
+                  isTargetAdmin 
+                    ? 'text-[var(--danger)] hover:bg-[var(--danger)]/10' 
+                    : 'text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)]'
+                }`}
+              >
+                {isTargetAdmin ? (
+                  <>
+                    <Lock size={16} />
+                    Remove Admin
+                  </>
+                ) : (
+                  <>
+                    <Star size={16} className="text-amber-500 fill-amber-500/20" />
+                    Make Admin
+                  </>
+                )}
+              </button>
+            );
+          })()}
         </div>
       )}
     </div>

@@ -19,6 +19,7 @@ export interface Room {
   description: string;
   created_at: string;
   created_by: string;
+  admins: string[];
 }
 
 export interface RoomMessage {
@@ -28,6 +29,12 @@ export interface RoomMessage {
   body: string;
   created_at: Date;
   type?: 'system' | 'chat';
+}
+
+export function isRoomAdmin(room: Room | undefined, username: string | null | undefined): boolean {
+  if (!room || !username) return false;
+  if (room.created_by === username) return true;
+  return Array.isArray(room.admins) && room.admins.includes(username);
 }
 
 interface MucContextType {
@@ -51,6 +58,7 @@ interface MucContextType {
   deleteRoomMessageForMe: (roomName: string, messageId: string) => void;
   clearRoomUnread: (roomName: string) => void;
   setCurrentRoom: (roomName: string | null) => void;
+  setRoomAdmins: (roomId: string, admins: string[]) => Promise<void>;
 }
 
 const MucContext = createContext<MucContextType | undefined>(undefined);
@@ -843,6 +851,20 @@ export function MucProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const setRoomAdmins = async (roomId: string, admins: string[]) => {
+    if (!myUsername) return;
+
+    const { error } = await supabase
+      .from('rooms')
+      .update({ admins })
+      .eq('id', roomId);
+
+    if (error) {
+      console.error('Failed to update room admins:', error);
+      throw error;
+    }
+  };
+
   // We filter out hidden messages right before returning
   const filteredRoomMessages = Object.fromEntries(
     Object.entries(roomMessages).map(([room, msgs]) => [
@@ -896,6 +918,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
         deleteRoomMessageForMe,
         clearRoomUnread,
         setCurrentRoom,
+        setRoomAdmins,
       }}
     >
       {children}
