@@ -59,6 +59,7 @@ interface MucContextType {
   clearRoomUnread: (roomName: string) => void;
   setCurrentRoom: (roomName: string | null) => void;
   setRoomAdmins: (roomId: string, admins: string[]) => Promise<void>;
+  kickUser: (roomName: string, targetUsername: string) => Promise<void>;
 }
 
 const MucContext = createContext<MucContextType | undefined>(undefined);
@@ -143,6 +144,11 @@ export function MucProvider({ children }: { children: ReactNode }) {
     const profile = allUsers.find((u) => u.username === myUsername);
     myDisplayNameRef.current = profile?.displayName || '';
   }, [allUsers, myUsername]);
+
+  const availableRoomsRef = useRef(availableRooms);
+  useEffect(() => {
+    availableRoomsRef.current = availableRooms;
+  }, [availableRooms]);
 
   const publishSystemMessage = async (
     roomName: string,
@@ -336,8 +342,36 @@ export function MucProvider({ children }: { children: ReactNode }) {
           const row = payload.new as any;
           if (!row?.id || seenRoomMessageIds.current.has(row.id)) return;
 
-          const room = availableRooms.find((r) => r.id === row.room_id);
+          const room = availableRoomsRef.current.find((r) => r.id === row.room_id);
           if (!room) return;
+
+          // Check if it is a kick command system message
+          if (row.sender === 'System' && row.body.startsWith('KICKED:')) {
+            const parts = row.body.split(':');
+            const kickedUser = parts[1];
+            if (kickedUser && kickedUser.toLowerCase() === myUsernameRef.current?.toLowerCase()) {
+              // Synchronously remove room from localStorage to guarantee persistence before reload
+              const stored = localStorage.getItem('joined_rooms');
+              if (stored) {
+                try {
+                  const list = JSON.parse(stored);
+                  if (Array.isArray(list)) {
+                    const filteredList = list.filter((n) => n !== room.name);
+                    localStorage.setItem('joined_rooms', JSON.stringify(filteredList));
+                  }
+                } catch (e) {
+                  console.error(e);
+                }
+              }
+              
+              leaveRoom(room.name);
+              sessionStorage.setItem('kicked_room_alert', room.name);
+              setTimeout(() => {
+                window.location.href = '/rooms';
+              }, 250);
+              return;
+            }
+          }
 
           if (row.sender === 'System') {
             const sysKey = `sys:${room.id}:${row.body}`;
@@ -367,7 +401,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
         (payload) => {
           const row = payload.new as any;
           if (!row?.id) return;
-          const room = availableRooms.find((r) => r.id === row.room_id);
+          const room = availableRoomsRef.current.find((r) => r.id === row.room_id);
           if (!room) return;
 
           setRoomMessages((prev) => {
@@ -404,7 +438,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
       supabase.removeChannel(roomsChannel);
       supabase.removeChannel(messagesChannel);
     };
-  }, [myUsername, availableRooms]);
+  }, [myUsername]);
 
   // Track connection status to detect reconnections
   useEffect(() => {
@@ -865,6 +899,41 @@ export function MucProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const kickUser = async (roomName: string, targetUsername: string) => {
+    if (!myUsername) return;
+    const room = availableRooms.find((r) => r.name === roomName);
+    if (!room) return;
+
+    // If the kicked user is currently an admin, remove their admin status
+    const admins = Array.isArray(room.admins) ? room.admins : [];
+    if (admins.includes(targetUsername)) {
+      const nextAdmins = admins.filter((u) => u !== targetUsername);
+      const { error: adminError } = await supabase
+        .from('rooms')
+        .update({ admins: nextAdmins })
+        .eq('id', room.id);
+
+      if (adminError) {
+        console.error('Failed to remove admin status of kicked user:', adminError);
+      }
+    }
+
+    const sysMsgBody = `KICKED:${targetUsername}:${myUsername}`;
+    const msgId = generateId();
+
+    const { error } = await supabase.from('room_messages').insert({
+      id: msgId,
+      room_id: room.id,
+      sender: 'System',
+      body: sysMsgBody,
+    });
+
+    if (error) {
+      console.error('Failed to publish kick message:', error);
+      throw error;
+    }
+  };
+
   // We filter out hidden messages right before returning
   const filteredRoomMessages = Object.fromEntries(
     Object.entries(roomMessages).map(([room, msgs]) => [
@@ -919,6 +988,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
         clearRoomUnread,
         setCurrentRoom,
         setRoomAdmins,
+        kickUser,
       }}
     >
       {children}

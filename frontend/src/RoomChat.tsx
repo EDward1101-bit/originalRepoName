@@ -9,7 +9,7 @@ import { formatMessageTimestamp } from './utils/time';
 import MediaViewer from './components/MediaViewer';
 import { supabase } from './supabase';
 import EmojiPicker from 'emoji-picker-react';
-import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot, Shield, Crown } from 'lucide-react';
+import { ArrowLeft, Hash, LogOut, Phone, Video, Info, MoreHorizontal, EyeOff, Trash2, Image, FileText, X, Plus, Smile, Send, Loader2, Lock, Star, Users, Bot, Shield, Crown, UserMinus } from 'lucide-react';
 
 export default function RoomChat() {
   const { roomName } = useParams<{ roomName: string }>();
@@ -29,6 +29,7 @@ export default function RoomChat() {
     clearRoomUnread,
     setCurrentRoom,
     setRoomAdmins,
+    kickUser,
   } = useMucContext();
   const { user } = useAuth();
   const { myUsername, status, getUserProfile } = useChatContext();
@@ -47,6 +48,14 @@ export default function RoomChat() {
 
   const formatSystemMessage = useCallback(
     (body: string) => {
+      if (body.startsWith('KICKED:')) {
+        const parts = body.split(':');
+        const target = parts[1];
+        const kicker = parts[2];
+        const displayNameTarget = resolveDisplayName(target);
+        const displayNameKicker = resolveDisplayName(kicker);
+        return `${displayNameTarget} has been kicked from the room by ${displayNameKicker}.`;
+      }
       const match = body.match(/^(.*) has (entered|left) the room\.$/);
       if (!match) return body;
       const nickname = match[1];
@@ -272,32 +281,47 @@ export default function RoomChat() {
 
     const allUnique = Array.from(new Set([myUsername, ...active, ...creator, ...senders]));
     
-    // Filter out bots to avoid listing them in the human users sections
-    const filtered = allUnique.filter(
-      (nickname) => !allBots.some((bot) => bot.name.toLowerCase() === nickname.toLowerCase())
+    // Find all usernames that have been kicked in this room
+    const kickedUsers = new Set(
+      messages
+        .filter((m) => m.sender === 'System' && m.body.startsWith('KICKED:'))
+        .map((m) => m.body.split(':')[1]?.toLowerCase())
+        .filter(Boolean)
     );
+
+    // Filter out bots, and kicked users who are not currently active in the room
+    const filtered = allUnique.filter((nickname) => {
+      const isBot = allBots.some((bot) => bot.name.toLowerCase() === nickname.toLowerCase());
+      const isActiveInRoom = active.some((u) => u.toLowerCase() === nickname.toLowerCase());
+      const isKicked = kickedUsers.has(nickname.toLowerCase()) && !isActiveInRoom;
+      return !isBot && !isKicked;
+    });
 
     return filtered.sort((a, b) => a.localeCompare(b));
   }, [roomName, isJoined, roomActiveUsers, myUsername, room, roomMessages, allBots]);
 
   const onlineUsers = useMemo(() => {
+    const active = roomActiveUsers[roomName || ''] || [];
     return activeUsers.filter((nickname) => {
       const profile = getUserProfile(nickname) || getUserProfile(nickname.toLowerCase());
+      const isActiveInRoom = active.some((u) => u.toLowerCase() === nickname.toLowerCase());
       return nickname.toLowerCase() === myUsername.toLowerCase()
         ? isConnected
-        : !!profile?.online;
+        : (isActiveInRoom || !!profile?.online);
     });
-  }, [activeUsers, getUserProfile, myUsername, isConnected]);
+  }, [activeUsers, getUserProfile, myUsername, isConnected, roomActiveUsers, roomName]);
 
   const offlineUsers = useMemo(() => {
+    const active = roomActiveUsers[roomName || ''] || [];
     return activeUsers.filter((nickname) => {
       const profile = getUserProfile(nickname) || getUserProfile(nickname.toLowerCase());
+      const isActiveInRoom = active.some((u) => u.toLowerCase() === nickname.toLowerCase());
       const isOnline = nickname.toLowerCase() === myUsername.toLowerCase()
         ? isConnected
-        : !!profile?.online;
+        : (isActiveInRoom || !!profile?.online);
       return !isOnline;
     });
-  }, [activeUsers, getUserProfile, myUsername, isConnected]);
+  }, [activeUsers, getUserProfile, myUsername, isConnected, roomActiveUsers, roomName]);
 
   if (!roomName) return null;
 
@@ -1039,43 +1063,63 @@ export default function RoomChat() {
             }
 
             return (
-              <button
-                onClick={async () => {
-                  let nextAdmins = Array.isArray(room.admins) ? [...room.admins] : [];
-                  if (isTargetAdmin) {
-                    // Remove admin
-                    nextAdmins = nextAdmins.filter((u) => u !== contextMenu.targetUsername);
-                  } else {
-                    // Add admin
-                    if (!nextAdmins.includes(contextMenu.targetUsername)) {
-                      nextAdmins.push(contextMenu.targetUsername);
+              <div className="flex flex-col">
+                <button
+                  onClick={async () => {
+                    let nextAdmins = Array.isArray(room.admins) ? [...room.admins] : [];
+                    if (isTargetAdmin) {
+                      // Remove admin
+                      nextAdmins = nextAdmins.filter((u) => u !== contextMenu.targetUsername);
+                    } else {
+                      // Add admin
+                      if (!nextAdmins.includes(contextMenu.targetUsername)) {
+                        nextAdmins.push(contextMenu.targetUsername);
+                      }
                     }
-                  }
-                  try {
-                    await setRoomAdmins(room.id, nextAdmins);
-                  } catch (err) {
-                    console.error('Failed to update admin status:', err);
-                  }
-                  setContextMenu(null);
-                }}
-                className={`w-full text-left px-4 py-2.5 text-[14px] flex items-center gap-3 transition-colors ${
-                  isTargetAdmin 
-                    ? 'text-[var(--danger)] hover:bg-[var(--danger)]/10' 
-                    : 'text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)]'
-                }`}
-              >
-                {isTargetAdmin ? (
-                  <>
-                    <Lock size={16} />
-                    Remove Admin
-                  </>
-                ) : (
-                  <>
-                    <Star size={16} className="text-amber-500 fill-amber-500/20" />
-                    Make Admin
-                  </>
-                )}
-              </button>
+                    try {
+                      await setRoomAdmins(room.id, nextAdmins);
+                    } catch (err) {
+                      console.error('Failed to update admin status:', err);
+                    }
+                    setContextMenu(null);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-[14px] flex items-center gap-3 transition-colors ${
+                    isTargetAdmin 
+                      ? 'text-[var(--danger)] hover:bg-[var(--danger)]/10' 
+                      : 'text-[var(--text-normal)] hover:bg-[var(--bg-modifier-hover)]'
+                  }`}
+                >
+                  {isTargetAdmin ? (
+                    <>
+                      <Lock size={16} />
+                      Remove Admin
+                    </>
+                  ) : (
+                    <>
+                      <Star size={16} className="text-amber-500 fill-amber-500/20" />
+                      Make Admin
+                    </>
+                  )}
+                </button>
+
+                <div className="h-[1px] bg-[var(--border)] my-1" />
+
+                <button
+                  onClick={async () => {
+                    if (!roomName) return;
+                    try {
+                      await kickUser(roomName, contextMenu.targetUsername);
+                    } catch (err) {
+                      console.error('Failed to kick user:', err);
+                    }
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-[14px] flex items-center gap-3 transition-colors text-[var(--danger)] hover:bg-[var(--danger)]/10"
+                >
+                  <UserMinus size={16} />
+                  Kick from Room
+                </button>
+              </div>
             );
           })()}
         </div>
