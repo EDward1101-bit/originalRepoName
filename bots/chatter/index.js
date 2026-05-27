@@ -1,8 +1,7 @@
-import express from 'express';
-import crypto from 'crypto';
 import fs from 'fs';
 import * as dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import { AetherBot } from 'aether-bot-sdk';
 
 dotenv.config();
 
@@ -12,7 +11,7 @@ const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:7b';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-const WEBHOOK_HOST = process.env.WEBHOOK_HOST || 'http://172.17.0.1'; // docker host IP or container name
+const WEBHOOK_HOST = process.env.WEBHOOK_HOST || 'http://172.17.0.1';
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('[Chatter] Missing Supabase credentials in .env');
@@ -37,11 +36,16 @@ const AGENTS_CONFIG = [
 ];
 
 let agents = {};
-let agentsBySecret = {};
 
 // Track recent bot replies to avoid infinite loops
 // roomName -> { lastMessageTime, messageCount }
 const conversationMemory = {};
+
+const bot = new AetherBot({
+  name: 'ChatterManager',
+  port: PORT,
+  apiUrl: API_URL
+});
 
 async function authenticateSupabase() {
   const email = 'chatter_system@example.com';
@@ -54,23 +58,6 @@ async function authenticateSupabase() {
     console.error('[Chatter] Failed to authenticate with Supabase:', error.message);
   } else {
     console.log('[Chatter] Authenticated with Supabase to bypass RLS.');
-  }
-}
-
-function verifySignature(secret, body, signature) {
-  if (!secret) return true;
-  function sortKeys(obj) {
-    if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return obj;
-    return Object.keys(obj).sort().reduce((result, key) => {
-      result[key] = sortKeys(obj[key]);
-      return result;
-    }, {});
-  }
-  const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(JSON.stringify(sortKeys(body))).digest('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature || ''));
-  } catch {
-    return false;
   }
 }
 
@@ -134,6 +121,12 @@ async function loadOrRegisterAgents() {
       agents[config.name].config = config;
     }
 
+    // Register this agent inside the AetherBot SDK instance
+    bot.addAgent({
+      name: config.name,
+      secret: agents[config.name].webhook_secret
+    });
+
     // Clean up any duplicate active registrations with the same name in the DB
     const botId = agents[config.name].bot_id;
     const { error: cleanError } = await supabase
@@ -146,26 +139,6 @@ async function loadOrRegisterAgents() {
     } else {
       console.log(`[Chatter] Cleaned stale duplicate bots for ${config.name}`);
     }
-  }
-
-  agentsBySecret = Object.values(agents).reduce((acc, a) => {
-    acc[a.webhook_secret] = a;
-    return acc;
-  }, {});
-}
-
-async function sendBotMessage(roomName, agent, text) {
-  try {
-    await fetch(`${API_URL}/api/bots/rooms/${encodeURIComponent(roomName)}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Aether-Secret': agent.webhook_secret
-      },
-      body: JSON.stringify({ body: text })
-    });
-  } catch (err) {
-    console.error(`[Chatter] Failed to send message in ${roomName}:`, err.message);
   }
 }
 
@@ -213,7 +186,7 @@ async function wanderLoop() {
           const text = await generateReply(prompt, context);
           if (text) {
             console.log(`[Chatter] ${agentName} starting conversation in ${room.name}`);
-            await sendBotMessage(room.name, agent, text);
+            await bot.sendMessage(room.name, text, agent.webhook_secret);
             conversationMemory[room.name] = { lastMessageTime: Date.now(), messageCount: 1 };
           }
         }
@@ -224,34 +197,11 @@ async function wanderLoop() {
   }
 }
 
-const app = express();
-app.use(express.json());
-
-app.post('/webhook', async (req, res) => {
-  const signature = req.headers['x-aether-signature'];
-  
-  // Find which agent this webhook is for
-  let targetAgent = null;
-  for (const secret of Object.keys(agentsBySecret)) {
-    if (verifySignature(secret, req.body, signature)) {
-      targetAgent = agentsBySecret[secret];
-      break;
-    }
-  }
-
-  if (!targetAgent) {
-    return res.status(401).json({ error: 'Invalid signature' });
-  }
-
-  res.json({ status: 'received' });
-
-  const { event, message } = req.body;
-  if (event !== 'message_create' || !message || !message.body) return;
-
-  const { room_name, sender, body } = message;
+bot.on('message', async (message) => {
+  const { id, body, roomName, sender, agentName, agentSecret } = message;
 
   // Don't reply to self or other bots blindly to avoid rapid infinite loops
-  if (sender === targetAgent.config.name) {
+  if (sender === agentName) {
     return; // Ignore our own messages
   } else if (Object.keys(agents).includes(sender)) {
     // 100% chance to reply to another bot
@@ -260,7 +210,7 @@ app.post('/webhook', async (req, res) => {
   }
 
   // Conversation tracking
-  const mem = conversationMemory[room_name] || { lastMessageTime: 0, messageCount: 0 };
+  const mem = conversationMemory[roomName] || { lastMessageTime: 0, messageCount: 0 };
   const now = Date.now();
   if (now - mem.lastMessageTime > 60000) {
     // reset if more than 60s
@@ -275,46 +225,32 @@ app.post('/webhook', async (req, res) => {
 
   // General probability to reply to a normal user message (50%)
   // If mentioned directly, 100% chance to reply
-  const isMentioned = body.toLowerCase().includes(targetAgent.config.name.toLowerCase());
+  const isMentioned = body.toLowerCase().includes(agentName.toLowerCase());
   if (!isMentioned && Math.random() > 0.5) {
     return;
   }
 
-  console.log(`[Chatter] ${targetAgent.config.name} replying to ${sender} in #${room_name}`);
-  const replyText = await generateReply(targetAgent.config.prompt, `${sender} said: ${body}`);
+  console.log(`[Chatter] ${agentName} replying to ${sender} in #${roomName}`);
+  const replyText = await generateReply(agents[agentName].config.prompt, `${sender} said: ${body}`);
   if (replyText) {
-    await sendBotMessage(room_name, targetAgent, replyText);
+    await message.reply(replyText);
     mem.lastMessageTime = Date.now();
     mem.messageCount += 1;
-    conversationMemory[room_name] = mem;
+    conversationMemory[roomName] = mem;
   }
 });
 
-// Heartbeat
-async function sendHeartbeats() {
-  for (const agent of Object.values(agents)) {
-    try {
-      await fetch(`${API_URL}/api/bots/heartbeat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Aether-Secret': agent.webhook_secret
-        }
-      });
-    } catch {}
-  }
-}
-
-app.listen(PORT, async () => {
-  console.log(`[Chatter] Server running on port ${PORT}`);
+// Start initialization and boot up server using the SDK
+async function bootstrap() {
   await authenticateSupabase();
   await loadOrRegisterAgents();
   
-  sendHeartbeats();
-  setInterval(sendHeartbeats, 30_000);
-  
+  bot.start();
+
   // Wander loop every 10s
   setInterval(wanderLoop, 10_000);
   // Initial wander after 5s
   setTimeout(wanderLoop, 5_000);
-});
+}
+
+bootstrap();
