@@ -19,7 +19,7 @@ bot_heartbeats: dict[str, float] = {}
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 def _sign_payload(secret: str, payload: dict) -> str:
-    msg = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode()
+    msg = json.dumps(payload, separators=(",", ":")).encode()
     digest = hmac.new(secret.encode(), msg, hashlib.sha256).hexdigest()
     return f"sha256={digest}"
 

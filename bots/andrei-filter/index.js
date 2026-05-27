@@ -1,95 +1,32 @@
-import express from 'express';
-import crypto from 'crypto';
+import { AetherBot } from 'aether-bot-sdk';
 
-// Use the secret provided by the user
 const BOT_SECRET = process.env.BOT_SECRET || '82ad1c725ac496865d6e024f385e6f28d6a1effdb7954da39ff344eb8b3bbdb4';
-// Use port 4001 to avoid conflicting with the example bot on 4000
 const PORT = parseInt(process.env.PORT || '4001', 10);
 const API_URL = process.env.API_URL || 'http://localhost:8000';
 
-/**
- * Verify the X-Aether-Signature header against the request body.
- */
-function verifySignature(secret, body, signature) {
-  if (!secret) return true;
+const bot = new AetherBot({
+  name: 'AndreiFilterBot',
+  secret: BOT_SECRET,
+  port: PORT,
+  apiUrl: API_URL
+});
 
-  // Recursively sort object keys so it matches Python's sort_keys=True
-  function sortKeys(obj) {
-    if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
-      return obj;
-    }
-    return Object.keys(obj)
-      .sort()
-      .reduce((result, key) => {
-        result[key] = sortKeys(obj[key]);
-        return result;
-      }, {});
-  }
+bot.on('message', async (message) => {
+  const { id, body, roomName, sender } = message;
 
-  const expected =
-    'sha256=' +
-    crypto
-      .createHmac('sha256', secret)
-      .update(JSON.stringify(sortKeys(body)))
-      .digest('hex');
-
-  try {
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature || ''));
-  } catch {
-    return false;
-  }
-}
-
-const app = express();
-app.use(express.json());
-
-app.post('/webhook', async (req, res) => {
-  const signature = req.headers['x-aether-signature'];
-
-  if (!verifySignature(BOT_SECRET, req.body, signature)) {
-    console.warn('[AndreiFilterBot] Rejected request: invalid signature');
-    return res.status(401).json({ error: 'Invalid signature' });
-  }
-
-  // The webhook dispatcher now returns immediately, so we just acknowledge it
-  res.json({ status: 'received' });
-
-  const { event, message } = req.body;
-
-  if (event !== 'message_create' || !message) {
-    return;
-  }
-
-  const { id, body, room_name, sender } = message;
-
-  if (typeof body !== 'string') {
-    return;
-  }
-
-  // Ignore our own messages to prevent infinite loops
-  if (sender === 'AndreiFilterBot') {
+  if (typeof body !== 'string' || sender === 'AndreiFilterBot') {
     return;
   }
 
   // Handle !ping command
   if (body.trim() === '!ping') {
-    console.log(`[AndreiFilterBot] Received !ping from ${sender} in #${room_name}. Sending Pong!`);
+    console.log(`[AndreiFilterBot] Received !ping from ${sender} in #${roomName}. Sending Pong!`);
     try {
-      const sendRes = await fetch(`${API_URL}/api/bots/rooms/${room_name}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Aether-Secret': BOT_SECRET
-        },
-        body: JSON.stringify({ body: 'Pong!' })
-      });
-      if (!sendRes.ok) {
-        console.error(`[AndreiFilterBot] Failed to send message: ${sendRes.status}`);
-      }
+      await message.reply('Pong!');
     } catch (err) {
-      console.error(`[AndreiFilterBot] Error calling send message REST API:`, err);
+      console.error(`[AndreiFilterBot] Error sending Pong! message:`, err);
     }
-    return; // Stop processing further for commands
+    return;
   }
 
   // Replace every word sequence with 'andrei'
@@ -100,57 +37,17 @@ app.post('/webhook', async (req, res) => {
   });
 
   if (filtered !== body) {
-    console.log(`[AndreiFilterBot] Filtering message from ${sender} in #${room_name}:`);
+    console.log(`[AndreiFilterBot] Filtering message from ${sender} in #${roomName}:`);
     console.log(`  Original: ${body}`);
     console.log(`  Filtered: ${filtered}`);
 
     try {
-      // Async SDK: Edit the message via REST API
-      const patchRes = await fetch(`${API_URL}/api/bots/messages/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Aether-Secret': BOT_SECRET
-        },
-        body: JSON.stringify({ body: filtered })
-      });
-
-      if (!patchRes.ok) {
-        console.error(`[AndreiFilterBot] Failed to edit message: ${patchRes.status}`);
-      } else {
-        console.log(`[AndreiFilterBot] Message ${id} successfully edited.`);
-      }
+      await message.edit(filtered);
+      console.log(`[AndreiFilterBot] Message ${id} successfully edited.`);
     } catch (err) {
-      console.error(`[AndreiFilterBot] Error calling REST API:`, err);
+      console.error(`[AndreiFilterBot] Error calling edit message REST API:`, err);
     }
   }
 });
 
-app.get('/health', (_req, res) => res.json({ status: 'ok', bot: 'AndreiFilterBot' }));
-
-// ── Heartbeat: keep the bot marked as "online" on the backend ────────────────
-async function sendHeartbeat() {
-  try {
-    const res = await fetch(`${API_URL}/api/bots/heartbeat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Aether-Secret': BOT_SECRET,
-      },
-    });
-    if (!res.ok) {
-      console.warn(`[AndreiFilterBot] Heartbeat failed: ${res.status}`);
-    }
-  } catch (err) {
-    console.warn(`[AndreiFilterBot] Heartbeat error:`, err.message);
-  }
-}
-
-app.listen(PORT, () => {
-  console.log(`[AndreiFilterBot] Bot running on http://localhost:${PORT}`);
-  console.log(`[AndreiFilterBot] Webhook endpoint: POST http://localhost:${PORT}/webhook`);
-
-  // Send initial heartbeat immediately, then every 30 seconds
-  sendHeartbeat();
-  setInterval(sendHeartbeat, 30_000);
-});
+bot.start();
