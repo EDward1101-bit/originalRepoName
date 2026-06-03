@@ -12,10 +12,12 @@ app = FastAPI(
     version="0.1.0",
 )
 
+# Simple permissive CORS for development and remote testing
+# In a real production app, you should restrict this to your specific frontend URL
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
