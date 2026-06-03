@@ -17,9 +17,13 @@ services:
     volumes:
       - prosody-data:/var/lib/prosody
       - ./prosody/prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro
-      - ./prosody/modules/mod_admin_net.lua:/usr/lib/prosody/modules/mod_admin_net.lua:ro
+      - ./prosody/modules:/usr/lib/prosody/modules-custom:ro
     env_file:
       - ./.env
+    environment:
+      - SERVER_HOSTNAME=${SERVER_HOSTNAME:-localhost}
+      - PROSODY_DOMAIN=${SERVER_HOSTNAME:-localhost}
+      - PROSODY_ADMIN_USER=${PROSODY_ADMIN_USER:-admin}
     restart: unless-stopped
     networks:
       - xmpp-network
