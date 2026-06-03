@@ -57,11 +57,11 @@ docker-compose up --build -d
 
 | Service          | URL                        |
 | ---------------- | -------------------------- |
-| Frontend         | http://localhost:5173      |
-| Backend API      | http://localhost:8000      |
-| API Docs         | http://localhost:8000/docs |
+| Frontend         | http://localhost:8080      |
+| Backend API      | http://localhost:8080/api  |
+| API Docs         | http://localhost:8080/api/docs |
 | Prosody XMPP     | localhost:5222             |
-| Prosody HTTP API | http://localhost:5280      |
+| Prosody HTTP API | http://localhost:8080/http-bind |
 
 ## Common Commands
 
