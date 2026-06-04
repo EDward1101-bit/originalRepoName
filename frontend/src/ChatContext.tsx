@@ -217,6 +217,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const boshUrl = `${window.location.origin}/http-bind`;
 
+    console.log('[XMPP] Connecting with:', {
+      jid: fullJid,
+      boshUrl,
+      server: XMPP_DOMAIN,
+      origin: window.location.origin
+    });
+
     let client: Agent | null = null;
     try {
       client = createClient({

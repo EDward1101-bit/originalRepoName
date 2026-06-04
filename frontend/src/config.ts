@@ -1,12 +1,16 @@
-const globalHostname = window.location.hostname || import.meta.env.VITE_SERVER_HOSTNAME || 'localhost';
+const globalHostname = window.location.hostname || 'localhost';
 
-// Use port 8000 for local development (when not using Nginx)
-// Use the current origin when running behind Nginx (port 8085 or remote)
+// Port 8085 is where Nginx is listening.
+// If we are on port 8085, it means we are going through the proxy.
 export const API_URL = 
-  (globalHostname === 'localhost' || globalHostname === '127.0.0.1') && window.location.port !== '8085'
-    ? `http://${globalHostname}:8000`
-    : `${window.location.origin}`;
+  (window.location.port === '8085')
+    ? `${window.location.protocol}//${globalHostname}:8085`
+    : (globalHostname === 'localhost' || globalHostname === '127.0.0.1')
+      ? `http://${globalHostname}:8000`
+      : `${window.location.origin}`;
 
+// Prosody and the frontend MUST agree on the domain name for JIDs.
+// Using 'localhost' is fine for local dev, but it must be consistent.
 const DEFAULT_XMPP_DOMAIN = globalHostname;
 
 // Use the global hostname if the env variable is set to localhost, to allow local network access

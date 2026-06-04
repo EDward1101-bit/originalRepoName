@@ -20,12 +20,14 @@ class UserCreate(BaseModel):
 class UserSync:
     @staticmethod
     async def create_user(user: UserCreate) -> dict[str, Any]:
-        supabase = get_supabase_client()
+        from services.supabase import get_service_client, get_supabase_client
+        supabase = get_service_client() or get_supabase_client()
 
         prosody_response = await prosody_client.create_user(user.username, user.password)
 
+        auth_email = user.email or f"{user.username}@{settings.server_hostname}"
         auth_data: dict[str, str] = {
-            "email": user.email or f"{user.username}@{settings.server_hostname}",
+            "email": auth_email,
             "password": user.password,
         }
 
@@ -35,7 +37,7 @@ class UserSync:
             user_data = {
                 "id": auth_response.user.id,
                 "username": user.username,
-                "email": user.email,
+                "email": auth_email, # Store the actual email used
                 "xmpp_created": True,
             }
 
@@ -51,7 +53,8 @@ class UserSync:
 
     @staticmethod
     async def delete_user(username: str) -> bool:
-        supabase = get_supabase_client()
+        from services.supabase import get_service_client, get_supabase_client
+        supabase = get_service_client() or get_supabase_client()
 
         await prosody_client.delete_user(username)
 
