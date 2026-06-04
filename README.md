@@ -75,9 +75,9 @@ docker-compose up --build
 ```
 
 ### 4. Access the Application
-- **Frontend App**: [http://localhost:8080](http://localhost:8080)
-- **Backend API**: [http://localhost:8080/api](http://localhost:8080/api)
-- **API Documentation**: [http://localhost:8080/api/docs](http://localhost:8080/api/docs)
+- **Frontend App**: [http://localhost:8085](http://localhost:8085)
+- **Backend API**: [http://localhost:8085/api](http://localhost:8085/api)
+- **API Documentation**: [http://localhost:8085/api/docs](http://localhost:8085/api/docs)
 
 
 ## 🤝 Contributing

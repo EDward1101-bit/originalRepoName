@@ -92,7 +92,7 @@
   2. What changes with a Reverse Proxy?
 
   If you use Nginx, your configuration becomes much cleaner. Instead of pointing to different ports, everything goes through the proxy port
-  (8080).
+  (8085).
 
   Frontend (.env)
   Instead of using IPs and ports, you use the public URLs:
