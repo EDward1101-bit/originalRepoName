@@ -117,21 +117,6 @@ export default function Auth() {
     }
   };
 
-  if (user) {
-    return (
-      <div className="h-screen w-full bg-transparent flex items-center justify-center p-6 transition-all duration-500">
-        <div className="flex flex-col items-center justify-center gap-4 animate-pulse">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--brand)] text-white flex items-center justify-center shadow-lg">
-            <div className="w-5 h-5 rounded-full border-2 border-white/80 border-t-transparent animate-spin" />
-          </div>
-          <p className="text-[14px] font-medium text-[var(--text-muted)] tracking-wide">
-            Connecting to Aether...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   // Forgot Password form
   if (isForgotPassword) {
     return (
