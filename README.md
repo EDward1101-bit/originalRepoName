@@ -61,12 +61,13 @@ cd originalRepoName
 ```
 
 ### 2. Configure environment variables
-Copy the example configuration files and add your Supabase credentials:
+Copy the root example configuration file and add your credentials:
 ```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+cp .env.example .env
 ```
-*(Open both `.env` files and add your `SUPABASE_URL` and `SUPABASE_ANON_KEY` / `SERVICE_KEY`.)*
+*(Open the `.env` file and set the following:)*
+- `SUPABASE_URL` and `SUPABASE_ANON_KEY`: Your Supabase credentials.
+- `SERVER_HOSTNAME`: Set this to `localhost` for local development, or to your **remote IP or domain name** (e.g., `1.2.3.4` or `chat.example.com`) if deploying to a server. This is critical for both API access and XMPP messaging.
 
 ### 3. Start the containers
 The following command will build the project and initialize all services:

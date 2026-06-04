@@ -1,5 +1,12 @@
 const globalHostname = window.location.hostname || import.meta.env.VITE_SERVER_HOSTNAME || 'localhost';
-const DEFAULT_HTTP_API_URL = `http://${globalHostname}:8000`;
+
+// Use port 8000 for local development (when not using Nginx)
+// Use the current origin + /api when running behind Nginx (port 8085 or remote)
+const DEFAULT_HTTP_API_URL = 
+  (globalHostname === 'localhost' || globalHostname === '127.0.0.1') && window.location.port !== '8085'
+    ? `http://${globalHostname}:8000`
+    : `${window.location.origin}/api`;
+
 const DEFAULT_XMPP_DOMAIN = globalHostname;
 
 // Use the global hostname if the env variable is set to localhost, to allow local network access
