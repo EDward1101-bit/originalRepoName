@@ -55,8 +55,6 @@ services:
       - ./.env
     environment:
       - PROSODY_URL=http://prosody:5280
-      - VITE_API_URL=http://${SERVER_HOSTNAME:-localhost}:8085/api
-      - VITE_WS_URL=ws://${SERVER_HOSTNAME:-localhost}:8085/api
     volumes:
       - ./frontend:/app
       - /app/node_modules

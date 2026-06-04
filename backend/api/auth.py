@@ -30,25 +30,36 @@ async def verify_credentials(request: AuthVerifyRequest) -> AuthVerifyResponse:
     supabase = get_supabase_client()
 
     try:
+        # Search for user by email localpart (their XMPP username)
         user_response = (
             supabase.table("users")
-            .select("id, username")
-            .eq("username", request.username)
+            .select("id, username, email")
+            .ilike("email", f"{request.username}@%")
             .execute()
         )
 
         if not user_response.data or len(user_response.data) == 0:
+            # Fallback: try looking up by username directly
+            user_response = (
+                supabase.table("users")
+                .select("id, username, email")
+                .eq("username", request.username)
+                .execute()
+            )
+
+        if not user_response.data or len(user_response.data) == 0:
             return AuthVerifyResponse(valid=False, user_id=None)
 
-        user = user_response.data[0] if user_response.data else None
-        if not user:
+        user = user_response.data[0]
+        user_id = str(user.get("id", ""))
+        user_email = user.get("email", "")
+
+        if not user_email:
             return AuthVerifyResponse(valid=False, user_id=None)
 
-        user_dict = cast(dict[str, Any], user)
-        user_id: str = str(user_dict.get("id", ""))
-
+        # Use the actual email from the database for Supabase Auth
         auth_response = supabase.auth.sign_in_with_password(
-            {"email": f"{request.username}@{request.host}", "password": request.password}
+            {"email": user_email, "password": request.password}
         )
 
         if auth_response.user:
@@ -79,12 +90,22 @@ async def check_user_exists(username: str) -> dict[str, Any]:
     supabase = get_supabase_client()
 
     try:
+        # Look up by email localpart (XMPP username)
         response = (
             supabase.table("users")
             .select("id, username, email")
-            .eq("username", username)
+            .ilike("email", f"{username}@%")
             .execute()
         )
+
+        if not response.data or len(response.data) == 0:
+            # Fallback to username
+            response = (
+                supabase.table("users")
+                .select("id, username, email")
+                .eq("username", username)
+                .execute()
+            )
 
         if response.data and len(response.data) > 0:
             return {"exists": True, "user": response.data[0]}

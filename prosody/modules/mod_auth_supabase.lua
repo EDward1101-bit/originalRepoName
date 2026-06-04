@@ -1,9 +1,23 @@
 -- mod_auth_supabase - Authenticate against Supabase
 -- Queries Supabase REST API to validate user credentials
 
-local http = require "net.http";
+-- Hack to allow ltn12 and socket.http to set globals during loading
+local http, ltn12;
 local json = require "util.json";
-local usermanager = require "core.usermanager";
+do
+    local _G = _G;
+    local mt = getmetatable(_G);
+    local old_newindex;
+    if mt then
+        old_newindex = mt.__newindex;
+        mt.__newindex = nil;
+    end
+    http = require "socket.http";
+    ltn12 = require "ltn12";
+    if mt then
+        mt.__newindex = old_newindex;
+    end
+end
 
 local function get_supabase_url()
     return module:get_option_string("supabase_url", "http://backend:8000");
@@ -20,25 +34,27 @@ local function auth_user(username, password)
     -- Call backend API to validate credentials
     local url = supabase_url .. "/api/auth/verify";
     
-    local headers = {
-        ["Content-Type"] = "application/json",
-        ["apikey"] = api_key
-    };
-    
     local body = json.encode({
         username = username,
         password = password,
         host = module.host
     });
     
-    local response = http.request(url, {
+    local response_body = {};
+    local res, code, headers, status = http.request{
+        url = url,
         method = "POST",
-        headers = headers,
-        body = body
-    });
+        headers = {
+            ["Content-Type"] = "application/json",
+            ["Content-Length"] = #body,
+            ["apikey"] = api_key
+        },
+        source = ltn12.source.string(body),
+        sink = ltn12.sink.table(response_body)
+    }
     
-    if response and response.code == 200 then
-        local data = json.decode(response.body);
+    if code == 200 then
+        local data = json.decode(table.concat(response_body));
         if data and data.valid == true then
             return true;
         end
@@ -52,19 +68,26 @@ local function user_exists(username)
     local supabase_url = get_supabase_url();
     local api_key = get_supabase_api_key();
     
-    local url = supabase_url .. "/api/users/" .. username;
+    local url = supabase_url .. "/api/auth/users/" .. username;
     
-    local headers = {
-        ["apikey"] = api_key
-    };
-    
-    local response = http.request(url, {
+    module:log("info", "Checking if user exists in Supabase: %s (URL: %s)", username, url);
+    local response_body = {};
+    local res, code, headers, status = http.request{
+        url = url,
         method = "GET",
-        headers = headers
-    });
+        headers = {
+            ["apikey"] = api_key
+        },
+        sink = ltn12.sink.table(response_body)
+    }
     
-    if response and response.code == 200 then
-        return true;
+    module:log("info", "Supabase user_exists response: %s (code: %s)", status, code);
+    
+    if code == 200 then
+        local data = json.decode(table.concat(response_body));
+        if data and data.exists == true then
+            return true;
+        end
     end
     
     return false;
@@ -78,13 +101,10 @@ function auth_provider.test_password(username, password)
 end
 
 function auth_provider.get_password(username)
-    -- We don't store passwords in Prosody, return nil
-    -- Authentication is done via Supabase
     return nil;
 end
 
 function auth_provider.set_password(username, password)
-    -- Passwords are managed in Supabase, not Prosody
     return false;
 end
 
@@ -93,12 +113,10 @@ function auth_provider.user_exists(username)
 end
 
 function auth_provider.create_user(username, password)
-    -- Users are created in Supabase, not Prosody
     return false;
 end
 
 function auth_provider.delete_user(username)
-    -- Users are deleted in Supabase, not Prosody
     return false;
 end
 

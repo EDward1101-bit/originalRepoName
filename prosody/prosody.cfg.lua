@@ -24,8 +24,8 @@ end
 
 local hostname = get_env("SERVER_HOSTNAME", get_env("PROSODY_DOMAIN", "localhost"))
 
--- Supabase Configuration
-supabase_url = get_env("SUPABASE_URL", "http://backend:8000")
+-- Backend Configuration (used by mod_auth_supabase)
+supabase_url = get_env("BACKEND_URL", "http://backend:8000")
 supabase_anon_key = get_env("SUPABASE_ANON_KEY", "")
 
 -- Enable debug logging for BOSH
