@@ -4,6 +4,7 @@
 local jid = require "util.jid";
 local json = require "util.json";
 local usermanager = require "core.usermanager";
+local async = require "util.async";
 
 local function handle_request(event, path)
     local request = event.request;
@@ -85,15 +86,33 @@ local function handle_request(event, path)
     return reply(404, {error = "Not found", path_tried = path});
 end
 
+local function handle_request_async(event, path)
+    local runner = async.runner(function()
+        local response = handle_request(event, path);
+        if response then
+            event.response.status = response.status;
+            for k, v in pairs(response.headers or {}) do
+                event.response.headers[k] = v;
+            end
+            event.response:send(response.body);
+        else
+            event.response.status = 500;
+            event.response:send(json.encode({error = "Internal server error"}));
+        end
+    end);
+    runner:run();
+    return true; -- indicates response will be sent later
+end
+
 module:provides("http", {
     default_path = "/";
     route = {
-        ["GET /health"] = function(event) return handle_request(event, "health") end;
-        ["GET /users"] = function(event) return handle_request(event, "users") end;
-        ["GET /users/*"] = function(event, path) return handle_request(event, "users/"..path) end;
-        ["POST /users/*"] = function(event, path) return handle_request(event, "users/"..path) end;
-        ["DELETE /users/*"] = function(event, path) return handle_request(event, "users/"..path) end;
-        ["OPTIONS /*"] = function(event, path) return handle_request(event, path) end;
+        ["GET /health"] = function(event) return handle_request_async(event, "health") end;
+        ["GET /users"] = function(event) return handle_request_async(event, "users") end;
+        ["GET /users/*"] = function(event, path) return handle_request_async(event, "users/"..path) end;
+        ["POST /users/*"] = function(event, path) return handle_request_async(event, "users/"..path) end;
+        ["DELETE /users/*"] = function(event, path) return handle_request_async(event, "users/"..path) end;
+        ["OPTIONS /*"] = function(event, path) return handle_request_async(event, path) end;
     };
 });
 
