@@ -90,7 +90,7 @@ services:
       - PORT=4002
       - API_URL=http://backend:8000
       - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=qwen2.5:7b
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:0.5b}
       - WEBHOOK_HOST=http://xmpp-chat-chatter
       - SUPABASE_URL=https://cfydkldgxvxsxhejtdtr.supabase.co
       - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmeWRrbGRneHZ4c3hoZWp0ZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjU2MjksImV4cCI6MjA5MDU0MTYyOX0.5qGylQ74EXzuolzz__BRwmICk-4ikYsH_gzedRLp72M
@@ -115,7 +115,7 @@ services:
       - PORT=4001
       - API_URL=http://backend:8000
       - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=qwen2.5:7b
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:0.5b}
       - BOT_SECRET=f3259af28fcd26fef3b520f62ab2203183b5e284b9df78454234fea1f06c55dd
     depends_on:
       - backend
@@ -140,7 +140,7 @@ services:
     container_name: xmpp-chat-ollama-pull
     volumes:
       - ollama-data:/root/.ollama
-    entrypoint: [ "sh", "-c", "until OLLAMA_HOST=ollama ollama list >/dev/null 2>&1; do sleep 1; done && OLLAMA_HOST=ollama ollama pull qwen2.5:7b" ]
+    entrypoint: [ "sh", "-c", "until OLLAMA_HOST=ollama ollama list >/dev/null 2>&1; do sleep 1; done && OLLAMA_HOST=ollama ollama pull ${OLLAMA_MODEL:-qwen2.5:0.5b}" ]
     depends_on:
       - ollama
     networks:

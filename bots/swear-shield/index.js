@@ -11,7 +11,7 @@ const PORT = parseInt(process.env.PORT || '4001', 10);
 const SERVER_HOSTNAME = process.env.SERVER_HOSTNAME || 'localhost';
 const API_URL = process.env.API_URL || `http://${SERVER_HOSTNAME}:8000`;
 const OLLAMA_URL = process.env.OLLAMA_URL || `http://${SERVER_HOSTNAME}:11434`;
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:7b';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:0.5b';
 
 const bot = new AetherBot({
   name: 'SwearShield',

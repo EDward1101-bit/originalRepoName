@@ -8,7 +8,7 @@ dotenv.config();
 const PORT = parseInt(process.env.PORT || '4002', 10);
 const API_URL = process.env.API_URL || 'http://localhost:8000';
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:7b';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:0.5b';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const WEBHOOK_HOST = process.env.WEBHOOK_HOST || 'http://172.17.0.1';
