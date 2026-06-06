@@ -3,10 +3,12 @@
 
 local http = require "net.http";
 local json = require "util.json";
-local usermanager = require "core.usermanager";
+local sasl_factory = require "util.sasl";
+local async = require "util.async";
 
+-- Configuration
 local function get_supabase_url()
-    return module:get_option_string("supabase_url", "http://backend:8000");
+    return module:get_option_string("supabase_url", "http://backend:8000"):gsub("/+$", "");
 end
 
 local function get_supabase_api_key()
@@ -14,97 +16,106 @@ local function get_supabase_api_key()
 end
 
 local function auth_user(username, password)
-    local supabase_url = get_supabase_url();
+    local url = get_supabase_url() .. "/api/auth/verify";
     local api_key = get_supabase_api_key();
-
-    -- Call backend API to validate credentials
-    local url = supabase_url .. "/api/auth/verify";
     
-    local headers = {
-        ["Content-Type"] = "application/json",
-        ["apikey"] = api_key
-    };
-    
-    local body = json.encode({
+    local body_data = {
         username = username,
         password = password,
         host = module.host
-    });
-    
-    local response = http.request(url, {
-        method = "POST",
-        headers = headers,
-        body = body
-    });
-    
-    if response and response.code == 200 then
-        local data = json.decode(response.body);
-        if data and data.valid == true then
-            return true;
-        end
-    end
-    
-    return false;
-end
-
-local function user_exists(username)
-    -- Check if user exists in Supabase via backend API
-    local supabase_url = get_supabase_url();
-    local api_key = get_supabase_api_key();
-    
-    local url = supabase_url .. "/api/users/" .. username;
-    
-    local headers = {
-        ["apikey"] = api_key
     };
     
-    local response = http.request(url, {
-        method = "GET",
-        headers = headers
-    });
+    local ok, body = pcall(json.encode, body_data);
+    if not ok then return false; end
     
-    if response and response.code == 200 then
-        return true;
-    end
-    
-    return false;
+    module:log("debug", "Attempting auth for user '%s' via backend: %s", username, url);
+
+    -- Use util.async to make the async http call look synchronous
+    local wait, done = async.waiter();
+    local result = false;
+
+    http.request(url, {
+        method = "POST",
+        headers = {
+            ["Content-Type"] = "application/json",
+            ["apikey"] = api_key
+        },
+        body = body,
+    }, function(response_body, code)
+        if code == 200 then
+            local decode_ok, data = pcall(json.decode, response_body);
+            if decode_ok and data and data.valid == true then
+                module:log("info", "Backend auth successful for user '%s'", username);
+                result = true;
+            else
+                module:log("warn", "Backend auth returned invalid data for '%s': %s", username, response_body);
+            end
+        else
+            module:log("warn", "Backend auth failed for user '%s' (code: %s)", username, tostring(code));
+        end
+        done();
+    end);
+
+    wait();
+    return result;
 end
 
-local auth_provider = {};
+local function check_user_exists(username)
+    local url = get_supabase_url() .. "/api/auth/users/" .. username;
+    local api_key = get_supabase_api_key();
+    
+    module:log("debug", "Checking existence for user '%s' via backend", username);
 
-function auth_provider.test_password(username, password)
-    module:log("info", "Testing password for user: %s", username);
+    local wait, done = async.waiter();
+    local exists = false;
+
+    http.request(url, {
+        method = "GET",
+        headers = { ["apikey"] = api_key },
+    }, function(response_body, code)
+        if code == 200 then
+            local decode_ok, data = pcall(json.decode, response_body);
+            if decode_ok and data and data.exists == true then
+                exists = true;
+            end
+        end
+        done();
+    end);
+
+    wait();
+    return exists;
+end
+
+local provider = {};
+
+function provider.test_password(username, password)
     return auth_user(username, password);
 end
 
-function auth_provider.get_password(username)
-    -- We don't store passwords in Prosody, return nil
-    -- Authentication is done via Supabase
-    return nil;
+function provider.user_exists(username)
+    return check_user_exists(username);
 end
 
-function auth_provider.set_password(username, password)
-    -- Passwords are managed in Supabase, not Prosody
-    return false;
+function provider.get_password(username) return nil, "Passwords not stored locally"; end
+function provider.set_password(username, password) return nil, "Passwords not stored locally"; end
+function provider.create_user(username, password) return nil, "Account creation via XMPP not supported"; end
+function provider.delete_user(username) return nil, "Account deletion via XMPP not supported"; end
+
+function provider.get_sasl_handler()
+    local realm = module.host;
+    local function plain_test_handler(sasl, username, password, realm)
+        -- Prosody SASL handlers can be asynchronous since 0.10+
+        -- by returning a coroutine or using async.waiter
+        if provider.test_password(username, password) then
+            return true, true;
+        end
+        return nil, "Invalid username or password";
+    end
+    return sasl_factory.new(realm, {
+        plain_test = plain_test_handler;
+    });
 end
 
-function auth_provider.user_exists(username)
-    return user_exists(username);
-end
+module:provides("auth", provider);
+module:log("info", "Supabase auth provider loaded for host %s", module.host);
 
-function auth_provider.create_user(username, password)
-    -- Users are created in Supabase, not Prosody
-    return false;
-end
-
-function auth_provider.delete_user(username)
-    -- Users are deleted in Supabase, not Prosody
-    return false;
-end
-
-function auth_provider.get_sasl_handler()
-    return module:require("sasl").new(module.host);
-end
-
-module:provides("auth", auth_provider);
-module:log("info", "Supabase auth module loaded");

@@ -73,6 +73,8 @@ export default function Auth() {
     setLoading(true);
     setMessage('');
 
+    console.log('[Auth] Starting handleAuth', { email, hasPassword: !!password, isSignUp });
+
     try {
       if (isSignUp) {
         if (!username) {
@@ -85,11 +87,16 @@ export default function Auth() {
         }
         const authData = await signUp(email, password, username);
         if (authData?.user?.id) {
-          // Self-heal: Ensure public.users has the email populated
-          await supabase.from('users').update({ email }).eq('id', authData.user.id);
+          // Ensure public.users has the record before syncing
+          await supabase.from('users').upsert({ 
+            id: authData.user.id, 
+            email, 
+            username: username.trim() 
+          });
         }
         setMessage('Account created! Check email to confirm, then login.');
-        const localpart = email.split('@')[0];
+        const localpart = email.trim().split('@')[0];
+        console.log('[Auth] Syncing new user to Prosody', { localpart });
         const synced = await syncUserToProsody(localpart, password);
         if (synced) {
           savePassword(password);
@@ -97,40 +104,30 @@ export default function Auth() {
         }
       } else {
         const authData = await signIn(email, password);
+        console.log('[Auth] Supabase signIn successful', { userId: authData?.user?.id });
         if (authData?.user?.id) {
           // Self-heal: Ensure public.users has the email populated
           await supabase.from('users').update({ email }).eq('id', authData.user.id);
         }
-        const localpart = email.split('@')[0];
+        const localpart = email.trim().split('@')[0];
+        console.log('[Auth] Syncing existing user to Prosody', { localpart });
         const synced = await syncUserToProsody(localpart, password);
         if (synced) {
+          console.log('[Auth] Sync successful, saving password');
           savePassword(password);
           setMessage('Logged in successfully!');
         } else {
+          console.error('[Auth] Prosody sync failed');
           setMessage('Logged in but sync failed.');
         }
       }
     } catch (err) {
+      console.error('[Auth] Authentication error:', err);
       setMessage(err instanceof Error ? err.message : 'Authentication failed');
     } finally {
       setLoading(false);
     }
   };
-
-  if (user) {
-    return (
-      <div className="h-screen w-full bg-transparent flex items-center justify-center p-6 transition-all duration-500">
-        <div className="flex flex-col items-center justify-center gap-4 animate-pulse">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--brand)] text-white flex items-center justify-center shadow-lg">
-            <div className="w-5 h-5 rounded-full border-2 border-white/80 border-t-transparent animate-spin" />
-          </div>
-          <p className="text-[14px] font-medium text-[var(--text-muted)] tracking-wide">
-            Connecting to Aether...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // Forgot Password form
   if (isForgotPassword) {
@@ -149,11 +146,14 @@ export default function Auth() {
 
           <form onSubmit={handleForgotPassword} className="flex flex-col gap-5">
             <div>
-              <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
+              <label htmlFor="reset-email" className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
                 Email Address
               </label>
               <input
+                id="reset-email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
@@ -212,11 +212,14 @@ export default function Auth() {
 
         <form onSubmit={handleAuth} className="flex flex-col gap-5">
           <div>
-            <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
+            <label htmlFor="email" className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
               Email <span className="text-[var(--danger)]">*</span>
             </label>
             <input
+              id="email"
+              name="email"
               type="email"
+              autoComplete={isSignUp ? "username" : "email"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
@@ -227,11 +230,14 @@ export default function Auth() {
 
           {isSignUp && (
             <div>
-              <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
+              <label htmlFor="username" className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
                 Username <span className="text-[var(--danger)]">*</span>
               </label>
               <input
+                id="username"
+                name="username"
                 type="text"
+                autoComplete="nickname"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"
@@ -242,11 +248,14 @@ export default function Auth() {
           )}
 
           <div>
-            <label className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
+            <label htmlFor="password" className="block text-[12px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-2">
               Password <span className="text-[var(--danger)]">*</span>
             </label>
             <input
+              id="password"
+              name="password"
               type="password"
+              autoComplete={isSignUp ? "new-password" : "current-password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-[var(--input-bg)] border border-[var(--border)] outline-none text-[var(--text-normal)] text-[15px] px-4 py-3 rounded-xl focus:border-[var(--brand)] transition-colors"

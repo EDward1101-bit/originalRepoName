@@ -2,7 +2,8 @@ import { AetherBot } from 'aether-bot-sdk';
 
 const BOT_SECRET = process.env.BOT_SECRET || '82ad1c725ac496865d6e024f385e6f28d6a1effdb7954da39ff344eb8b3bbdb4';
 const PORT = parseInt(process.env.PORT || '4001', 10);
-const API_URL = process.env.API_URL || 'http://localhost:8000';
+const SERVER_HOSTNAME = process.env.SERVER_HOSTNAME || 'localhost';
+const API_URL = process.env.API_URL || `http://${SERVER_HOSTNAME}:8000`;
 
 const bot = new AetherBot({
   name: 'AndreiFilterBot',

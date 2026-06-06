@@ -17,9 +17,13 @@ services:
     volumes:
       - prosody-data:/var/lib/prosody
       - ./prosody/prosody.cfg.lua:/etc/prosody/prosody.cfg.lua:ro
-      - ./prosody/modules/mod_admin_net.lua:/usr/lib/prosody/modules/mod_admin_net.lua:ro
+      - ./prosody/modules:/usr/lib/prosody/modules-custom:ro
+    env_file:
+      - ./.env
     environment:
-      - PROSODY_HOST=localhost
+      - SERVER_HOSTNAME=${SERVER_HOSTNAME:-localhost}
+      - PROSODY_DOMAIN=${SERVER_HOSTNAME:-localhost}
+      - PROSODY_ADMIN_USER=${PROSODY_ADMIN_USER:-admin}
     restart: unless-stopped
     networks:
       - xmpp-network
@@ -29,10 +33,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: xmpp-chat-backend
-    ports:
-      - "8000:8000"
+    # Port 8000 removed, will be accessed via Nginx
     env_file:
-      - ./backend/.env
+      - ./.env
     volumes:
       - ./backend:/app
     depends_on:
@@ -47,16 +50,14 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: xmpp-chat-frontend
-    ports:
-      - "5173:5173"
+    # Port 5173 removed, will be accessed via Nginx
     env_file:
-      - ./frontend/.env
+      - ./.env
     environment:
       - PROSODY_URL=http://prosody:5280
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - /app/node_modules/.cache
     depends_on:
       - backend
     init: true
@@ -64,27 +65,16 @@ services:
     networks:
       - xmpp-network
 
-  chatter:
-    build:
-      context: .
-      dockerfile: bots/chatter/Dockerfile
-    container_name: xmpp-chat-chatter
+  nginx:
+    image: nginx:alpine
+    container_name: xmpp-chat-nginx
     ports:
-      - "4002:4002"
-    environment:
-      - PORT=4002
-      - API_URL=http://backend:8000
-      - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=qwen2.5:7b
-      - WEBHOOK_HOST=http://xmpp-chat-chatter
-      - SUPABASE_URL=https://cfydkldgxvxsxhejtdtr.supabase.co
-      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmeWRrbGRneHZ4c3hoZWp0ZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NjU2MjksImV4cCI6MjA5MDU0MTYyOX0.5qGylQ74EXzuolzz__BRwmICk-4ikYsH_gzedRLp72M
-      - AGENTS_FILE=/data/agents.json
+      - "8085:8085"
     volumes:
-      - chatter-data:/data
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
+      - frontend
       - backend
-      - ollama
     restart: unless-stopped
     networks:
       - xmpp-network

@@ -8,8 +8,9 @@ import { AetherBot } from 'aether-bot-sdk';
 
 const BOT_SECRET = process.env.BOT_SECRET || 'f3259af28fcd26fef3b520f62ab2203183b5e284b9df78454234fea1f06c55dd';
 const PORT = parseInt(process.env.PORT || '4001', 10);
-const API_URL = process.env.API_URL || 'http://localhost:8000';
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
+const SERVER_HOSTNAME = process.env.SERVER_HOSTNAME || 'localhost';
+const API_URL = process.env.API_URL || `http://${SERVER_HOSTNAME}:8000`;
+const OLLAMA_URL = process.env.OLLAMA_URL || `http://${SERVER_HOSTNAME}:11434`;
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:7b';
 
 const bot = new AetherBot({

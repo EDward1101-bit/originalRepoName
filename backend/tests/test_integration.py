@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from services.prosody import ProsodyClient
+from config import settings
 
 
 @pytest.mark.integration
@@ -63,7 +64,7 @@ class TestUserCreationWorkflow:
             auth_data = {
                 "username": "testuser",
                 "password": "password123",
-                "host": "localhost"
+                "host": settings.server_hostname
             }
 
             response = await async_client.post("/api/auth/verify", json=auth_data)
@@ -137,7 +138,7 @@ class TestExternalServiceIntegration:
     @pytest.mark.asyncio
     async def test_prosody_client_integration(self):
         """Test ProsodyClient with realistic scenarios."""
-        client = ProsodyClient(base_url="http://localhost:5280")
+        client = ProsodyClient(base_url=settings.prosody_url)
 
         # Test health check (would fail in real test without Prosody running)
         try:

@@ -6,6 +6,8 @@ from pydantic import BaseModel
 from services.prosody import prosody_client
 from services.supabase import get_supabase_client
 
+from config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,12 +20,16 @@ class UserCreate(BaseModel):
 class UserSync:
     @staticmethod
     async def create_user(user: UserCreate) -> dict[str, Any]:
-        supabase = get_supabase_client()
+        from services.supabase import get_service_client, get_supabase_client
+        supabase = get_service_client() or get_supabase_client()
 
-        prosody_response = await prosody_client.create_user(user.username, user.password)
+        # prosody_client.create_user is removed to avoid deadlocks. 
+        # Prosody will see the user as soon as they are in the DB.
+        prosody_response = {"status": "dynamic_auth_enabled"}
 
+        auth_email = user.email or f"{user.username}@{settings.server_hostname}"
         auth_data: dict[str, str] = {
-            "email": user.email or f"{user.username}@localhost",
+            "email": auth_email,
             "password": user.password,
         }
 
@@ -33,7 +39,7 @@ class UserSync:
             user_data = {
                 "id": auth_response.user.id,
                 "username": user.username,
-                "email": user.email,
+                "email": auth_email, # Store the actual email used
                 "xmpp_created": True,
             }
 
@@ -49,9 +55,11 @@ class UserSync:
 
     @staticmethod
     async def delete_user(username: str) -> bool:
-        supabase = get_supabase_client()
+        from services.supabase import get_service_client, get_supabase_client
+        supabase = get_service_client() or get_supabase_client()
 
-        await prosody_client.delete_user(username)
+        # prosody_client.delete_user(username) is removed. 
+        # Deleting from the DB effectively removes them from Prosody.
 
         supabase.table("users").delete().eq("username", username).execute()
 
@@ -59,11 +67,9 @@ class UserSync:
 
     @staticmethod
     async def sync_user_to_prosody(username: str, password: str) -> bool:
-        existing = await prosody_client.get_user(username)
-        if existing:
-            return True
-
-        await prosody_client.create_user(username, password)
+        # We no longer call Prosody here. 
+        # The backend's /sync-user endpoint already ensures the DB record exists.
+        # Prosody will authenticate against that DB record dynamically.
         return True
 
     @staticmethod

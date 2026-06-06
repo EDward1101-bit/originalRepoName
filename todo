@@ -1,0 +1,139 @@
+
+  Researching Remote Deployment Configuration: 
+  Researching configuration files to identify necessary changes for remote deployment.
+
+  ✓  ReadFile  frontend/src/config.ts
+  ✓  ReadFile  backend/.env.example
+  ✓  ReadFile  prosody/prosody.cfg.lua
+  ✓  ReadFile  docker-compose.yml
+  ✓  ReadFile  backend/main.py
+
+
+ℹ Gemini CLI update available! 0.41.1 → 0.41.2
+  Installed with npm. Attempting to automatically update now...
+
+  ✓  ReadFile  frontend/.env.example
+  ✓  ReadFile  frontend/Dockerfile
+  ✓  ReadFile  prosody/Dockerfile
+  ✓  SearchText  'localhost' → Found 62 matches
+  ✓  ReadFile  backend/services/prosody.py
+  ✓  ReadFile  backend/services/user_sync.py
+  ✓  ReadFile  backend/api/auth.py
+
+✦ To access the application from a regular browser when deployed on a remote server, you need to update several configuration files to
+  replace localhost with your server's domain name or public IP address.
+
+  1. Prosody Configuration (prosody/prosody.cfg.lua)
+  This is the most critical change. Prosody needs to know which domain it is serving.
+
+   * VirtualHost: Change VirtualHost "localhost" to VirtualHost "your-domain.com" (or your IP).
+   * MUC Component: Change Component "conference.localhost" to Component "conference.your-domain.com".
+   * Admins: Update admins = { "admin@localhost" } to admins = { "admin@your-domain.com" }.
+   * HTTP Host: Update http_default_host = "localhost" to your-domain.com.
+
+  2. Frontend Environment Variables (frontend/.env)
+  Create a .env file in the frontend/ directory (copied from .env.example) and update the following:
+
+   1 VITE_API_URL=http://your-server-ip:8000
+   2 VITE_XMPP_DOMAIN=your-domain.com
+
+   * The frontend uses these variables to connect to the backend and the XMPP server.
+   * If you don't set these, the app will try to use the browser's current hostname, which might work for the API but often fails for
+     the XMPP domain.
+
+  3. Docker Compose (docker-compose.yml)
+  Update the PROSODY_HOST environment variable:
+
+   1 services:
+   2   prosody:
+   3     # ...
+   4     environment:
+   5       - PROSODY_HOST=your-domain.com
+
+  4. Backend Hardcoded References
+  Currently, some parts of the backend (like backend/api/auth.py and backend/services/user_sync.py) have @localhost hardcoded for user
+  email generation and authentication. 
+
+  You should update these files or, ideally, introduce a PROSODY_DOMAIN environment variable in the backend .env to replace them:
+   * In backend/api/auth.py, change the default host: str = "localhost" in AuthVerifyRequest.
+   * In backend/services/user_sync.py, change f"{user.username}@localhost".
+
+  5. Network & Firewall
+  Ensure your server's firewall allows traffic on the following ports:
+   * 5173: Frontend (Dev server)
+   * 8000: Backend API
+   * 5280: Prosody HTTP/BOSH (Used by the web client)
+   * 5222: XMPP Client-to-Server (Optional, for desktop clients)
+
+  6. Recommendation: Reverse Proxy (Nginx)
+  For a "regular browser" experience, it is highly recommended to use a reverse proxy like Nginx with SSL (HTTPS). Modern browsers
+  restrict many features (like notifications or certain media APIs) on non-localhost sites if they aren't served over HTTPS.
+
+  A typical Nginx setup would:
+   1. Serve the Frontend on port 80/443.
+   2. Proxy /api to the Backend (port 8000).
+   3. Proxy /http-bind to Prosody (port 5280) for XMPP traffic.
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+ > If we are using a reverse proxi, are the back and frontend changes still necessary?                                                
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+✦ Yes, most changes are still necessary, but the reverse proxy changes how you configure them. The reverse proxy handles the
+  networking, but the application code still needs to know its identity.
+
+  Here is why you still need to make those changes:
+
+  1. Identity vs. Network Path
+  The most important reason is the XMPP Domain. In XMPP, your "username" is actually a JID (like alice@your-domain.com). 
+   * Prosody must be configured with VirtualHost "your-domain.com" so it knows to accept messages for that domain.
+   * The Frontend must know your-domain.com to tell the browser which server to log into.
+   * The Backend must know your-domain.com so it creates users with the correct ID in the database.
+
+  Even if Nginx sits in front, if these three don't agree on the domain name, you won't be able to log in.
+
+  2. What changes with a Reverse Proxy?
+
+  If you use Nginx, your configuration becomes much cleaner. Instead of pointing to different ports, everything goes through the proxy port
+  (8085).
+
+  Frontend (.env)
+  Instead of using IPs and ports, you use the public URLs:
+
+   1 VITE_API_URL=https://chat.your-domain.com/api
+   2 VITE_XMPP_DOMAIN=chat.your-domain.com
+
+  Backend (main.py & .env)
+  If you use Nginx to provide HTTPS, you must ensure the Backend knows its domain for CORS security.
+
+   1 # In backend/main.py, you should eventually restrict this:
+   2 app.add_middleware(
+   3     CORSMiddleware,
+   4     allow_origins=["https://chat.your-domain.com"], # Instead of ["*"]
+   5     # ...
+   6 )
+
+  3. The "localhost" Problem in the Code
+  As I mentioned earlier, there are several places in your current code where @localhost is hardcoded. A reverse proxy won't fix
+  these; they will still produce user@localhost even if you are visiting https://my-cool-app.com.
+
+  Example of what will break if you don't change the code:
+   1. You register on my-cool-app.com.
+   2. The Backend (hardcoded) creates a user bob@localhost.
+   3. The Frontend (browser) tries to log in as bob@my-cool-app.com.
+   4. Prosody rejects the login because bob@my-cool-app.com doesn't exist (only bob@localhost does).
+
+  Summary: What to do
+   1. Prosody: Update VirtualHost (This is mandatory).
+   2. Frontend: Update VITE_XMPP_DOMAIN (This is mandatory).
+   3. Backend: Replace hardcoded localhost strings with a variable (This is mandatory for the app to function).
+   4. Nginx: Use it to handle SSL (HTTPS) and to map /api to the backend and /http-bind to Prosody. This makes the "regular browser"
+      experience much better.
+
+
+
+TODO EU (FARA AI)
+
+In prosody nu e folosit un environment pentru a incarca variabilele de port si hostname. Un caz similar in frontend si backend. 
+Centralizeaza env-urile intr-unul singur, global.
+
+Done !!!1
+
+Folosit env in backend

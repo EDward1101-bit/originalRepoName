@@ -13,6 +13,8 @@ backend_root = Path(__file__).resolve().parents[1]
 if str(backend_root) not in sys.path:
     sys.path.insert(0, str(backend_root))
 
+from config import settings
+
 from main import app
 
 
@@ -89,8 +91,8 @@ def sample_message_data():
     """Sample message data for testing."""
     return {
         "id": "msg_123",
-        "from": "user1@localhost",
-        "to": "user2@localhost",
+        "from": f"user1@{settings.server_hostname}",
+        "to": f"user2@{settings.server_hostname}",
         "body": "Hello, this is a test message!",
         "timestamp": "2024-01-01T12:00:00Z",
         "type": "chat",

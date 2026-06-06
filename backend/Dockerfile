@@ -8,18 +8,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Create user first and set ownership of the workdir
+RUN useradd -m appuser && chown appuser:appuser /app
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-COPY requirements.txt .
+COPY --chown=appuser:appuser requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY . .
+COPY --chown=appuser:appuser . .
 
-# Security: Run as a non-root user
-RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000

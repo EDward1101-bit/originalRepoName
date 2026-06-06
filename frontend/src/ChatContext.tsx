@@ -207,9 +207,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setJid(fullJid);
     setStatus('Connecting...');
 
+    console.log('[XMPP] Initializing client for:', fullJid, { hasPassword: !!password });
+
+    if (!password) {
+      console.error('[XMPP] Cannot connect: Password is missing');
+      setStatus('Error: Password is missing');
+      return;
+    }
+
     const boshUrl = `${window.location.origin}/http-bind`;
 
-    console.log('[XMPP] Initializing client for:', fullJid);
+    console.log('[XMPP] Connecting with:', {
+      jid: fullJid,
+      boshUrl,
+      server: XMPP_DOMAIN,
+      origin: window.location.origin
+    });
+
     let client: Agent | null = null;
     try {
       client = createClient({

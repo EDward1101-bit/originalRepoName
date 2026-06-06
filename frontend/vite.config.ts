@@ -18,6 +18,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
+    allowedHosts: [process.env.VITE_SERVER_HOSTNAME || 'localhost'],
     proxy: {
       '/http-bind': {
         target: process.env.PROSODY_URL || 'http://localhost:5280',

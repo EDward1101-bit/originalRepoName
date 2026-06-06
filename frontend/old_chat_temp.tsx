@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import { Client } from 'stanza';
 import type { ReceivedMessage } from 'stanza/protocol';
 import { supabase } from './supabase';
+import { API_URL, XMPP_DOMAIN } from './config';
 
 interface ChatMessage {
   id: string;
@@ -68,7 +69,8 @@ export default function Chat() {
 
     const storedJid = sessionStorage.getItem('xmpp_jid');
     const username = user.email?.split('@')[0] || '';
-    const fullJid = storedJid || `${username}@localhost`;
+    const serverHostname = XMPP_DOMAIN;
+    const fullJid = storedJid || `${username}@${serverHostname}`;
     jidRef.current = fullJid;
     setJid(fullJid);
     setStatus('Connecting...');
@@ -78,7 +80,7 @@ export default function Chat() {
     const client = new Client({
       jid: fullJid,
       password: password,
-      server: 'localhost',
+      server: serverHostname,
       transports: {
         bosh: boshUrl,
       },
@@ -226,7 +228,7 @@ export default function Chat() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/users');
+        const res = await fetch(`${API_URL}/api/users`);
         const data = await res.json();
         setAllUsers(data.map((u: any) => ({ username: u.username, online: false })));
       } catch (err) {
@@ -350,7 +352,7 @@ export default function Chat() {
 
     let finalRecipient = recipientUsername;
     if (!finalRecipient.includes('@')) {
-      finalRecipient = `${finalRecipient}@localhost`;
+      finalRecipient = `${finalRecipient}@${XMPP_DOMAIN}`;
     }
 
     const msg = {

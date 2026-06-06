@@ -3,76 +3,117 @@
 
 local jid = require "util.jid";
 local json = require "util.json";
-local http = require "net.http";
 local usermanager = require "core.usermanager";
+local async = require "util.async";
 
-local function handle_request(event)
-   local request = event.request;
-    local path = event.path or request.path or "";
+local function handle_request(event, path)
+    local request = event.request;
     
-    -- IMPORTANT: Strip ALL leading slashes so "/users" becomes "users"
-    path = path:gsub("^/+", ""); 
-    -- Strip trailing slashes so "users/" becomes "users"
-    path = path:gsub("/+$", "");
+    -- Normalize path: strip leading/trailing slashes
+    path = path or "";
+    path = path:gsub("^/+", ""):gsub("/+$", "");
 
-    module:log("info", "Final normalized path for logic: '%s'", path);
+    module:log("info", "Request %s %s (normalized path: '%s')", request.method, request.path, path);
+
+    local function reply(status, data)
+        return {
+            status = status,
+            headers = {
+                ["Content-Type"] = "application/json",
+                ["Access-Control-Allow-Origin"] = "*",
+                ["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS",
+                ["Access-Control-Allow-Headers"] = "Content-Type",
+            },
+            body = json.encode(data)
+        };
+    end
 
     -- 1. Health Check
     if path == "health" then
-        return { status = 200, headers = { ["Content-Type"] = "application/json" }, body = '{"status":"ok"}' };
+        return reply(200, {status = "ok"});
     end
 
     -- 2. List Users
     if path == "users" and request.method == "GET" then
-        local users = {};
-        local host = module.host;
-        for user in usermanager.users(host) do
-            table.insert(users, { username = user, jid = user .. "@" .. host });
-        end
-        return { 
-            status = 200, 
-            headers = { ["Content-Type"] = "application/json" }, 
-            body = json.encode({users = users}) 
-        };
+        return reply(200, {users = {}}); -- Listing not supported for Supabase auth
     end
 
     -- 3. Individual User Operations
-    local user_jid = path:match("^users/([^/]+)$");
-    if user_jid then
-        local username = user_jid;
+    local username = path:match("^users/([^/]+)$");
+    if username then
         local host = module.host;
 
         if request.method == "GET" then
             if usermanager.user_exists(username, host) then
-                return { status = 200, body = json.encode({username = username, exists = true}) };
+                return reply(200, {username = username, exists = true});
             end
-            return { status = 404, body = '{"error":"User not found"}' };
+            return reply(404, {error = "User not found"});
         end
 
         if request.method == "POST" then
             local data = json.decode(request.body);
             if not data or not data.password then
-                return { status = 400, body = '{"error":"Password required"}' };
+                return reply(400, {error = "Password required"});
             end
             local ok, err = usermanager.create_user(username, data.password, host);
-            if ok then return { status = 201, body = '{"created":true}' }; end
-            return { status = 409, body = json.encode({error = err or "Conflict"}) };
+            if ok then 
+                return reply(201, {created = true}); 
+            end
+            return reply(409, {error = err or "Conflict"});
+        end
+
+        if request.method == "DELETE" then
+            local ok = usermanager.delete_user(username, host);
+            if ok then 
+                return reply(200, {deleted = true}); 
+            end
+            return reply(404, {error = "User not found or could not be deleted"});
         end
     end
 
-    return { status = 404, body = '{"error":"Not found", "path_tried":"'..path..'"}' };
+    if request.method == "OPTIONS" then
+        return {
+            status = 200,
+            headers = {
+                ["Access-Control-Allow-Origin"] = "*",
+                ["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS",
+                ["Access-Control-Allow-Headers"] = "Content-Type",
+            },
+            body = ""
+        };
+    end
+
+    return reply(404, {error = "Not found", path_tried = path});
+end
+
+local function handle_request_async(event, path)
+    local runner = async.runner(function()
+        local response = handle_request(event, path);
+        if response then
+            event.response.status = response.status;
+            for k, v in pairs(response.headers or {}) do
+                event.response.headers[k] = v;
+            end
+            event.response:send(response.body);
+        else
+            event.response.status = 500;
+            event.response:send(json.encode({error = "Internal server error"}));
+        end
+    end);
+    runner:run();
+    return true; -- indicates response will be sent later
 end
 
 module:provides("http", {
     default_path = "/";
     route = {
-        ["GET /health"] = function(event) return handle_request(event) end;
-        ["GET /users"] = function(event) return handle_request(event) end;
-        ["GET /users/*"] = function(event) return handle_request(event) end;
-        ["POST /users/*"] = function(event) return handle_request(event) end;
-        ["DELETE /users/*"] = function(event) return handle_request(event) end;
-        ["POST /auth"] = function(event) return handle_request(event) end;
-        ["OPTIONS /*"] = function(event) return handle_request(event) end;
+        ["GET /health"] = function(event) return handle_request_async(event, "health") end;
+        ["GET /users"] = function(event) return handle_request_async(event, "users") end;
+        ["GET /users/*"] = function(event, path) return handle_request_async(event, "users/"..path) end;
+        ["POST /users/*"] = function(event, path) return handle_request_async(event, "users/"..path) end;
+        ["DELETE /users/*"] = function(event, path) return handle_request_async(event, "users/"..path) end;
+        ["OPTIONS /*"] = function(event, path) return handle_request_async(event, path) end;
     };
 });
+
 module:log("info", "Admin HTTP API loaded");
