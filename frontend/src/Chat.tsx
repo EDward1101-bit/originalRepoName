@@ -98,7 +98,7 @@ export default function Chat() {
         .eq('user_id', user.id)
         .eq('type', 'dm')
         .eq('name', recipient)
-        .single();
+        .maybeSingle();
       if (data) {
         setFavoriteId(data.id);
       } else {

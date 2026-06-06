@@ -253,7 +253,7 @@ export function MucProvider({ children }: { children: ReactNode }) {
           .from('rooms')
           .select('*')
           .eq('name', roomName)
-          .single();
+          .maybeSingle();
         if (error || !data) return;
         room = data as Room;
       }
