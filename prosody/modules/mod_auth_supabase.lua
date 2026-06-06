@@ -103,17 +103,16 @@ function provider.delete_user(username) return nil, "Account deletion via XMPP n
 
 function provider.get_sasl_handler()
     local realm = module.host;
-    local function plain_handler(sasl, password)
+    local function plain_test_handler(sasl, username, password, realm)
         -- Prosody SASL handlers can be asynchronous since 0.10+
         -- by returning a coroutine or using async.waiter
-        if provider.test_password(sasl.username, password) then
+        if provider.test_password(username, password) then
             return true, true;
         end
         return nil, "Invalid username or password";
     end
     return sasl_factory.new(realm, {
-        plain = plain_handler;
-        plain_test_password = plain_handler;
+        plain_test = plain_test_handler;
     });
 end
 
