@@ -1,5 +1,4 @@
-import express from 'express';
-import crypto from 'crypto';
+import { AetherBot } from 'aether-bot-sdk';
 
 /**
  * SwearShield — Ollama-powered Aether Bot
@@ -14,73 +13,25 @@ const API_URL = process.env.API_URL || `http://${SERVER_HOSTNAME}:8000`;
 const OLLAMA_URL = process.env.OLLAMA_URL || `http://${SERVER_HOSTNAME}:11434`;
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:7b';
 
-if (!BOT_SECRET) {
-  console.warn('[SwearShield] WARNING: BOT_SECRET is not set. Signature verification is disabled.');
-}
+const bot = new AetherBot({
+  name: 'SwearShield',
+  secret: BOT_SECRET,
+  port: PORT,
+  apiUrl: API_URL
+});
 
-/**
- * Verify the X-Aether-Signature header against the request body.
- */
-function verifySignature(secret, body, signature) {
-  if (!secret) return true;
-
-  // Recursively sort object keys so it matches Python's sort_keys=True
-  function sortKeys(obj) {
-    if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
-      return obj;
-    }
-    return Object.keys(obj)
-      .sort()
-      .reduce((result, key) => {
-        result[key] = sortKeys(obj[key]);
-        return result;
-      }, {});
-  }
-
-  const expected =
-    'sha256=' +
-    crypto
-      .createHmac('sha256', secret)
-      .update(JSON.stringify(sortKeys(body)))
-      .digest('hex');
-
-  try {
-    return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature || ''));
-  } catch {
-    return false;
-  }
-}
-
-const app = express();
-app.use(express.json());
-
-app.post('/webhook', async (req, res) => {
-  const signature = req.headers['x-aether-signature'];
-
-  if (!verifySignature(BOT_SECRET, req.body, signature)) {
-    console.warn('[SwearShield] Rejected request: invalid signature');
-    return res.status(401).json({ error: 'Invalid signature' });
-  }
-
-  // Acknowledge the webhook immediately
-  res.json({ status: 'received' });
-
-  const { event, message } = req.body;
-  if (event !== 'message_create' || !message) {
-    return;
-  }
-
-  const { id, body, room_name, sender } = message;
+bot.on('message', async (message) => {
+  const { id, body, roomName, sender } = message;
 
   if (typeof body !== 'string' || sender === 'SwearShield') {
     return;
   }
 
-  console.log(`[SwearShield] Checking message from ${sender} in #${room_name} using Ollama (${OLLAMA_MODEL})...`);
+  console.log(`[SwearShield] Checking message from ${sender} in #${roomName} using Ollama (${OLLAMA_MODEL})...`);
 
   try {
     // Prompting Ollama to filter the message
-    const prompt = `You are a chat filter bot. Filter the following message to remove any profanity or highly offensive language. Replace profane words with '***'. If the message is clean, return it exactly as is. Keep in mind we want an EXTREMELY family friendly environment. Return ONLY the final message text, nothing else. THIS IS VERY IMPORTANT. Return ONLY THE FINAL TEXT! Do not put "Message: " before it.\n\nMessage: ${body}`;
+    const prompt = `You are a strict chat filter bot. Your task is to identify and censor EVERY SINGLE PROFANE OR OFFENSIVE WORD in the provided message. Replace EACH profane word with '*', based on the letter count of the word. If there are multiple swear words, you MUST replace all of them. If the message is completely clean, return it exactly as is. We enforce an EXTREMELY family-friendly environment. Return ONLY the final filtered message text. DO NOT add any line breaks or newlines unless they are in the original message. Do not add explanations, and do not put "Message: " before it.\n\nMessage: ${body}`;
 
     const ollamaRes = await fetch(`${OLLAMA_URL}/api/generate`, {
       method: 'POST',
@@ -107,23 +58,19 @@ app.post('/webhook', async (req, res) => {
     filtered = filtered.replace(/^(Message|Filtered Message|Output|Result):\s*/i, '').trim();
 
     // 3. Remove any potential quotes or leading/trailing noise
-    const cleaned = filtered.replace(/^"|"$/g, '').trim();
+    let cleaned = filtered.replace(/^"|"$/g, '').trim();
+
+    // 4. Ensure no newlines are added if the original message had none
+    if (!body.includes('\n') && cleaned.includes('\n')) {
+      cleaned = cleaned.replace(/\n+/g, ' ');
+    }
 
     if (cleaned !== body && cleaned.length > 0) {
       console.log(`[SwearShield] Profanity detected. Original: "${body}" -> Filtered: "${cleaned}"`);
 
-      const patchRes = await fetch(`${API_URL}/api/bots/messages/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Aether-Secret': BOT_SECRET
-        },
-        body: JSON.stringify({ body: cleaned })
-      });
-
-      if (!patchRes.ok) {
-        console.error(`[SwearShield] Failed to edit message: ${patchRes.status}`);
-      }
+      // Edit the message via the SDK's message.edit method
+      await message.edit(cleaned);
+      console.log(`[SwearShield] Message ${id} successfully edited.`);
     } else {
       console.log(`[SwearShield] Message is clean.`);
     }
@@ -132,32 +79,4 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-app.get('/health', (_req, res) => res.json({ status: 'ok', bot: 'SwearShield' }));
-
-// ── Heartbeat: keep the bot marked as "online" on the backend ────────────────
-async function sendHeartbeat() {
-  if (!BOT_SECRET) return;
-  try {
-    const res = await fetch(`${API_URL}/api/bots/heartbeat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Aether-Secret': BOT_SECRET,
-      },
-    });
-    if (!res.ok) {
-      console.warn(`[SwearShield] Heartbeat failed: ${res.status}`);
-    }
-  } catch (err) {
-    console.warn(`[SwearShield] Heartbeat error:`, err.message);
-  }
-}
-
-app.listen(PORT, () => {
-  console.log(`[SwearShield] Bot running on http://${SERVER_HOSTNAME}:${PORT}`);
-  console.log(`[SwearShield] Webhook endpoint: POST http://${SERVER_HOSTNAME}:${PORT}/webhook`);
-
-  // Send initial heartbeat immediately, then every 30 seconds
-  sendHeartbeat();
-  setInterval(sendHeartbeat, 30_000);
-});
+bot.start();
