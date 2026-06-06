@@ -109,7 +109,8 @@ export class AetherBot extends EventEmitter {
               body: JSON.stringify({ body: newBody })
             });
             if (!editRes.ok) {
-              throw new Error(`[${targetAgentName}] Failed to edit message: ${editRes.status}`);
+              const errText = await editRes.text();
+              throw new Error(`[${targetAgentName}] Failed to edit message: ${editRes.status} - Response: ${errText}`);
             }
             return editRes.json();
           },
@@ -123,7 +124,8 @@ export class AetherBot extends EventEmitter {
               }
             });
             if (!delRes.ok) {
-              throw new Error(`[${targetAgentName}] Failed to delete message: ${delRes.status}`);
+              const errText = await delRes.text();
+              throw new Error(`[${targetAgentName}] Failed to delete message: ${delRes.status} - Response: ${errText}`);
             }
             return delRes.json();
           },
@@ -139,7 +141,8 @@ export class AetherBot extends EventEmitter {
               body: JSON.stringify({ body: replyText })
             });
             if (!replyRes.ok) {
-              throw new Error(`[${targetAgentName}] Failed to send reply message: ${replyRes.status}`);
+              const errText = await replyRes.text();
+              throw new Error(`[${targetAgentName}] Failed to send reply message: ${replyRes.status} - Response: ${errText}`);
             }
             return replyRes.json();
           }
@@ -169,7 +172,8 @@ export class AetherBot extends EventEmitter {
         },
       });
       if (!res.ok) {
-        console.warn(`[${botName}] Heartbeat failed: ${res.status}`);
+        const errText = await res.text();
+        console.warn(`[${botName}] Heartbeat failed: ${res.status} - Response: ${errText}`);
       }
     } catch (err) {
       console.warn(`[${botName}] Heartbeat error:`, err.message);
@@ -206,7 +210,8 @@ export class AetherBot extends EventEmitter {
       body: JSON.stringify({ body })
     });
     if (!res.ok) {
-      throw new Error(`[${this.name}] Failed to send proactive message: ${res.status}`);
+      const errText = await res.text();
+      throw new Error(`[${this.name}] Failed to send proactive message: ${res.status} - Response: ${errText}`);
     }
     return res.json();
   }

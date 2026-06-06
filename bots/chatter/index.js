@@ -111,6 +111,9 @@ async function loadOrRegisterAgents() {
         .maybeSingle();
 
       if (fetchError || !dbBot) {
+        if (fetchError) {
+          console.error(`[Chatter] Error checking database for agent ${config.name} (ID: ${botId}):`, fetchError.message || fetchError);
+        }
         console.log(`[Chatter] Agent ${config.name} (ID: ${botId}) not found or inactive in database. Re-registering...`);
         needsRegister = true;
       } else {
