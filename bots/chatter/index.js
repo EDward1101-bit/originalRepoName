@@ -87,12 +87,51 @@ async function generateReply(prompt, userMessage) {
 async function loadOrRegisterAgents() {
   const file = process.env.AGENTS_FILE || 'agents.json';
   if (fs.existsSync(file)) {
-    agents = JSON.parse(fs.readFileSync(file, 'utf8'));
-    console.log('[Chatter] Loaded existing agents configuration.');
+    try {
+      agents = JSON.parse(fs.readFileSync(file, 'utf8'));
+      console.log('[Chatter] Loaded existing agents configuration.');
+    } catch (err) {
+      console.error('[Chatter] Failed to parse agents.json, starting fresh:', err.message);
+      agents = {};
+    }
   }
 
   for (const config of AGENTS_CONFIG) {
-    if (!agents[config.name]) {
+    let needsRegister = false;
+    const expectedWebhookUrl = `${WEBHOOK_HOST}:${PORT}/webhook`;
+
+    if (agents[config.name]) {
+      // Validate with Supabase that the bot exists and is active
+      const botId = agents[config.name].bot_id;
+      const { data: dbBot, error: fetchError } = await supabase
+        .from('bots')
+        .select('*')
+        .eq('id', botId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (fetchError || !dbBot) {
+        console.log(`[Chatter] Agent ${config.name} (ID: ${botId}) not found or inactive in database. Re-registering...`);
+        needsRegister = true;
+      } else {
+        // Stored bot is valid, but check if webhook URL needs to be synchronized/updated
+        if (dbBot.webhook_url !== expectedWebhookUrl) {
+          console.log(`[Chatter] Syncing webhook URL for ${config.name} (ID: ${botId}) to ${expectedWebhookUrl}`);
+          const { error: updateError } = await supabase
+            .from('bots')
+            .update({ webhook_url: expectedWebhookUrl })
+            .eq('id', botId);
+          if (updateError) {
+            console.error(`[Chatter] Failed to update webhook URL for ${config.name}:`, updateError.message);
+          }
+        }
+        agents[config.name].config = config;
+      }
+    } else {
+      needsRegister = true;
+    }
+
+    if (needsRegister) {
       console.log(`[Chatter] Registering new agent: ${config.name}`);
       const res = await fetch(`${API_URL}/api/bots/register`, {
         method: 'POST',
@@ -101,7 +140,7 @@ async function loadOrRegisterAgents() {
           name: config.name,
           description: config.description,
           emoji: config.emoji,
-          webhook_url: `${WEBHOOK_HOST}:${PORT}/webhook`,
+          webhook_url: expectedWebhookUrl,
           owner_username: 'system'
         })
       });
@@ -117,8 +156,6 @@ async function loadOrRegisterAgents() {
         config: config
       };
       fs.writeFileSync(file, JSON.stringify(agents, null, 2));
-    } else {
-      agents[config.name].config = config;
     }
 
     // Register this agent inside the AetherBot SDK instance
