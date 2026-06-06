@@ -6,7 +6,7 @@ WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
     chown appuser:appgroup /app
 
-USER appuser
+# USER appuser
 
 COPY --chown=appuser:appgroup package.json package-lock.json ./
 # Use npm ci instead of npm install for faster, deterministic builds
