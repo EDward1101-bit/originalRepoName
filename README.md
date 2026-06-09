@@ -35,7 +35,7 @@ The system utilizes React 19 and Tailwind CSS for the user interface, communicat
 - **Direct Messages**: 1:1 conversations with online/offline presence, typing indicators (XEP-0085), unread counts, message editing, delete-for-self / delete-for-everyone, favorites, and file/image sharing.
 - **Group Rooms (Multi-User Chat)**: Create, join, and manage chat rooms backed by XMPP MUC with server-side message archiving (`muc_mam`). Includes room admins, member kicking, system join/leave messages, and per-room unread tracking.
 - **Friendships & Social Graph**: Friend requests with pending/accepted states and a live-presence friend list — all keyed on stable user IDs rather than mutable usernames.
-- **AI & Bot Platform**: Browse and invite built-in or custom bots into rooms. AI agents reply using locally-hosted LLMs via **Ollama** (privacy-friendly, no per-token API costs), and a moderation bot keeps conversations clean. Bots integrate through HMAC-signed webhooks for secure, sandboxed extensibility.
+- **AI & Bot Platform**: Browse and invite built-in or custom bots into rooms. AI agents reply using locally-hosted LLMs via **Ollama** (privacy-friendly, no per-token API costs), and a moderation bot keeps conversations clean. Bots integrate through HMAC-signed webhooks for secure, sandboxed extensibility. See the **[Bot Documentation & SDK Guide](BOTS.md)**.
 - **Modern Interface**: Built from scratch using React 19 and Tailwind CSS v4, featuring a fluid, responsive design with comprehensive theme support.
 - **Authentication & Discovery**: Powered by Supabase. Secure user registration, JWT-based login, and global user search functionality.
 - **Optimized Performance**: Packaged with Vite 6, utilizing dynamic code-splitting and chunk management for minimal load times.
@@ -128,6 +128,11 @@ docker-compose up --build
 - **Backend API**: [http://localhost:8085/api](http://localhost:8085/api)
 - **API Documentation**: [http://localhost:8085/api/docs](http://localhost:8085/api/docs)
 
+
+## 📚 Documentation
+
+- **[Bot Documentation & SDK Guide](BOTS.md)** — what bots are, how to use them, the `aether-bot-sdk` API, the webhook protocol, and how the bot system is implemented.
+- **[Docker Setup Guide](DOCKER.md)** — container architecture and deployment details.
 
 ## 🤝 Contributing
 
