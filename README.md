@@ -52,6 +52,82 @@ graph TD
     API --> |Admin API| Prosody
 ```
 
+### Database Schema
+
+The relational database schema is hosted on Supabase (PostgreSQL) and manages user profiles, friendships, direct messages, chat rooms, and bot integrations.
+
+```mermaid
+erDiagram
+    users {
+        uuid id PK
+        varchar username
+        varchar email
+        boolean xmpp_created
+        varchar avatar_url
+    }
+    friendships {
+        uuid id PK
+        uuid requester_id FK
+        uuid receiver_id FK
+        varchar status
+        timestamptz created_at
+    }
+    messages {
+        uuid id PK
+        uuid sender_id FK
+        uuid receiver_id FK
+        text body
+        timestamptz created_at
+    }
+    favorites {
+        uuid id PK
+        uuid user_id FK
+        varchar type
+        varchar name
+        timestamptz created_at
+    }
+    rooms {
+        uuid id PK
+        varchar name
+        text description
+        varchar created_by
+        varchar_array admins
+        timestamptz created_at
+    }
+    room_messages {
+        uuid id PK
+        uuid room_id FK
+        varchar sender
+        text body
+        timestamptz created_at
+    }
+    bots {
+        varchar id PK
+        varchar name
+        text description
+        varchar emoji
+        varchar webhook_url
+        varchar webhook_secret
+        varchar owner_username
+        boolean is_builtin
+        boolean is_active
+        timestamptz created_at
+    }
+    room_bots {
+        varchar bot_id PK, FK
+        uuid room_id PK, FK
+    }
+
+    users ||--o{ friendships : "requests"
+    users ||--o{ friendships : "receives"
+    users ||--o{ messages : "sends"
+    users ||--o{ messages : "receives"
+    users ||--o{ favorites : "favorites"
+    rooms ||--o{ room_messages : "contains"
+    bots ||--o{ room_bots : "assigned to"
+    rooms ||--o{ room_bots : "has"
+```
+
 ### Technology Stack
 
 | Component | Technologies |
